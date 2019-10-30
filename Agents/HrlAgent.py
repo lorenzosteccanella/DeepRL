@@ -10,7 +10,7 @@ class HrlAgent(AbstractAgent):
 
     epsilon = 1
 
-    def __init__(self, option_params, exploration_option, LAMBDA=0.0005, MIN_EPSILON=0.01):
+    def __init__(self, option_params, exploration_option, LAMBDA=0.0005, MIN_EPSILON=0.01, correct_option_end_reward=0.6, wrong_option_end_reward=-0.6):
 
         self.option_params = option_params
 
@@ -20,12 +20,14 @@ class HrlAgent(AbstractAgent):
 
         self.best_option_action = None
         self.current_node = None
-        self.exploration_option = "exploration - option" #exploration_option
+        self.exploration_option = exploration_option
         self.options = []
         self.target = None
 
         self.MIN_EPSILON = MIN_EPSILON
         self.LAMBDA = LAMBDA
+        self.correct_option_end_reward = correct_option_end_reward
+        self.wrong_end_option_reward = wrong_option_end_reward
 
     def act(self, s):
         node = Node(s["manager"], 0)
@@ -40,9 +42,11 @@ class HrlAgent(AbstractAgent):
             distances = self.graph.find_distances(self.current_node)
             self.best_option_action = self.get_epsilon_best_action(distances)
 
-        #print(self.current_node.state, "->", self.best_option_action)
+        if self.target is not None:
+            #self.graph.print_node_list()
+            print(self.current_node.state, "->", self.target.state, " - ", self.best_option_action, end=" ")
 
-        return random.choice(self.action_space)
+        return self.best_option_action.act(s["option"])
 
     def sub_path(self, distances, root):
         next_node = None
@@ -74,6 +78,7 @@ class HrlAgent(AbstractAgent):
                             max_distance = distances[edge.destination]
                             best_edge_index = i
                             self.target = edges_from_current_node[best_edge_index].get_destination()
+                    self.options[best_edge_index].add_edge(edges_from_current_node[best_edge_index])
                     return self.options[best_edge_index]
             else:
                 self.target = None
@@ -85,8 +90,10 @@ class HrlAgent(AbstractAgent):
     def create_options(self, edges_from_current_node):
 
         if len(edges_from_current_node) > len(self.options):
-            #create a new option
-            self.options.append("new option " + str(len(self.options)))
+
+            option = self.option_params["option"]
+            option = option(self.option_params)
+            self.options.append(option)
 
     def update_option(self, sample):
         s = sample[0]["option"]
@@ -99,16 +106,16 @@ class HrlAgent(AbstractAgent):
         if sample[0]["manager"] != sample[3]["manager"]:
             if self.target is not None:
                 if sample[3]["manager"] == self.target.state:
-                    r += 1
+                    r += self.correct_option_end_reward
                     done = True
 
                 else:
-                    r -= 1
+                    r += self.wrong_end_option_reward
                     done = True
 
-        print(r)
+        print(r, done)
 
-        #self.best_option_action.observe((s, a, r, s_, done, info))
+        self.best_option_action.observe((s, a, r, s_, done, info))
 
     def observe(self, sample):  # in (s, a, r, s_, done, info) format
 

@@ -12,3 +12,6 @@ class RandomAgentOption(AbstractOption):
 
     def observe(self, sample):
         return self.agent.observe(sample)
+
+    def __str__(self):
+        return " random_exploration_option "

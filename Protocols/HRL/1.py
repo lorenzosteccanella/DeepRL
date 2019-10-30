@@ -1,4 +1,4 @@
-from Agents import HrlAgent
+from Agents import HrlAgent, RandomAgentOption, A2COption
 import gym
 import tensorflow as tf
 import os
@@ -22,8 +22,6 @@ class variables():
         self.RESULTS_FOLDER = './results/'
         self.FILE_NAME = 'HRL.pkl'
         self.NUMBER_OF_EPOCHS = 5000
-        self.LAMBDA = 0.01
-        self.MIN_EPSILON = 0.01
 
         self.PROBLEM = 'GE_MazeKeyDoor-v0'
         environment = gym.make(self.PROBLEM)
@@ -41,6 +39,7 @@ class variables():
         shared_conv_layers = SharedConvLayers()
 
         self.option_params = {
+            "option": A2COption,
             "h_size": 30,
             "action_space": self.ACTION_SPACE,
             "critic_network": CriticNetwork,
@@ -48,11 +47,16 @@ class variables():
             "shared_representation": shared_conv_layers,
             "weight_mse": 0.5,
             "weight_ce_exploration": 0.01,
+            "learning_rate": 0.0001,
             "gamma": 0.99,
             "batch_size": 1
         }
 
-        self.agent = HrlAgent(self.option_params, None, self.LAMBDA, self.MIN_EPSILON)
+        self.random_agent = RandomAgentOption(self.ACTION_SPACE)
+        self.LAMBDA = 0.01
+        self.MIN_EPSILON = 0.01
+
+        self.agent = HrlAgent(self.option_params, self.random_agent, self.LAMBDA, self.MIN_EPSILON)
 
 
 

@@ -115,9 +115,9 @@ class A2CEagerSync:
         self.weight_mse = weight_mse
         self.weight_ce = weight_ce
 
-        print("\n ACTOR CRITIC MODEL \n")
+        #print("\n ACTOR CRITIC MODEL \n")
 
-        slim.model_analyzer.analyze_vars(self.model_actor_critic.trainable_variables, print_info=True)
+        #slim.model_analyzer.analyze_vars(self.model_actor_critic.trainable_variables, print_info=True)
 
         self.optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate)
         if self.train_observation:
