@@ -42,6 +42,10 @@ class Preprocessing:
 
         return img_stacked
 
+    def reset(self, done):
+        if done:
+            self.images_stack.clear()
+
     @staticmethod
     def image_resize(image, width=None, height=None, inter=cv2.INTER_AREA):
         # initialize the dimensions of the image to be resized and
@@ -303,9 +307,9 @@ class AnalyzeMemory:
         plt.hist(self.reward_distribution)
         plt.show()
 
-class Tools4DQN:
-
-    def epsilon_decay_end_steps(self, MIN_EPSILON, LAMBDA):
+class ToolEpsilonDecayExploration:
+    @staticmethod
+    def epsilon_decay_end_steps(MIN_EPSILON, LAMBDA):
 
         exp=0
 

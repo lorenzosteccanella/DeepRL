@@ -81,6 +81,7 @@ class Graph:
         self.node_list = []
         self.current_node = None
         self.current_edge = None
+        self.new_node_encontered = False
 
     def edge_update(self, old_node, new_node, reward):
 
@@ -98,15 +99,19 @@ class Graph:
     def node_update(self, old_node, new_node=None, reward=None):
         if old_node not in self.node_list:
             self.node_list.append(old_node)
+            self.new_node_encontered = True
 
         if new_node:
             if new_node not in self.node_list:
                 self.node_list.append(new_node)
+                self.new_node_encontered = True
         if new_node:
             node = self.node_list[self.node_list.index(new_node)]
             node.set_value((node.get_value() + reward) / 2)
+            self.new_node_encontered = False
         else:
             node = self.node_list[self.node_list.index(old_node)]
+            self.new_node_encontered = False
 
         node.visited() # to augment the visit counter
 
@@ -119,6 +124,8 @@ class Graph:
         self.node_update(old_node, new_node, sample[2])
         self.edge_update(old_node, new_node, sample[2])
 
+        return self.new_node_encontered
+
     def print_edge_list(self):
         for edge in self.edge_list:
             print(edge)
@@ -126,6 +133,9 @@ class Graph:
     def print_node_list(self):
         for node in self.node_list:
             print(node)
+
+    def get_number_of_nodes(self):
+        return len(self.node_list)
 
     def find_distances(self, root):
         """

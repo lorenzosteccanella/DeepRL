@@ -4,13 +4,12 @@ from Utils import ExperienceReplay
 
 class A2CAgent(AbstractAgent):
 
-    def __init__(self, action_space, main_model_nn, gamma, batch_size, analyze_memory = False):
+    def __init__(self, action_space, main_model_nn, gamma, batch_size):
 
         self.batch_size = batch_size
         self.buffer = ExperienceReplay(self.batch_size)
         self.action_space = action_space
         self.main_model_nn = main_model_nn
-        self.analyze_memory = analyze_memory
         self.gamma = gamma
 
     def _get_actor_critic_error(self, batch):

@@ -159,4 +159,4 @@ class ShowRenderHRL(object):
         if self.slow_display>0.3:
             self.slow_display -= 0.1
         else:
-            self.slow_display = 0\
+            self.slow_display = 0

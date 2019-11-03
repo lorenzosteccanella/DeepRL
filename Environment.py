@@ -9,6 +9,7 @@ class Environment:
         self.env = env  # the environment
         self.n_step = 0
         self.n_episodes = 0
+        self.total_r_episode = 0
 
         if not rendering_custom_class:
             self.rendering = self.env
@@ -28,7 +29,7 @@ class Environment:
         else:
             s = self.preprocessing.preprocess_image(img)  # reshape and preprocess the image
 
-        total_r = 0  # total reward
+        self.total_r_episode = 0  # total reward
         while True:
             a = agent.act(s)
             img, r, done, info = self.env.step(a)
@@ -51,12 +52,20 @@ class Environment:
             agent.replay()
 
             s = s_
-            total_r += r
+            self.total_r_episode += r
             self.n_step += 1
 
             if done:
+                if self.preprocessing:
+                    self.preprocessing.reset(done)
                 break
 
         self.n_episodes += 1
 
-        return self.n_episodes, self.n_step, total_r
+        return self.n_episodes, self.n_step, self.total_r_episode
+
+    def close(self):
+        self.env.reset()
+        self.n_episodes = 0
+        self.n_step = 0
+        self.total_r_episode = 0

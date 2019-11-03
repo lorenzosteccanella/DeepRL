@@ -23,17 +23,23 @@ import matplotlib.pyplot as plt
 
 
 
-# Get the protocol info
+
+
+def moving_average(interval, window_size):
+    window = np.ones(int(window_size))/float(window_size)
+    return np.convolve(interval, window, 'valid')
 
 
 # try:
 
 for experiment in args[1::]:
-
     path_protocol = 'Protocols.' + experiment
     variables = importlib.import_module(path_protocol).variables()
+    variables.env.close()
 
     for seed in variables.seeds:
+        variables.reset()
+        variables.SAVE_RESULT.set_seed(seed)
         tf.set_random_seed(seed)
         random.seed(seed)
         np.random.seed(seed)
@@ -45,9 +51,10 @@ for experiment in args[1::]:
 
         epochs = []
         rewards = []
+        n_steps = []
         epoch = 0
 
-        #if variables.BufferFillAgent is not None:
+        #if variables.BufferFillAgent is not None:total_r
         #    print("RANDOM EXPLORATION TO FILL EXPERIENCE REPLAY BUFFER")
         #    while variables.randomAgent.exp < variables.RANDOM_EXPLORATION:
         #        epoch, nstep, reward = variables.env.run(variables.randomAgent)
@@ -61,25 +68,41 @@ for experiment in args[1::]:
         print("START TO LEARN")
         while epoch < variables.NUMBER_OF_EPOCHS:
             epoch, nstep, reward = variables.env.run(variables.agent)
-            print(epoch, nstep, reward)  # (sum(rewards[-10:])/10))
+            print(epoch, nstep, reward, (sum(rewards[-10:])/10))
             epochs.append(epoch)
             rewards.append(reward)
+            n_steps.append(nstep)
 
         end = time.time()
 
-        # AnaliseResults.save_data(variables.RESULTS_FOLDER, variables.FILE_NAME, [epochs, rewards, (end - start)])
+        moving_average_reward = moving_average(rewards, 10)
 
-        del variables
+        message = [str(e) + " " + str(nstep) + " " + str(r) + "\n" for e, r, nstep in zip(epochs, moving_average_reward, n_steps)]
+        variables.SAVE_RESULT.save_data(variables.FILE_NAME, message)
+        parameters = vars(variables)
+        variables.SAVE_RESULT.save_settings(parameters)
+        variables.SAVE_RESULT.plot_results(variables.FILE_NAME, "reward-over-episodes", "episodes", "reward")
 
-        # finally:
-        #    AnaliseResults.save_data(variables.RESULTS_FOLDER, variables.FILE_NAME, [epochs, rewards])
-        #    AnaliseResults.reward_over_episodes(epochs, rewards)
-        #    variables.analyze_memory.plot_memory_distribution()
-        #
-        #    if variables.sess is not None:
-        #        variables.sess.close()
-        #    # agent.brain.model.save("Boh.h5")
-        #
-        print("FINISHED")
+        epochs = []
+        rewards = []
+        n_steps = []
+        epoch = 0
 
-        tf.keras.backend.clear_session()
+    variables.SAVE_RESULT.plot_multiple_seeds(variables.FILE_NAME, "reward-over-episodes", "episodes", "reward")
+
+    del variables
+    print("FINISHED")
+
+    # finally:
+    #    AnaliseResults.save_data(variables.RESULTS_FOLDER, variables.FILE_NAME, [epochs, rewards])
+    #    AnaliseResults.reward_over_episodes(epochs, rewards)
+    #    variables.analyze_memory.plot_memory_distribution()
+    #
+    #    if variables.sess is not None:
+    #        variables.sess.close()
+    #    # agent.brain.model.save("Boh.h5")
+    #
+
+
+
+

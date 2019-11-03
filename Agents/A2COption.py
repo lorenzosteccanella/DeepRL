@@ -4,7 +4,7 @@ from Models.A2CnetworksEager import *
 
 class A2COption(AbstractOption):
 
-    def __init__(self, parameters):
+    def __init__(self, parameters, preprocessing=False):
 
         super(A2COption, self).__init__()
 
@@ -18,8 +18,12 @@ class A2COption(AbstractOption):
 
         self.parameters = parameters
 
+        self.preprocessing = preprocessing
+
 
     def act(self, s):
+        if self.preprocessing:
+            s = self.preprocessing.preprocess_image(s)
 
         return self.agent.act(s)
 
@@ -27,6 +31,9 @@ class A2COption(AbstractOption):
         #print(sample[2])
         self.agent.observe(sample)
         self.agent.replay()
+
+        if sample[4]:
+            self.preprocessing.reset(sample[4])
 
     def __str__(self):
         return "option " + str(self.id)

@@ -2,11 +2,10 @@ from Models.A2CnetworksEager import *
 import tensorflow as tf
 import os
 from Environment import Environment
-from Utils import AnaliseResults, Preprocessing, AnalyzeMemory
 from Agents import A2CAgent
 import gym
 import gridenvs.examples
-from Utils import SaveResult
+from Utils import SaveResult, ShowRenderHRL, Preprocessing
 
 class variables():
 
@@ -17,33 +16,35 @@ class variables():
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-        self.seeds = [1]
-        self.PROBLEM = 'CartPole-v0'
-        self.ACTION_SPACE = [0, 1]
+        self.seeds = range(3)
+        self.PROBLEM = 'GE_MazeKeyDoor-v0'
+        self.ACTION_SPACE = [0, 1, 2, 3, 4]
         self.GAMMA = 0.99
-        self.LEARNING_RATE = 0.001
+        self.LEARNING_RATE = 0.0001
         self.RESULTS_FOLDER = 'A2C/'
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
-        self.FILE_NAME = 'cartpole_A2C'
-        self.BATCH_SIZE = 32
+        self.FILE_NAME = 'Key_Door_A2C'
+        self.BATCH_SIZE = 6
         self.WEIGHT_MSE = 0.5
-        self.WEIGHT_CE_EXPLORATION = 0.0001
+        self.WEIGHT_CE_EXPLORATION = 0.01
 
-        self.NUMBER_OF_EPOCHS = 1000
+        self.NUMBER_OF_EPOCHS = 4000
 
         self.preprocess = None
 
-        self.env = Environment(gym.make(self.PROBLEM), self.preprocess)
+        environment = gym.make(self.PROBLEM)
+
+        preprocessing = Preprocessing(84, 84, 3, 1)
+
+        self.env = Environment(environment, preprocessing=preprocessing, rendering_custom_class=ShowRenderHRL)
 
         # Just to be sure that we don't have some others graph loaded
         tf.reset_default_graph()
 
-        self.SharedDenseLayers = SharedDenseLayers(30)
+        shared_conv_layers = SharedConvLayers()
 
         self.a2cDNN = A2CEagerSync(30, len(self.ACTION_SPACE), CriticNetwork, ActorNetwork,
-                                   self.LEARNING_RATE, self.WEIGHT_MSE, self.WEIGHT_CE_EXPLORATION, self.SharedDenseLayers)
-
-        self.randomAgent = None
+                                   self.LEARNING_RATE, self.WEIGHT_MSE, self.WEIGHT_CE_EXPLORATION, shared_conv_layers)
 
         self.agent = A2CAgent(self.ACTION_SPACE, self.a2cDNN, self.GAMMA, self.BATCH_SIZE)
 
@@ -53,11 +54,9 @@ class variables():
         # Just to be sure that we don't have some others graph loaded
         tf.reset_default_graph()
 
-        self.SharedDenseLayers = SharedDenseLayers(30)
+        shared_conv_layers = SharedConvLayers()
 
         self.a2cDNN = A2CEagerSync(30, len(self.ACTION_SPACE), CriticNetwork, ActorNetwork,
-                                   self.LEARNING_RATE, self.WEIGHT_MSE, self.WEIGHT_CE_EXPLORATION, self.SharedDenseLayers)
-
-        self.randomAgent = None
+                                   self.LEARNING_RATE, self.WEIGHT_MSE, self.WEIGHT_CE_EXPLORATION, shared_conv_layers)
 
         self.agent = A2CAgent(self.ACTION_SPACE, self.a2cDNN, self.GAMMA, self.BATCH_SIZE)
