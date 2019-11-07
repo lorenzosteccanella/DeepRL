@@ -14,18 +14,19 @@ import math
 
 class Preprocessing:
 
-    def __init__(self, image_width, image_height, image_depth, stacked_frames = 1):
+    def __init__(self, image_width, image_height, image_depth, stacked_frames = 1, normalization = True):
         self.image_width = image_width
         self.image_height = image_height
         self.image_depth = image_depth
         self.stacked_frames = stacked_frames
         self.images_stack = deque([], maxlen=self.stacked_frames)
+        self.normalization = normalization
 
     def preprocess_image(self, img):
-        img = Preprocessing.image_resize(img, self.image_width, self.image_height)
+        #img = Preprocessing.image_resize(img, self.image_width, self.image_height)
         #img = Preprocessing.gray_scale(img)
-
-        img = img / 255
+        if self.normalization:
+            img = img / 255
         img_stacked = self.stack_frames(img)
 
         return img_stacked

@@ -1,11 +1,15 @@
+import math
+
 class Edge:
+
+    pseudo_count_factor = 1000
 
     def __init__(self, origin, destination, value=0, edge_cost = -0.001):
 
         self.origin = origin
         self.destination = destination
-        self.edge_cost = edge_cost
-        self.value = float(destination.get_value() or 0) + self.edge_cost
+        self.edge_cost = (-(1 * math.exp(-Edge.pseudo_count_factor * destination.visit_count))) + edge_cost
+        self.value = float(destination.get_value()) + self.edge_cost
         self.option = None
 
     def get_value(self):
@@ -41,13 +45,17 @@ class Edge:
     def __str__(self):
         return "["+str(self.origin.state) + ", " + str(self.destination.state) + ", " + str(self.value)+"]\n"
 
+    @staticmethod
+    def set_pseudo_count(pseudo_count_factor):
+        Edge.pseudo_count_factor = pseudo_count_factor
+
 
 class Node:
 
     def __init__(self, state, value=0):
         self.state = state
-        self.value = value
         self.visit_count = 1
+        self.value = value #(Node.pseudo_count_factor * (self.visit_count ** -1))
 
     def get_value(self):
         return self.value
@@ -56,7 +64,7 @@ class Node:
         return self.state
 
     def set_value(self, value):
-        self.value = value
+        self.value = value #(Node.pseudo_count_factor * (self.visit_count ** -1))
 
     def visited(self):
         self.visit_count += 1
@@ -165,7 +173,7 @@ class Graph:
                 destination = edge.get_destination()
                 if distances[destination] < (distances[origin] + edge.get_value()):
                     print( "Graph contains a negative-weight cycle")
-                    return None
+            #        return None
 
             return distances
 

@@ -4,13 +4,13 @@ from Utils import Edge, Node, Graph
 import time
 import math
 
-class HrlAgent(AbstractAgent):
+class HrlImitationAgent(AbstractAgent):
 
     manager_exp = 0
 
     epsilon = 1
 
-    def __init__(self, option_params, exploration_option, pseudo_count_exploration = 1000, LAMBDA=1000, MIN_EPSILON=0, correct_option_end_reward=0.6, wrong_option_end_reward=-0.6, SaveResult = False):
+    def __init__(self, option_params, exploration_option, LAMBDA=0.0005, MIN_EPSILON=0.01, correct_option_end_reward=0.6, wrong_option_end_reward=-0.6, SaveResult = False):
 
         self.option_params = option_params
 
@@ -36,7 +36,6 @@ class HrlAgent(AbstractAgent):
         self.LAMBDA = LAMBDA
         self.correct_option_end_reward = correct_option_end_reward
         self.wrong_end_option_reward = wrong_option_end_reward
-        self.pseudo_count_exploration(pseudo_count_exploration)
 
     def act(self, s):
         node = Node(s["manager"], 0)
@@ -45,11 +44,11 @@ class HrlAgent(AbstractAgent):
         if self.current_node is None:
             self.current_node = self.graph.get_current_node()
             distances = self.graph.find_distances(self.current_node)
-            self.best_option_action = self.get_epsilon_best_action(distances)
+            self.best_option_action = self.get_epsilon_best_imitation_action(distances)
         elif self.current_node != node:
             self.current_node = self.graph.get_current_node()
             distances = self.graph.find_distances(self.current_node)
-            self.best_option_action = self.get_epsilon_best_action(distances)
+            self.best_option_action = self.get_epsilon_best_imitation_action(distances)
 
         #if self.target is not None:
             #self.graph.print_node_list()
@@ -86,7 +85,7 @@ class HrlAgent(AbstractAgent):
             self.target = None
             return self.exploration_option
 
-    def get_epsilon_best_action(self, distances):
+    def get_epsilon_best_imitation_action(self, distances):
         if distances is not None:
             edges_from_current_node = self.graph.get_edges_of_a_node(self.current_node)
             if len(edges_from_current_node) > 0:
@@ -97,7 +96,7 @@ class HrlAgent(AbstractAgent):
                         self.target = None
                         return self.exploration_option
                     else:
-                        self.target = edges_from_current_node[random_edge_index].get_destination()
+                        self.target = edges_from_current_node[random_edge_index].get_destination().state
                         return self.options[random_edge_index]
                 else:
                     max_distance = - float("inf")
@@ -114,19 +113,17 @@ class HrlAgent(AbstractAgent):
                     #else:                                           # Changed  so now when exploration finish the plan will become deterministic
                     #    best_edge = best_edge_index[0]              #
 
-                    best_edge = random.choice(best_edge_index)
-                    self.target = edges_from_current_node[best_edge].get_destination()
-                    self.options[best_edge].add_edge(edges_from_current_node[best_edge])
-                    return self.options[best_edge]
+                    #best_edges = []
+                    #for i in best_edge_index:
+                    #    best_edges.append(edges_from_current_node[i].get_destination().state)
+                    self.target = [edges_from_current_node[best_edge_index[0]].get_destination().state]
+                    return self.options[best_edge_index[0]]
             else:
                 self.target = None
                 return self.exploration_option
         else:
             self.target = None
             return self.exploration_option
-
-    def pseudo_count_exploration(self, pseudo_count_factor):
-        Edge.set_pseudo_count(pseudo_count_factor)
 
     def create_options(self, edges_from_current_node):
 
@@ -146,7 +143,7 @@ class HrlAgent(AbstractAgent):
 
         if sample[0]["manager"] != sample[3]["manager"]:
             if self.target is not None:
-                if sample[3]["manager"] == self.target.state:
+                if sample[3]["manager"] in self.target:
 
                     # to keep performance statistics
                     self.number_of_options_executed += 1
@@ -174,8 +171,6 @@ class HrlAgent(AbstractAgent):
         self.LAMBDA = self.INITIAL_LAMBDA
 
     def observe(self, sample):  # in (s, a, r, s_, done, info) format
-
-        #print(self.graph.print_node_list())
 
         newnode_discovered = self.graph.abstract_state_discovery(sample)
         if newnode_discovered:

@@ -20,20 +20,20 @@ class variables():
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
         self.seeds = range(3)
-        self.RESULTS_FOLDER = 'HRL_E_GREEDY/'
+        self.RESULTS_FOLDER = 'TEST_HRL_E_GREEDY/'
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Key_Door_HRL_E_GREEDY'
-        self.NUMBER_OF_EPOCHS = 1500
+        self.NUMBER_OF_EPOCHS = 4000
 
-        self.PROBLEM = 'GE_MazeKeyDoor-v10'
+        self.PROBLEM = 'GE_MazeKeyDoor-v20'
         environment = gym.make(self.PROBLEM)
 
         self.ACTION_SPACE = [0, 1, 2, 3, 4]
 
         wrapper_params = {
             "stack_images_length": 1,
-            "width": 10,
-            "height": 10,
+            "width": 20,
+            "height": 20,
             "n_zones": 2
         }
 

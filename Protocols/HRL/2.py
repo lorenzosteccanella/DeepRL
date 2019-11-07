@@ -1,10 +1,12 @@
-from Agents import HrlAgent
+from Agents import HrlAgent, RandomAgentOption, A2COption
 import gym
 import tensorflow as tf
 import os
 from Environment import Environment
-from Wrappers_Env import WrapperObsHRL
-from Utils import ShowRenderHRL
+from Wrappers_Env import PositionGridenv_GE_MazeKeyDoor_v0
+from Utils import ShowRenderHRL, ToolEpsilonDecayExploration, Preprocessing
+from Models.A2CnetworksEager import *
+from Utils import SaveResult
 import gridenvs.examples
 
 
@@ -17,35 +19,65 @@ class variables():
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-        self.seeds = [1]
-        self.RESULTS_FOLDER = './results/'
-        self.FILE_NAME = 'HRL.pkl'
-        self.NUMBER_OF_EPOCHS = 200
+        self.seeds = range(3)
+        self.RESULTS_FOLDER = 'HRL_PSEUDO_COUNT/'
+        self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
+        self.FILE_NAME = 'Key_Door_HRL_PSEUDO_COUNT'
+        self.NUMBER_OF_EPOCHS = 1500
 
         self.PROBLEM = 'GE_MazeKeyDoor-v0'
         environment = gym.make(self.PROBLEM)
 
-        wrapper_params={
-            "stack_images_length": 4,
+        self.ACTION_SPACE = [0, 1, 2, 3, 4]
 
-            "NUMBER_ZONES_GRIDWORLD_X": 84,
-            "NUMBER_ZONES_GRIDWORLD_Y": 84,
-            "NUMBER_ZONES_MANAGER_X": 4,
-            "NUMBER_ZONES_MANAGER_Y": 4,
-            "GRAY_SCALE": False,
-            "SSIM_PRECISION_FACTOR": 2
+        wrapper_params = {
+            "stack_images_length": 1,
         }
 
-        wrapper_params.update({"ZONE_SIZE_MANAGER_X": wrapper_params["NUMBER_ZONES_GRIDWORLD_X"] // wrapper_params["NUMBER_ZONES_MANAGER_X"],
-                     "ZONE_SIZE_MANAGER_Y": wrapper_params["NUMBER_ZONES_GRIDWORLD_Y"] // wrapper_params["NUMBER_ZONES_MANAGER_Y"]})
+        self.wrapper = PositionGridenv_GE_MazeKeyDoor_v0(environment, wrapper_params)
 
-        wrapper = WrapperObsHRL(environment, wrapper_params)
+        self.env = Environment(self.wrapper, preprocessing=False, rendering_custom_class=ShowRenderHRL)
 
-        self.env = Environment(wrapper, preprocessing=False, rendering_custom_class=ShowRenderHRL)
+    def reset(self):
+        self.env.close()
 
-        self.ACTION_SPACE = [1, 2, 3, 4]
+        # Just to be sure that we don't have some others graph loaded
+        tf.reset_default_graph()
 
-        self.agent = HrlAgent(self.ACTION_SPACE)
+        self.shared_conv_layers = SharedConvLayers(0.1)
+
+        self.number_of_stacked_frames = 1
+
+        preprocessing = Preprocessing(84, 84, 3, self.number_of_stacked_frames, False)
+
+        self.option_params = {
+            "option": A2COption,
+            "h_size": 30,
+            "action_space": self.ACTION_SPACE,
+            "critic_network": CriticNetwork,
+            "actor_network": ActorNetwork,
+            "shared_representation": self.shared_conv_layers,
+            "weight_mse": 0.5,
+            "weight_ce_exploration": 0.01,
+            "learning_rate": 0.0001,
+            "gamma": 0.99,
+            "batch_size": 6,
+            "preprocessing": preprocessing
+        }
+
+        self.random_agent = RandomAgentOption(self.ACTION_SPACE)
+        self.LAMBDA = 1000
+        self.MIN_EPSILON = 0
+        self.PSEUDO_COUNT = 0.1
+
+        # to know in how many episodes the epsilon will decay
+        ToolEpsilonDecayExploration.epsilon_decay_end_steps(0, self.PSEUDO_COUNT)
+
+        self.agent = HrlAgent(self.option_params, self.random_agent, self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON)
+
+
+
+
 
 
 

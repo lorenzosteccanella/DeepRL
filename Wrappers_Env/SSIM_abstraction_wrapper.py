@@ -10,9 +10,6 @@ class PositionGridenv_GE_MazeKeyDoor_v0(gym.Wrapper):
 
         super().__init__(env)
         self.parameters = parameters
-        self.width = self.parameters["width"]
-        self.height = self.parameters["height"]
-        self.n_zones = self.parameters["n_zones"]
         self.images_stack = deque([], maxlen=self.parameters["stack_images_length"])
         self.KEY = False
 
@@ -70,33 +67,43 @@ class PositionGridenv_GE_MazeKeyDoor_v0(gym.Wrapper):
         if x == 0 or y == 0:
             return "died"
         # dying
-        elif x == self.width - 1 or y == self.height - 1:
+        elif x == 9 or y == 9:
             return "died"
 
         if self.KEY == False:
             # key taken
-            if x == self.width - 2 and y == 1 and r == 1:
+            if x == 8 and y == 1 and r == 1:
                 self.KEY = True
                 return "key taken"
             # door close
             elif x == 1 and y == 1:
                 return "door close"
-
-            step_x = int((self.width - 2) / self.n_zones)
-            step_y = int((self.height - 2) / self.n_zones)
-            for grid_x in range(step_x, (self.width - 1), step_x):
-                for grid_y in range(step_y, (self.height - 1), step_y):
-                    if x <= grid_x and y <= grid_y:
-                        return "abstract state %i %i" % (grid_x, grid_y)
+            #abstract state 4
+            elif x <= 8 / 2 and y <= 8 / 2:
+                return "abstract state 4"
+            # abstract state 2
+            elif x > 8 / 2 and y > 8 / 2:
+                return "abstract state 2"
+            # abstract state 1
+            elif x <= 8 / 2 and y >= 8 / 2:
+                return "abstract state 1"
+            #abstract state 3
+            elif x >= 8 / 2 >= y:
+                return "abstract state 3"
 
         if self.KEY == True:
             # door close
             if x == 1 and y == 1:
                 return "door open"
-
-            step_x = int((self.width - 2) / self.n_zones)
-            step_y = int((self.height - 2) / self.n_zones)
-            for grid_x in range(step_x, (self.width - 1), step_x):
-                for grid_y in range(step_y, (self.height - 1), step_y):
-                    if x <= grid_x and y <= grid_y:
-                        return "abstract state with key %i %i" % (grid_x, grid_y)
+            #abstract state 4
+            elif x <= 8 / 2 and y <= 8 / 2:
+                return "abstract state 4 with key"
+            # abstract state 2
+            elif x > 8 / 2 and y > 8 / 2:
+                return "abstract state 2 with key"
+            # abstract state 1
+            elif x <= 8 / 2 and y >= 8 / 2:
+                return "abstract state 1 with key"
+            #abstract state 3
+            elif x >= 8 / 2 >= y:
+                return "abstract state 3 with key"

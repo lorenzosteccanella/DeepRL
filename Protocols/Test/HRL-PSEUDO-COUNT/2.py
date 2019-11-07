@@ -20,10 +20,10 @@ class variables():
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
         self.seeds = range(3)
-        self.RESULTS_FOLDER = 'HRL_E_GREEDY/'
+        self.RESULTS_FOLDER = 'TEST_HRL_PSEUDO_COUNT/'
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Key_Door_HRL_E_GREEDY'
-        self.NUMBER_OF_EPOCHS = 1500
+        self.NUMBER_OF_EPOCHS = 4000
 
         self.PROBLEM = 'GE_MazeKeyDoor-v10'
         environment = gym.make(self.PROBLEM)
@@ -34,7 +34,7 @@ class variables():
             "stack_images_length": 1,
             "width": 10,
             "height": 10,
-            "n_zones": 2
+            "n_zones": 4
         }
 
         self.wrapper = PositionGridenv_GE_MazeKeyDoor_v0(environment, wrapper_params)
@@ -69,9 +69,9 @@ class variables():
         }
 
         self.random_agent = RandomAgentOption(self.ACTION_SPACE)
-        self.LAMBDA = 0.05
+        self.LAMBDA = 1000
         self.MIN_EPSILON = 0
-        self.PSEUDO_COUNT = 1000
+        self.PSEUDO_COUNT = 0.1
 
         # to know in how many episodes the epsilon will decay
         ToolEpsilonDecayExploration.epsilon_decay_end_steps(self.MIN_EPSILON, self.LAMBDA)

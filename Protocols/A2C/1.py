@@ -35,17 +35,7 @@ class variables():
 
         self.env = Environment(gym.make(self.PROBLEM), self.preprocess)
 
-        # Just to be sure that we don't have some others graph loaded
-        tf.reset_default_graph()
 
-        self.SharedDenseLayers = SharedDenseLayers(30)
-
-        self.a2cDNN = A2CEagerSync(30, len(self.ACTION_SPACE), CriticNetwork, ActorNetwork,
-                                   self.LEARNING_RATE, self.WEIGHT_MSE, self.WEIGHT_CE_EXPLORATION, self.SharedDenseLayers)
-
-        self.randomAgent = None
-
-        self.agent = A2CAgent(self.ACTION_SPACE, self.a2cDNN, self.GAMMA, self.BATCH_SIZE)
 
     def reset(self):
         self.env.close()

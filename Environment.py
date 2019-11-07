@@ -33,7 +33,7 @@ class Environment:
         while True:
             a = agent.act(s)
             img, r, done, info = self.env.step(a)
-            if True: #and r > 0:  # just to check the correct episodes
+            if False: #and r > 0:  # just to check the correct episodes
                 self.rendering.render(img)
 
             if not self.preprocessing:

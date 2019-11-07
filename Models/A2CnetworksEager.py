@@ -6,13 +6,14 @@ import tensorflow.contrib.slim as slim
 import inspect
 
 class SharedConvLayers(keras.Model):
-    def __init__(self):
+    def __init__(self, learning_rate_observation_adjust=1):
         super(SharedConvLayers, self).__init__(name="SharedConvLayers")
-        self.conv1 = keras.layers.Conv2D(32, 8, (4, 4), padding='VALID', activation='elu', kernel_initializer='he_normal')
+        self.conv1 = keras.layers.Conv2D(32, 8, (4, 4), padding='VALID', activation='elu', kernel_initializer='he_normal', )
         self.conv2 = keras.layers.Conv2D(64, 4, (2, 2), padding='VALID', activation='elu', kernel_initializer='he_normal')
         self.conv3 = keras.layers.Conv2D(64, 3, (1, 1), padding='VALID', activation='elu', kernel_initializer='he_normal')
         self.flatten = keras.layers.Flatten()
         self.dense = keras.layers.Dense(256)
+        self.learning_rate_adjust = learning_rate_observation_adjust
 
     def call(self, x):
 
@@ -21,6 +22,7 @@ class SharedConvLayers(keras.Model):
         x = self.conv3(x)
         x = self.flatten(x)
         x = self.dense(x)
+        x = self.learning_rate_adjust * x + (1-self.learning_rate_adjust) * tf.stop_gradient(x)  # U have to test this!!!
 
         return [x] # super importante ricordati che negli actor e critic modelli stai indicizzando a 0 ho bisogno di questo per la vae observation
 

@@ -1,0 +1,3 @@
+[submodule "RLstateAggregationTool"]
+	path = RLstateAggregationTool
+	url = https://github.com/lorenzosteccanella/RLstateAggregationTool.git
