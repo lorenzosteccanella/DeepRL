@@ -1,4 +1,4 @@
-from Agents import HrlAgent, RandomAgentOption, A2COption
+from Agents import HrlAgent, RandomAgentOption, A2CSILOption
 import gym
 import tensorflow as tf
 import os
@@ -17,12 +17,12 @@ class variables():
         tf.enable_eager_execution()
 
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
-        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+        os.environ["CUDA_VISIBLE_DEVICES"] = "0, 1, 2"
 
         self.seeds = range(3)
-        self.RESULTS_FOLDER = 'TEST_HRL_PSEUDO_COUNT/'
+        self.RESULTS_FOLDER = 'TEST_HRL_SIL_E_GREEDY/'
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
-        self.FILE_NAME = 'Key_Door_HRL_PSEUDO_COUNT'
+        self.FILE_NAME = 'Key_Door_HRL_SIL_E_GREEDY'
         self.NUMBER_OF_EPOCHS = 4000
 
         self.PROBLEM = 'GE_MazeKeyDoor-v10'
@@ -34,7 +34,7 @@ class variables():
             "stack_images_length": 1,
             "width": 10,
             "height": 10,
-            "n_zones": 8
+            "n_zones": 2
         }
 
         self.wrapper = PositionGridenv_GE_MazeKeyDoor_v0(environment, self.wrapper_params)
@@ -54,24 +54,29 @@ class variables():
         preprocessing = Preprocessing(84, 84, 3, self.number_of_stacked_frames, False)
 
         self.option_params = {
-            "option": A2COption,
+            "option": A2CSILOption,
             "h_size": 30,
             "action_space": self.ACTION_SPACE,
             "critic_network": CriticNetwork,
             "actor_network": ActorNetwork,
             "shared_representation": self.shared_conv_layers,
             "weight_mse": 0.5,
+            "sil_weight_mse": 0.01,
             "weight_ce_exploration": 0.01,
             "learning_rate": 0.0001,
-            "gamma": 0.99,
+            "gamma": 0.95,
             "batch_size": 6,
+            "sil_batch_size": 64,
+            "imitation_buffer_size":64*100,
+            "imitation_learning_steps": 4,
+
             "preprocessing": preprocessing
         }
 
         self.random_agent = RandomAgentOption(self.ACTION_SPACE)
-        self.LAMBDA = 1000
+        self.LAMBDA = 0.05
         self.MIN_EPSILON = 0
-        self.PSEUDO_COUNT = 0.1
+        self.PSEUDO_COUNT = 1000
 
         # to know in how many episodes the epsilon will decay
         ToolEpsilonDecayExploration.epsilon_decay_end_steps(self.MIN_EPSILON, self.LAMBDA)

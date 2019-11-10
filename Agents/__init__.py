@@ -5,3 +5,5 @@ from .HrlAgent import HrlAgent
 from .HrlImitationAgent import HrlImitationAgent
 from .A2COption import A2COption
 from .RandomAgentOption import RandomAgentOption
+from .A2CSILAgent import A2CSILAgent
+from .A2CSILOption import A2CSILOption

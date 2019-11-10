@@ -2,14 +2,12 @@ import math
 
 class Edge:
 
-    pseudo_count_factor = 1000
-
-    def __init__(self, origin, destination, value=0, edge_cost = -0.001):
+    def __init__(self, origin, destination, value=0, edge_cost = -1000):
 
         self.origin = origin
         self.destination = destination
-        self.edge_cost = (-(1 * math.exp(-Edge.pseudo_count_factor * destination.visit_count))) + edge_cost
-        self.value = float(destination.get_value()) + self.edge_cost
+        self.edge_cost = edge_cost
+        self.value = float(self.destination.get_value() or 0) + self.edge_cost
         self.option = None
 
     def get_value(self):
@@ -23,6 +21,9 @@ class Edge:
 
     def set_value(self, value):
         self.value = value + self.edge_cost
+
+    def refresh_value(self):
+        self.value = float(self.destination.get_value() or 0) + self.edge_cost
 
     def update_value(self, value):
         self.value = (self.value + self.edge_cost + value)/2
@@ -45,17 +46,15 @@ class Edge:
     def __str__(self):
         return "["+str(self.origin.state) + ", " + str(self.destination.state) + ", " + str(self.value)+"]\n"
 
-    @staticmethod
-    def set_pseudo_count(pseudo_count_factor):
-        Edge.pseudo_count_factor = pseudo_count_factor
-
 
 class Node:
+
+    pseudo_count_factor = 0
 
     def __init__(self, state, value=0):
         self.state = state
         self.visit_count = 1
-        self.value = value #(Node.pseudo_count_factor * (self.visit_count ** -1))
+        self.value = round(value + (1 * math.exp(-Node.pseudo_count_factor * self.visit_count)), 6) #(Node.pseudo_count_factor * (self.visit_count ** -1))
 
     def get_value(self):
         return self.value
@@ -64,7 +63,7 @@ class Node:
         return self.state
 
     def set_value(self, value):
-        self.value = value #(Node.pseudo_count_factor * (self.visit_count ** -1))
+        self.value = round(value + (1 * math.exp(-Node.pseudo_count_factor * self.visit_count)), 6) #(Node.pseudo_count_factor * (self.visit_count ** -1))
 
     def visited(self):
         self.visit_count += 1
@@ -80,6 +79,10 @@ class Node:
 
     def __hash__(self):
         return hash(self.state)
+
+    @staticmethod
+    def set_pseudo_count(pseudo_count_factor):
+        Node.pseudo_count_factor = pseudo_count_factor
 
 
 class Graph:
@@ -98,13 +101,15 @@ class Graph:
             if current_edge not in self.edge_list:
                 self.edge_list.append(current_edge)
                 #current_edge.set_value(reward)
+                current_edge.refresh_value()
                 self.current_edge = current_edge
             else:
                 edge = self.edge_list[self.edge_list.index(current_edge)]
+                edge.refresh_value()
                 #edge.update_value(reward)
                 self.current_edge = edge
 
-    def node_update(self, old_node, new_node=None, reward=None):
+    def node_update(self, old_node, new_node=False, reward=False):
         if old_node not in self.node_list:
             self.node_list.append(old_node)
             self.new_node_encontered = True
@@ -129,6 +134,7 @@ class Graph:
         old_node = Node(sample[0]["manager"], 0)
 
         new_node = Node(sample[3]["manager"], sample[2])
+
         self.node_update(old_node, new_node, sample[2])
         self.edge_update(old_node, new_node, sample[2])
 

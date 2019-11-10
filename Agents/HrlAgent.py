@@ -126,7 +126,7 @@ class HrlAgent(AbstractAgent):
             return self.exploration_option
 
     def pseudo_count_exploration(self, pseudo_count_factor):
-        Edge.set_pseudo_count(pseudo_count_factor)
+        Node.set_pseudo_count(pseudo_count_factor)
 
     def create_options(self, edges_from_current_node):
 
@@ -174,8 +174,6 @@ class HrlAgent(AbstractAgent):
         self.LAMBDA = self.INITIAL_LAMBDA
 
     def observe(self, sample):  # in (s, a, r, s_, done, info) format
-
-        #print(self.graph.print_node_list())
 
         newnode_discovered = self.graph.abstract_state_discovery(sample)
         if newnode_discovered:

@@ -2,7 +2,7 @@ from Models.QnetworksEager import *
 import tensorflow as tf
 import os
 from Environment import Environment
-from Utils import PrioritizedExperienceReplay, ExperienceReplay, AnaliseResults, Preprocessing, UpdateWeightsModels,UpdateWeightsEager, SoftUpdateWeightsEager, AnalyzeMemory, Tools4DQN
+from Utils import PrioritizedExperienceReplay, ExperienceReplay, AnaliseResults, Preprocessing, UpdateWeightsModels,UpdateWeightsEager, SoftUpdateWeightsEager, AnalyzeMemory, ToolEpsilonDecayExploration
 from Agents import DQNAgent
 import gym
 import gridenvs.examples
@@ -42,18 +42,6 @@ class variables():
 
         self.stateDimension = (4,)
         self.buffer_memory = ExperienceReplay(self.MEMORY_CAPACITY)
-
-        # Just to be sure that we don't have some others graph loaded
-        tf.reset_default_graph()
-
-        self.MainQN = QnetworkEager(30, len(self.ACTION_SPACE), DenseModel)
-        self.TargetQN = QnetworkEager(30, len(self.ACTION_SPACE), DenseModel)
-
-        self.upd_target = SoftUpdateWeightsEager(weights=self.MainQN, model=self.TargetQN, tau=0.08)
-
-        self.BufferFillAgent = None
-        self.agent = DQNAgent(self.ACTION_SPACE, self.stateDimension, self.buffer_memory, self.MainQN, self.TargetQN,
-                              self.LAMBDA, self.UPDATE_TARGET_FREQ, self.upd_target, self.GAMMA, self.BATCH_SIZE, self.MIN_EPSILON, self.analyze_memory)
 
     def reset(self):
         self.env.close()

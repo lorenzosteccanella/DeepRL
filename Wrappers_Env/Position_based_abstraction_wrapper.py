@@ -57,10 +57,13 @@ class PositionGridenv_GE_MazeKeyDoor_v0(gym.Wrapper):
         return img_option_stacked
 
     def get_position_abstract_state_gridenv_GE_MazeKeyDoor_v0(self, position, reward):
+        step_x = int((self.width - 2) / self.n_zones)
+        step_y = int((self.height - 2) / self.n_zones)
+
         #initial state returned when the environments is resetted
         if position is None:
             self.KEY = False
-            return "abstract state 1"
+            return "abstract state %i %i" % (step_x, self.height-2)
 
         x = position[0]
         y = position[1]
@@ -82,8 +85,6 @@ class PositionGridenv_GE_MazeKeyDoor_v0(gym.Wrapper):
             elif x == 1 and y == 1:
                 return "door close"
 
-            step_x = int((self.width - 2) / self.n_zones)
-            step_y = int((self.height - 2) / self.n_zones)
             for grid_x in range(step_x, (self.width - 1), step_x):
                 for grid_y in range(step_y, (self.height - 1), step_y):
                     if x <= grid_x and y <= grid_y:
@@ -94,8 +95,6 @@ class PositionGridenv_GE_MazeKeyDoor_v0(gym.Wrapper):
             if x == 1 and y == 1:
                 return "door open"
 
-            step_x = int((self.width - 2) / self.n_zones)
-            step_y = int((self.height - 2) / self.n_zones)
             for grid_x in range(step_x, (self.width - 1), step_x):
                 for grid_y in range(step_y, (self.height - 1), step_y):
                     if x <= grid_x and y <= grid_y:

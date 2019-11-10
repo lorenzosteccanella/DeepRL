@@ -34,8 +34,6 @@ class DQNAgent(AbstractAgent):
 
     def _get_tderror(self, batch):
 
-        no_state = np.zeros(self.state_dimension)
-
         states = np.array([o[1][0] for o in batch])
         states_ = np.array([o[1][3] for o in batch])
 

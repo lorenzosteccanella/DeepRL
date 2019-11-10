@@ -30,14 +30,14 @@ class variables():
 
         self.ACTION_SPACE = [0, 1, 2, 3, 4]
 
-        wrapper_params = {
+        self.wrapper_params = {
             "stack_images_length": 1,
             "width": 10,
             "height": 10,
             "n_zones": 2
         }
 
-        self.wrapper = PositionGridenv_GE_MazeKeyDoor_v0(environment, wrapper_params)
+        self.wrapper = PositionGridenv_GE_MazeKeyDoor_v0(environment, self.wrapper_params)
 
         self.env = Environment(self.wrapper, preprocessing=False, rendering_custom_class=ShowRenderHRL)
 
@@ -47,7 +47,7 @@ class variables():
         # Just to be sure that we don't have some others graph loaded
         tf.reset_default_graph()
 
-        self.shared_conv_layers = SharedConvLayers(0.1)
+        self.shared_conv_layers = SharedConvLayers(0.01)
 
         self.number_of_stacked_frames = 1
 

@@ -89,10 +89,9 @@ class ActorCriticNetwork(keras.Model):
 
         return actor, critic
 
+class A2CSILEagerSync:
 
-class A2CEagerSync:
-
-    def __init__(self, h_size, n_actions, model_critic, model_actor, learning_rate, weight_mse, weight_ce, shared_observation_model=None, train_observation=False):
+    def __init__(self, h_size, n_actions, model_critic, model_actor, learning_rate_online, weight_mse, weight_sil_mse, weight_ce, shared_observation_model=None, train_observation=False):
 
         if inspect.isclass(shared_observation_model):
             self.shared_observation_model = shared_observation_model()
@@ -113,16 +112,28 @@ class A2CEagerSync:
 
         self.train_observation = train_observation
         self.weight_mse = weight_mse
+        self.weight_sil_mse = weight_sil_mse
         self.weight_ce = weight_ce
 
         #print("\n ACTOR CRITIC MODEL \n")
 
         #slim.model_analyzer.analyze_vars(self.model_actor_critic.trainable_variables, print_info=True)
 
-        self.optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate)
+        self.optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate_online)
+        #self.optimizer_imitation = tf.train.RMSPropOptimizer(learning_rate=learning_rate_imitation)
         if self.train_observation:
             self.optimizer_observation = tf.train.RMSPropOptimizer(learning_rate=1e-3)
         self.global_step = tf.Variable(0)
+
+    def prediction(self, s):
+
+        s = np.array(s, dtype=np.float32)
+
+        s = tf.convert_to_tensor(s)
+
+        a = self.model_actor(s)
+
+        return np.argmax(a, 1)
 
     def prediction_actor(self, s):
 
@@ -140,7 +151,6 @@ class A2CEagerSync:
 
         return self.model_actor_critic(s)[1].numpy()
 
-
     def grad(self, model_actor_critic, inputs, targets, one_hot_a, advantage, weight_ce, weight_mse = 0.5):
 
         with tf.GradientTape() as tape:
@@ -149,6 +159,16 @@ class A2CEagerSync:
             loss_ce = Losses.entropy_exploration_loss(softmax_logits)
             loss_critic = Losses.mse_loss(value_critic, targets)
             loss_value = (weight_mse * loss_critic) + (loss_pg - weight_ce * loss_ce)
+
+        return loss_value, tape.gradient(loss_value, model_actor_critic.trainable_variables)
+
+    def grad_imitation(self, model_actor_critic, inputs, targets, one_hot_a, advantage, imp_w, weight_mse=0.5, weight_sil_mse=0.01):
+
+        with tf.GradientTape() as tape:
+            softmax_logits, value_critic = model_actor_critic(inputs)
+            loss_pg_imitation = Losses.reinforce_loss_imp_w(softmax_logits, one_hot_a, advantage, imp_w)
+            loss_critic_imitation = (weight_mse * Losses.mse_loss_self_imitation_learning_imp_w(value_critic, targets, imp_w))
+            loss_value = weight_sil_mse * loss_critic_imitation + loss_pg_imitation
 
         return loss_value, tape.gradient(loss_value, model_actor_critic.trainable_variables)
 
@@ -173,6 +193,18 @@ class A2CEagerSync:
         self.optimizer.apply_gradients(zip(grads, self.model_actor_critic.trainable_variables), self.global_step)
 
         return [None, None]
+
+    def train_imitation(self, s, y, one_hot_a, advantage, imp_w, max_grad_norm=5):
+
+        s = np.array(s, dtype=np.float32)
+
+        s = tf.convert_to_tensor(s)
+
+        loss_value, grads = self.grad_imitation(self.model_actor_critic, s, y, one_hot_a, advantage, imp_w, self.weight_mse, self.weight_sil_mse)
+
+        grads, grad_norm = tf.clip_by_global_norm(grads, max_grad_norm)
+
+        self.optimizer.apply_gradients(zip(grads, self.model_actor_critic.trainable_variables), self.global_step)   # separate optimizer why doesn't work?
 
     def train_obs(self, s):
 
