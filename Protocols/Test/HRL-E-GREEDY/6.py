@@ -72,7 +72,7 @@ class variables():
             "weight_mse": 0.5,
             "weight_ce_exploration": 0.01,
             "learning_rate": 0.0001,
-            "gamma": 0.95,
+            "gamma": 0.99,
             "batch_size": 6,
             "preprocessing": preprocessing
         }
