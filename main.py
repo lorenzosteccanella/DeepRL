@@ -1,25 +1,22 @@
+import matplotlib
+import os
+if os.environ.get('DISPLAY', '') == '':
+    print('no display found. Using non-interactive Agg backend')
+    matplotlib.use('Agg')
+
+import matplotlib.pyplot as plt
 
 import sys
 # Parse command line arguments
 args = sys.argv
 
-from Utils import AnaliseResults
 import tensorflow as tf
-import os
 import time
 import random
 import numpy as np
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import importlib.util
-
-import matplotlib
-
-if os.environ.get('DISPLAY', '') == '':
-    print('no display found. Using non-interactive Agg backend')
-    matplotlib.use('Agg')
-
-import matplotlib.pyplot as plt
 
 
 

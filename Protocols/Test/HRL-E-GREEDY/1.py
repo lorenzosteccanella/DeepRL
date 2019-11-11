@@ -23,7 +23,7 @@ class variables():
         self.RESULTS_FOLDER = 'TEST_HRL_E_GREEDY/'
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Key_Door_HRL_E_GREEDY'
-        self.NUMBER_OF_EPOCHS = 500
+        self.NUMBER_OF_EPOCHS = 4000
 
         self.PROBLEM = 'GE_MazeKeyDoor-v10'
         environment = gym.make(self.PROBLEM)
