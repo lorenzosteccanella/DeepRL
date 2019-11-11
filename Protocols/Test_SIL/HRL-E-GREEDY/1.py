@@ -73,7 +73,7 @@ class variables():
             "sil_weight_mse": 0.01,
             "weight_ce_exploration": 0.01,
             "learning_rate": 0.0001,
-            "gamma": 0.99,
+            "gamma": 0.95,
             "batch_size": 6,
             "sil_batch_size": 64,
             "imitation_buffer_size":64*100,
