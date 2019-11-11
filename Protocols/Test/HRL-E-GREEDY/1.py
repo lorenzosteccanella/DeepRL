@@ -23,7 +23,7 @@ class variables():
         self.RESULTS_FOLDER = 'TEST_HRL_E_GREEDY/'
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Key_Door_HRL_E_GREEDY'
-        self.NUMBER_OF_EPOCHS = 4000
+        self.NUMBER_OF_EPOCHS = 500
 
         self.PROBLEM = 'GE_MazeKeyDoor-v10'
         environment = gym.make(self.PROBLEM)
@@ -84,7 +84,7 @@ class variables():
         # to know in how many episodes the epsilon will decay
         ToolEpsilonDecayExploration.epsilon_decay_end_steps(self.MIN_EPSILON, self.LAMBDA)
 
-        self.agent = HrlAgent(self.option_params, self.random_agent, self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON)
+        self.agent = HrlAgent(self.option_params, self.random_agent, self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 0.6, -0.6, self.SAVE_RESULT)
 
 
 

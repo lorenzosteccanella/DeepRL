@@ -22,8 +22,9 @@ class HrlAgent(AbstractAgent):
 
 
         # variables to keep statistics of the execution
-        self.number_of_options_executed = 0
+        self.number_of_options_executed = 1
         self.number_of_successfull_option = 0
+        self.list_percentual_of_successfull_options = []
 
         self.best_option_action = None
         self.current_node = None
@@ -161,6 +162,14 @@ class HrlAgent(AbstractAgent):
 
                     r += self.wrong_end_option_reward
                     done = True
+
+        if self.manager_exp % 1000 == 0:
+            if self.save_result is not False:
+                message = (str(self.number_of_options_executed) + " "
+                           + str(self.number_of_successfull_option) + " "
+                           + str(self.number_of_successfull_option/self.number_of_options_executed*100)
+                           +"\n")
+                self.save_result.save_data("Transitions_performance", message)
 
         #print(r, done, end=" ")
         #if self.number_of_successfull_option > 0:

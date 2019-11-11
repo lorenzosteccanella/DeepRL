@@ -82,6 +82,7 @@ for experiment in args[1::]:
         parameters = vars(variables)
         variables.SAVE_RESULT.save_settings(parameters)
         variables.SAVE_RESULT.plot_results(variables.FILE_NAME, "reward-over-episodes", "episodes", "reward")
+        variables.SAVE_RESULT.plot_success_rate_transitions("Transitions_performance")
 
         epochs = []
         rewards = []
@@ -89,6 +90,8 @@ for experiment in args[1::]:
         epoch = 0
 
     variables.SAVE_RESULT.plot_multiple_seeds(variables.FILE_NAME, "reward-over-episodes", "episodes", "reward")
+    variables.SAVE_RESULT.plot_multiple_seeds("Transitions_performance", "success rate of options' transitions",
+                                              "number of options executed", "% of successful option executions")
 
     del variables
     print("FINISHED")

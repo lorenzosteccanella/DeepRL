@@ -90,7 +90,7 @@ class variables():
         # to know in how many episodes the epsilon will decay
         ToolEpsilonDecayExploration.epsilon_decay_end_steps(0, self.PSEUDO_COUNT)
 
-        self.agent = HrlAgent(self.option_params, self.random_agent, self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON)
+        self.agent = HrlAgent(self.option_params, self.random_agent, self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 0.6, -0.6, self.SAVE_RESULT)
 
 
 

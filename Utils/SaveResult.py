@@ -106,8 +106,8 @@ class SaveResult:
 
         plt.close()
 
-    def plot_success_rate_transitions(self):
-        self.plot_results(self.success_rate_file_name, "success rate of options' transitions",
+    def plot_success_rate_transitions(self, file_name):
+        self.plot_results(file_name, "success rate of options' transitions",
                           "number of options executed", "% of successful option executions")
 
     def plot_manager_score(self):
