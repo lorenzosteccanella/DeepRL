@@ -5,3 +5,4 @@ __pycache__
 results/
 DeepRL_venv/
 Cluster_utils/cluster_env/
+Cluster_utils/jobs/
