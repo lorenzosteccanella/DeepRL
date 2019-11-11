@@ -5,7 +5,7 @@ from Environment import Environment
 from Agents import A2CAgent
 import gym
 import gridenvs.examples
-from Utils import SaveResult, ShowRenderHRL, Preprocessing
+from Utils import SaveResult, Preprocessing
 
 class variables():
 
@@ -38,7 +38,15 @@ class variables():
 
         preprocessing = Preprocessing(84, 84, 3, self.number_of_stacked_frames)
 
-        self.env = Environment(environment, preprocessing=preprocessing, rendering_custom_class=ShowRenderHRL)
+        display_env = False
+
+        if display_env:
+            from Utils import ShowRenderHRL
+            rendering = ShowRenderHRL
+        else:
+            rendering = False
+
+        self.env = Environment(environment, preprocessing=preprocessing, rendering_custom_class=rendering)
 
     def reset(self):
         self.env.close()

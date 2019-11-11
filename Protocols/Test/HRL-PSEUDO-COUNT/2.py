@@ -4,7 +4,7 @@ import tensorflow as tf
 import os
 from Environment import Environment
 from Wrappers_Env import PositionGridenv_GE_MazeKeyDoor_v0
-from Utils import ShowRenderHRL, ToolEpsilonDecayExploration, Preprocessing
+from Utils import ToolEpsilonDecayExploration, Preprocessing
 from Models.A2CnetworksEager import *
 from Utils import SaveResult
 import gridenvs.examples
@@ -39,7 +39,16 @@ class variables():
 
         self.wrapper = PositionGridenv_GE_MazeKeyDoor_v0(environment, self.wrapper_params)
 
-        self.env = Environment(self.wrapper, preprocessing=False, rendering_custom_class=ShowRenderHRL)
+        display_env = False
+
+        if display_env:
+            from Utils import ShowRenderHRL
+            rendering = ShowRenderHRL
+        else:
+            rendering = False
+
+
+        self.env = Environment(self.wrapper, preprocessing=False, rendering_custom_class=rendering)
 
     def reset(self):
         self.env.close()
@@ -63,7 +72,7 @@ class variables():
             "weight_mse": 0.5,
             "weight_ce_exploration": 0.01,
             "learning_rate": 0.0001,
-            "gamma": 0.95,
+            "gamma": 0.99,
             "batch_size": 6,
             "preprocessing": preprocessing
         }

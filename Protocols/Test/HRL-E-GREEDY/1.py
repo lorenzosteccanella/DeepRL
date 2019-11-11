@@ -4,7 +4,7 @@ import tensorflow as tf
 import os
 from Environment import Environment
 from Wrappers_Env import PositionGridenv_GE_MazeKeyDoor_v0
-from Utils import ShowRenderHRL, ToolEpsilonDecayExploration, Preprocessing
+from Utils import ToolEpsilonDecayExploration, Preprocessing
 from Models.A2CnetworksEager import *
 from Utils import SaveResult
 import gridenvs.examples
@@ -39,7 +39,15 @@ class variables():
 
         self.wrapper = PositionGridenv_GE_MazeKeyDoor_v0(environment, self.wrapper_params)
 
-        self.env = Environment(self.wrapper, preprocessing=False, rendering_custom_class=ShowRenderHRL)
+        display_env = False
+
+        if display_env:
+            from Utils import ShowRenderHRL
+            rendering = ShowRenderHRL
+        else:
+            rendering = False
+
+        self.env = Environment(self.wrapper, preprocessing=False, rendering_custom_class=rendering)
 
     def reset(self):
         self.env.close()
@@ -47,7 +55,7 @@ class variables():
         # Just to be sure that we don't have some others graph loaded
         tf.reset_default_graph()
 
-        self.shared_conv_layers = SharedConvLayers(0.01)
+        self.shared_conv_layers = SharedConvLayers(0.05)
 
         self.number_of_stacked_frames = 1
 
