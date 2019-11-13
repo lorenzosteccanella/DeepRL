@@ -43,6 +43,11 @@ class HrlAgent(AbstractAgent):
         node = Node(s["manager"], 0)
         self.graph.node_update(node)
         # if structure to reduce computation cost
+        #if self.target is not None:
+        #    if self.current_node != node:
+        #        #self.graph.print_node_list()
+        #        print(self.current_node.state, "->", self.target.state, " - ", self.best_option_action)
+
         if self.current_node is None:
             self.current_node = self.graph.get_current_node()
             distances = self.graph.find_distances(self.current_node)
@@ -51,10 +56,6 @@ class HrlAgent(AbstractAgent):
             self.current_node = self.graph.get_current_node()
             distances = self.graph.find_distances(self.current_node)
             self.best_option_action = self.get_epsilon_best_action(distances)
-
-        #if self.target is not None:
-            #self.graph.print_node_list()
-            #print(self.current_node.state, "->", self.target.state, " - ", self.best_option_action, end=" ")
 
         return self.best_option_action.act(s["option"])
 
@@ -90,6 +91,7 @@ class HrlAgent(AbstractAgent):
     def get_epsilon_best_action(self, distances):
         if distances is not None:
             edges_from_current_node = self.graph.get_edges_of_a_node(self.current_node)
+            #print(self.current_node, edges_from_current_node)
             if len(edges_from_current_node) > 0:
                 if random.random() < self.epsilon:
                     random_edge_index = random.choice(range(len(edges_from_current_node)+1))
@@ -110,6 +112,7 @@ class HrlAgent(AbstractAgent):
                             best_edge_index.clear()
                             best_edge_index.append(i)
                             max_distance = distances[edge.destination]
+
                     #if random.random() < self.epsilon:              #
                     #    best_edge = random.choice(best_edge_index)  # Better to check carefully this part
                     #else:                                           # Changed  so now when exploration finish the plan will become deterministic
@@ -170,6 +173,15 @@ class HrlAgent(AbstractAgent):
                            + str(self.number_of_successfull_option/self.number_of_options_executed*100)
                            +"\n")
                 self.save_result.save_data("Transitions_performance", message)
+                message = ("number of options executed:  ", str(self.number_of_options_executed)
+                           + "  number of succesfull termination  "
+                           + str(self.number_of_successfull_option)
+                           + "\n\n Nodes discovered: \n"
+                           + self.graph.string_node_list()
+                           + "\n\n Edges discovered: \n"
+                           + self.graph.string_edge_list()
+                           + "\n")
+                self.save_result.save_data("Nodes_Edge_discovered", message)
 
         #print(r, done, end=" ")
         #if self.number_of_successfull_option > 0:

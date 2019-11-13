@@ -65,7 +65,7 @@ for experiment in args[1::]:
         print("START TO LEARN")
         while epoch < variables.NUMBER_OF_EPOCHS:
             epoch, nstep, reward = variables.env.run(variables.agent)
-            #print(epoch, nstep, reward, (sum(rewards[-10:])/10))
+            print(epoch, nstep, reward, (sum(rewards[-10:])/10))
             epochs.append(epoch)
             rewards.append(reward)
             n_steps.append(nstep)

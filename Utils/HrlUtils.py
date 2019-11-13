@@ -148,6 +148,22 @@ class Graph:
         for node in self.node_list:
             print(node)
 
+    def string_node_list(self):
+        string = ""
+
+        for node in self.node_list:
+            string += node.__str__() + "\n"
+
+        return string
+
+    def string_edge_list(self):
+        string = ""
+
+        for edge in self.edge_list:
+            string += edge.__str__() + "\n"
+
+        return string
+
     def get_number_of_nodes(self):
         return len(self.node_list)
 

@@ -32,6 +32,12 @@ class SaveResult:
 
         return dir_name
 
+    def save_overwrite_data(self, file_name, data):
+        with open(self.dir_path_seed + "/" + file_name, 'w') as f:
+            for message in data:
+                f.write(message)
+        f.close
+
     def save_data(self, file_name, data):
         with open(self.dir_path_seed + "/" + file_name, 'a') as f:
             for message in data:
