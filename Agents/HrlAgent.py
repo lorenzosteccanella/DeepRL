@@ -166,7 +166,7 @@ class HrlAgent(AbstractAgent):
                     r += self.wrong_end_option_reward
                     done = True
 
-        if self.manager_exp % 1000 == 0:
+        if self.number_of_options_executed % 1000 == 0:
             if self.save_result is not False:
                 message = (str(self.number_of_options_executed) + " "
                            + str(self.number_of_successfull_option) + " "
