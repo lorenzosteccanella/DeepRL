@@ -20,7 +20,7 @@ class variables():
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
         self.seeds = range(2)
-        self.RESULTS_FOLDER = 'TEST_HRL_SIL_E_GREEDY/'
+        self.RESULTS_FOLDER = 'TEST_HRL_SIL_E_GREEDY_6/'
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Key_Door_HRL_SIL_E_GREEDY'
         self.NUMBER_OF_EPOCHS = 4000
