@@ -266,16 +266,15 @@ class Graph:
 
             root_origin=self.node_list[0]
 
-            distances = self.value_iteration(100)
+            distances = self.value_iteration(1000)
 
 
-            print("DISTANCES")
-            print("\nroot", root.state)
-
-            for node in self.node_list:
-              print(node.state, " = ", distances[node])
-            print()
-            self.print_best_path(root, distances)
+            #print("DISTANCES")
+            #print("\nroot", root.state)
+            #for node in self.node_list:
+            #  print(node.state, " = ", distances[node])
+            #print()
+            #self.print_best_path(root, distances)
 
             return distances
 
