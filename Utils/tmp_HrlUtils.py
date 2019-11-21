@@ -1,14 +1,13 @@
 import math
-import random
 
 class Edge:
 
-    def __init__(self, origin, destination, value=0, edge_cost = 0):
+    def __init__(self, origin, destination, value=0, edge_cost = + 0.1):
 
         self.origin = origin
         self.destination = destination
         self.edge_cost = edge_cost
-        self.value = self.edge_cost
+        self.value = (float(self.destination.get_value() or 0) + self.edge_cost)
         self.option = None
 
     def get_value(self):
@@ -24,7 +23,7 @@ class Edge:
         self.value = value + self.edge_cost
 
     def refresh_value(self):
-        self.value =  self.edge_cost
+        self.value = (float(self.destination.get_value() or 0) + self.edge_cost)
 
     def update_value(self, value):
         self.value = (self.value + self.edge_cost + value)/2
@@ -55,7 +54,7 @@ class Node:
     def __init__(self, state, value=0):
         self.state = state
         self.visit_count = 1
-        self.value = value + 1 * (math.exp(-Node.pseudo_count_factor * self.visit_count)) #(Node.pseudo_count_factor * (self.visit_count ** -1))
+        self.value = round(value + (1 * math.exp(-Node.pseudo_count_factor * self.visit_count)), 6) #(Node.pseudo_count_factor * (self.visit_count ** -1))
 
     def get_value(self):
         return self.value
@@ -64,7 +63,7 @@ class Node:
         return self.state
 
     def set_value(self, value):
-        self.value = value + 1 *(math.exp(-Node.pseudo_count_factor * self.visit_count)) #(Node.pseudo_count_factor * (self.visit_count ** -1))
+        self.value = round(value + (1 * math.exp(-Node.pseudo_count_factor * self.visit_count)), 6) #(Node.pseudo_count_factor * (self.visit_count ** -1))
 
     def visited(self):
         self.visit_count += 1
@@ -94,17 +93,12 @@ class Graph:
         self.current_node = None
         self.current_edge = None
         self.new_node_encontered = False
-        self.new_edge_encontered = False
-        self.index_4_bestpathprint = 0
 
     def edge_update(self, old_node, new_node, reward):
-
-        self.new_edge_encontered = False
 
         if old_node != new_node:
             current_edge = Edge(old_node, new_node)
             if current_edge not in self.edge_list:
-                self.new_edge_encontered = True
                 self.edge_list.append(current_edge)
                 #current_edge.set_value(reward)
                 current_edge.refresh_value()
@@ -116,9 +110,6 @@ class Graph:
                 self.current_edge = edge
 
     def node_update(self, old_node, new_node=False, reward=False):
-
-        self.new_node_encontered = False
-
         if old_node not in self.node_list:
             self.node_list.append(old_node)
             self.new_node_encontered = True
@@ -130,8 +121,10 @@ class Graph:
         if new_node:
             node = self.node_list[self.node_list.index(new_node)]
             node.set_value((node.get_value() + reward) / 2)
+            self.new_node_encontered = False
         else:
             node = self.node_list[self.node_list.index(old_node)]
+            self.new_node_encontered = False
 
         node.visited() # to augment the visit counter
 
@@ -145,7 +138,7 @@ class Graph:
         self.node_update(old_node, new_node, sample[2])
         self.edge_update(old_node, new_node, sample[2])
 
-        return self.new_node_encontered, self.new_edge_encontered
+        return self.new_node_encontered
 
     def print_edge_list(self):
         for edge in self.edge_list:
@@ -174,88 +167,6 @@ class Graph:
     def get_number_of_nodes(self):
         return len(self.node_list)
 
-    def get_node_best_edge_index(self, root, distances, edges=False, verbose=False):
-        max_distance = - float("inf")
-        best_edge_index = []
-        if not edges:
-            edges = self.get_edges_of_a_node(root)
-        for i, edge in zip(range(len(edges)), edges):
-            if distances[edge.destination] == max_distance:
-                best_edge_index.append(i)
-            elif distances[edge.destination] > max_distance:
-                best_edge_index.clear()
-                best_edge_index.append(i)
-                max_distance = distances[edge.destination]
-
-        if verbose:
-            print("root -> ", root.state)
-            for i in best_edge_index:
-                print("destination ->", edges[i].destination.state)
-
-        return best_edge_index
-
-    def print_best_path(self, root, distances):
-        self.index_4_bestpathprint += 1
-        if self.index_4_bestpathprint > 20:
-            self.index_4_bestpathprint = 0
-            return False
-        edges = self.get_edges_of_a_node(root)
-        max_distance = - float("inf")
-        best_edge_array = []
-        if(len(edges)==0):
-            return False
-        for edge in edges:
-            if distances[edge.destination] == max_distance:
-                best_edge_array.append(edge)
-            elif distances[edge.destination] > max_distance:
-                best_edge_array.clear()
-                best_edge_array.append(edge)
-                max_distance = distances[edge.destination]
-
-        best_edge = random.choice(best_edge_array)
-        print(best_edge.destination.state)
-        return self.print_best_path(best_edge.destination, distances)
-
-    def value_iteration(self, n_steps):
-        distances = {}
-        for node in self.node_list:
-            distances[node] = 0 # distances for all node setted to 0
-        # distances[root] = 0. # the source distance is set to 0
-        for _ in range(n_steps):
-            for node in self.node_list:
-                edges = self.get_edges_of_a_node(node)
-                values = []
-                if (len(edges) > 0):
-                    for edge in edges:
-                        origin = edge.get_origin()
-                        destination = edge.get_destination()
-                        # if((distances[node] + edge.get_value())<distances[node]):
-                        V = edge.get_value() + 0.95 * distances[destination]
-                        values.append(V)
-
-                    distances[node] = max(values)
-                else:
-                    distances[node] = node.value
-
-        return distances
-
-    def bellman_ford(self, root):
-        distances = {}
-        for node in self.node_list:
-            distances[node] = - float("inf")  # distances for all node setted to - inf
-        distances[root] = 0. # the source distance is set to 0
-
-        for i in range(len(self.node_list) - 1):
-            #print("LOOP ", i)
-            for edge in self.edge_list:
-                origin = edge.get_origin()
-                destination = edge.get_destination()
-                if distances[destination] < distances[origin] + edge.get_value() + destination.value :
-                    distances[destination] = distances[origin] + edge.get_value() + destination.value
-
-        return distances
-
-
     def find_distances(self, root):
         """
         Bellman-Ford algorithm to get the longest path (highest value)
@@ -263,19 +174,46 @@ class Graph:
         :return: distances.
         """
         if len(self.node_list) > 0 and len(self.edge_list) > 0:
+            distances = {}
+            for node in self.node_list:
+                distances[node] = - float("inf") # distances for all node setted to - inf
+            distances[root] = 0. # the source distance is set to 0
 
-            root_origin=self.node_list[0]
-
-            distances = self.value_iteration(100)
-
+            for i in range(len(self.node_list) - 1):
+                #print("LOOP ",i)
+                for edge in self.edge_list:
+                    origin = edge.get_origin()
+                    destination = edge.get_destination()
+                    #print(str(origin.state) + "->" + str(destination.state))
+                    #print(str(destination.state) + " = " + str(distances[destination]) + " < " + str(origin.state) + " = " + str(distances[origin] + edge.get_value()), distances[destination] < distances[origin] + edge.get_value())
+                    if distances[destination] < distances[origin] + edge.get_value():
+                        #print(str(destination.state) + " = " + str(distances[origin] + edge.get_value()))
+                        distances[destination] = round(distances[origin] + edge.get_value(),6)
 
             print("DISTANCES")
             print("\nroot", root.state)
+            max = - float("inf")
+            max_state = None
+            for edge in self.get_edges_of_a_node(root):
+                print("\n", edge)
+                print(str(edge.destination.state)+" = "+str(distances[edge.destination]))
+                if max < distances[edge.destination]:
+                    max = distances[edge.destination]
+                    max_state = edge.destination.state
 
-            for node in self.node_list:
-              print(node.state, " = ", distances[node])
-            print()
-            self.print_best_path(root, distances)
+            print("\nBest choice : ",max_state,"\n")
+
+            #print("PREDECESSORS")
+            #print(predecessors)
+
+            #Step 3: check for negative - weight cycles
+
+            #for edge in self.edge_list:
+            #    origin = edge.get_origin()
+            #    destination = edge.get_destination()
+            #    if distances[destination] < distances[origin] + edge.get_value():
+            #        print( "Graph contains a negative-weight cycle")
+            #        return None
 
             return distances
 

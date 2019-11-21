@@ -69,14 +69,13 @@ class PositionGridenv_GE_MazeKeyDoor_v0(gym.Wrapper):
         y = position[1]
         r = reward
 
-        # dying
-        if x == 0 or y == 0:
-            return "died"
-        # dying
-        elif x == self.width - 1 or y == self.height - 1:
-            return "died"
 
         if self.KEY == False:
+            # if x == 0 or y == 0:
+            #     return "died"
+            # if x == self.width - 1 or y == self.height - 1:
+            #     return "died"
+
             # key taken
             if x == self.width - 2 and y == 1 and r == 1:
                 self.KEY = True
@@ -87,15 +86,52 @@ class PositionGridenv_GE_MazeKeyDoor_v0(gym.Wrapper):
 
             for grid_x in range(step_x, (self.width - 1), step_x):
                 for grid_y in range(step_y, (self.height - 1), step_y):
+
+                    # dying
+                    if x == 0:
+                        if y<=grid_y:
+                            return "died %i %i" % (x + grid_x, grid_y)
+                    elif x == self.width - 1:
+                        if y<=grid_y:
+                            return "died %i %i" % (x -1, grid_y)
+                    # dying
+                    if y == 0:
+                        if x <= grid_x:
+                            return "died %i %i" % (grid_x, y + grid_y)
+                    elif y == self.height - 1:
+                        if x <= grid_x:
+                            return "died %i %i" % (grid_x, y -1)
+
                     if x <= grid_x and y <= grid_y:
                         return "abstract state %i %i" % (grid_x, grid_y)
 
         if self.KEY == True:
+            # if x == 0 or y == 0:
+            #     return "died with key"
+            # if x == self.width - 1 or y == self.height - 1:
+            #     return "died with key"
+
             # door close
             if x == 1 and y == 1:
                 return "door open"
 
             for grid_x in range(step_x, (self.width - 1), step_x):
                 for grid_y in range(step_y, (self.height - 1), step_y):
+
+                    # dying
+                    if x == 0:
+                        if y<=grid_y:
+                            return "died with key %i %i" % (x + grid_x, grid_y)
+                    elif x == self.width - 1:
+                        if y<=grid_y:
+                            return "died with key %i %i" % (x -1, grid_y)
+                    # dying
+                    if y == 0:
+                        if x <= grid_x:
+                            return "died with key %i %i" % (grid_x, y + grid_y)
+                    elif y == self.height - 1:
+                        if x <= grid_x:
+                            return "died with key %i %i" % (grid_x, y -1)
+
                     if x <= grid_x and y <= grid_y:
                         return "abstract state with key %i %i" % (grid_x, grid_y)

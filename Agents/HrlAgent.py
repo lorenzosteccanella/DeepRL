@@ -25,6 +25,9 @@ class HrlAgent(AbstractAgent):
         self.number_of_options_executed = 1
         self.number_of_successfull_option = 0
         self.list_percentual_of_successfull_options = []
+        self.old_number_of_options = 0
+        self.path_2_print = []
+        self.distances_2_print = []
 
         self.best_option_action = None
         self.current_node = None
@@ -43,18 +46,21 @@ class HrlAgent(AbstractAgent):
         node = Node(s["manager"], 0)
         self.graph.node_update(node)
         # if structure to reduce computation cost
-        #if self.target is not None:
-        #    if self.current_node != node:
-        #        #self.graph.print_node_list()
-        #        print(self.current_node.state, "->", self.target.state, " - ", self.best_option_action)
+
+        # if self.target is not None:
+        #   if self.current_node != node:
+        #       self.graph.print_node_list()
+        #       print(self.current_node.state, "->", self.target.state, " - ", self.best_option_action)
 
         if self.current_node is None:
             self.current_node = self.graph.get_current_node()
             distances = self.graph.find_distances(self.current_node)
+            self.distances_2_print.append(distances)
             self.best_option_action = self.get_epsilon_best_action(distances)
         elif self.current_node != node:
             self.current_node = self.graph.get_current_node()
             distances = self.graph.find_distances(self.current_node)
+            self.distances_2_print.append(distances)
             self.best_option_action = self.get_epsilon_best_action(distances)
 
         return self.best_option_action.act(s["option"])
@@ -90,6 +96,7 @@ class HrlAgent(AbstractAgent):
 
     def get_epsilon_best_action(self, distances):
         if distances is not None:
+            #print(distances)
             edges_from_current_node = self.graph.get_edges_of_a_node(self.current_node)
             #print(self.current_node, edges_from_current_node)
             if len(edges_from_current_node) > 0:
@@ -98,20 +105,23 @@ class HrlAgent(AbstractAgent):
                     if random_edge_index >= len(edges_from_current_node):
                         # here it means we choose the exploration option
                         self.target = None
+                        self.path_2_print.append("exploration " + str(self.current_node.state) + " - " + str(self.target))
                         return self.exploration_option
                     else:
                         self.target = edges_from_current_node[random_edge_index].get_destination()
+                        self.path_2_print.append(self.target)
                         return self.options[random_edge_index]
                 else:
-                    max_distance = - float("inf")
-                    best_edge_index = []
-                    for i, edge in zip(range(len(edges_from_current_node)), edges_from_current_node):
-                        if distances[edge.destination]==max_distance:
-                            best_edge_index.append(i)
-                        elif distances[edge.destination] > max_distance:
-                            best_edge_index.clear()
-                            best_edge_index.append(i)
-                            max_distance = distances[edge.destination]
+                    best_edge_index= self.graph.get_node_best_edge_index(self.current_node, distances, edges_from_current_node, False)
+                    #max_distance = - float("inf")
+                    #best_edge_index = []
+                    #for i, edge in zip(range(len(edges_from_current_node)), edges_from_current_node):
+                    #    if distances[edge.destination]==max_distance:
+                    #        best_edge_index.append(i)
+                    #    elif distances[edge.destination] > max_distance:
+                    #        best_edge_index.clear()
+                    #        best_edge_index.append(i)
+                    #        max_distance = distances[edge.destination]
 
                     #if random.random() < self.epsilon:              #
                     #    best_edge = random.choice(best_edge_index)  # Better to check carefully this part
@@ -120,13 +130,16 @@ class HrlAgent(AbstractAgent):
 
                     best_edge = random.choice(best_edge_index)
                     self.target = edges_from_current_node[best_edge].get_destination()
+                    self.path_2_print.append("best choice " + str(self.current_node.state) + " - " + str(self.target.state))
                     self.options[best_edge].add_edge(edges_from_current_node[best_edge])
                     return self.options[best_edge]
             else:
                 self.target = None
+                self.path_2_print.append("exploration " + str(self.current_node.state) + " - " + str(self.target))
                 return self.exploration_option
         else:
             self.target = None
+            self.path_2_print.append("exploration " + str(self.current_node.state) + " - " + str(self.target))
             return self.exploration_option
 
     def pseudo_count_exploration(self, pseudo_count_factor):
@@ -166,7 +179,23 @@ class HrlAgent(AbstractAgent):
                     r += self.wrong_end_option_reward
                     done = True
 
-        if self.number_of_options_executed % 1000 == 0:
+        if self.number_of_options_executed % 1000 == 0 and self.old_number_of_options != self.number_of_options_executed:
+            if self.save_result is not False:
+                message = ""
+                for target in self.path_2_print:
+                    message += (str(target) + "\n-> ")
+                message += "\n\n"
+                self.save_result.save_data("Path", message)
+                self.path_2_print.clear()
+
+            if self.save_result is not False:
+                message = ""
+                if self.distances_2_print is not None:
+                    for distance in self.distances_2_print:
+                        message += (str(distance) + " \n")
+                    message += "\n\n"
+                    self.save_result.save_data("Distances", message)
+                    self.distances_2_print.clear()
             if self.save_result is not False:
                 message = (str(self.number_of_options_executed) + " "
                            + str(self.number_of_successfull_option) + " "
@@ -182,6 +211,7 @@ class HrlAgent(AbstractAgent):
                            + self.graph.string_edge_list()
                            + "\n")
                 self.save_result.save_data("Nodes_Edge_discovered", message)
+            self.old_number_of_options = self.number_of_options_executed
 
         #print(r, done, end=" ")
         #if self.number_of_successfull_option > 0:
@@ -196,9 +226,12 @@ class HrlAgent(AbstractAgent):
 
     def observe(self, sample):  # in (s, a, r, s_, done, info) format
 
-        newnode_discovered = self.graph.abstract_state_discovery(sample)
-        if newnode_discovered:
-            self.reset_exploration()
+        self.graph.abstract_state_discovery(sample)
+
+        #if self.graph.new_node_encontered:
+        #    print("new node discovered, resetting the exploration!!!")
+        #    self.reset_exploration()
+
         edges_from_current_node = self.graph.get_edges_of_a_node(self.current_node)
         self.create_options(edges_from_current_node)
         self.update_option(sample)
@@ -207,6 +240,10 @@ class HrlAgent(AbstractAgent):
         if sample[0]["manager"] != sample[3]["manager"]:
             self.manager_exp += 1
             self.epsilon = self.MIN_EPSILON + (1 - self.MIN_EPSILON) * math.exp(-self.LAMBDA * self.manager_exp)
+
+        if sample[4]:
+            self.path_2_print.clear()
+            self.distances_2_print.clear()
 
     def replay(self):
         pass
