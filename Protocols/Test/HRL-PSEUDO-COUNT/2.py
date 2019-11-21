@@ -19,7 +19,7 @@ class variables():
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
         os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2"
 
-        self.seeds = range(3)
+        self.seeds = range(2)
         self.RESULTS_FOLDER = 'TEST_HRL_PSEUDO_COUNT/'
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Key_Door_HRL_PSEUDO_COUNT'
