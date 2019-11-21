@@ -34,7 +34,7 @@ class variables():
             "stack_images_length": 1,
             "width": 20,
             "height": 20,
-            "n_zones": 8
+            "n_zones": 9
         }
 
         self.wrapper = PositionGridenv_GE_MazeKeyDoor_v0(environment, self.wrapper_params)
