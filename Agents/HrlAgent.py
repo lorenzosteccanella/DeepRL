@@ -228,9 +228,9 @@ class HrlAgent(AbstractAgent):
 
         self.graph.abstract_state_discovery(sample)
 
-        #if self.graph.new_node_encontered:
-        #    print("new node discovered, resetting the exploration!!!")
-        #    self.reset_exploration()
+        if self.graph.new_node_encontered:
+            print("new node discovered, resetting the exploration!!!")
+            self.reset_exploration()
 
         edges_from_current_node = self.graph.get_edges_of_a_node(self.current_node)
         self.create_options(edges_from_current_node)

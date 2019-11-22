@@ -3,12 +3,12 @@ import random
 
 class Edge:
 
-    def __init__(self, origin, destination, value=0, edge_cost = 0):
+    def __init__(self, origin, destination, value=0, edge_cost = +0):
 
         self.origin = origin
         self.destination = destination
         self.edge_cost = edge_cost
-        self.value = self.edge_cost + 2 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count))
+        self.value = value + self.edge_cost + 2 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count))
         self.option = None
 
     def get_value(self):
@@ -255,8 +255,14 @@ class Graph:
             for edge in self.edge_list:
                 origin = edge.get_origin()
                 destination = edge.get_destination()
-                if distances[destination] < distances[origin] + edge.get_value() + destination.value :
+                if distances[origin] != - float("inf") and distances[origin] + edge.get_value() + destination.value > distances[destination]:
                     distances[destination] = distances[origin] + edge.get_value() + destination.value
+
+        #for edge in self.edge_list:
+            #origin = edge.get_origin()
+            #destination = edge.get_destination()
+            #if distances[origin] != - float("inf") and distances[origin] + edge.get_value() + destination.value > distances[destination]:
+            #    print("Graph contains negative weights cycles")
 
         return distances
 
@@ -271,15 +277,15 @@ class Graph:
 
             root_origin=self.node_list[0]
 
-            distances = self.bellman_ford(root) #self.value_iteration(100)
+            distances = self.value_iteration(1000)
 
 
-            print("DISTANCES")
-            print("\nroot", root.state)
-            for node in self.node_list:
-              print(node.state, " = ", distances[node])
-            print()
-            self.print_best_path(root, distances)
+            #print("DISTANCES")
+            #print("\nroot", root.state)
+            #for node in self.node_list:
+            #  print(node.state, " = ", distances[node])
+            #print()
+            #self.print_best_path(root, distances)
 
             #for node in self.node_list:
             #    print(node)
