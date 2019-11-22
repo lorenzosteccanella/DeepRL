@@ -10,7 +10,7 @@ class HrlAgent(AbstractAgent):
 
     epsilon = 1
 
-    def __init__(self, option_params, exploration_option, pseudo_count_exploration = 1000, LAMBDA=1000, MIN_EPSILON=0, correct_option_end_reward=0.6, wrong_option_end_reward=-0.6, SaveResult = False):
+    def __init__(self, option_params, exploration_option, pseudo_count_exploration = 1000, LAMBDA=1000, MIN_EPSILON=0, correct_option_end_reward=1.1, wrong_option_end_reward=-1.1, SaveResult = False):
 
         self.option_params = option_params
 
@@ -179,7 +179,7 @@ class HrlAgent(AbstractAgent):
                     r += self.wrong_end_option_reward
                     done = True
 
-        if self.number_of_options_executed % 1000 == 0 and self.old_number_of_options != self.number_of_options_executed:
+        if self.number_of_options_executed % 10000 == 0 and self.old_number_of_options != self.number_of_options_executed:
             if self.save_result is not False:
                 message = ""
                 for target in self.path_2_print:

@@ -8,7 +8,7 @@ class Edge:
         self.origin = origin
         self.destination = destination
         self.edge_cost = edge_cost
-        self.value = self.edge_cost
+        self.value = self.edge_cost + 2 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count))
         self.option = None
 
     def get_value(self):
@@ -21,10 +21,10 @@ class Edge:
         return self.destination
 
     def set_value(self, value):
-        self.value = value + self.edge_cost
+        self.value = value + self.edge_cost + 2 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count))
 
     def refresh_value(self):
-        self.value =  self.edge_cost
+        self.value =  self.edge_cost + 2 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count))
 
     def update_value(self, value):
         self.value = (self.value + self.edge_cost + value)/2
@@ -55,7 +55,7 @@ class Node:
     def __init__(self, state, value=0):
         self.state = state
         self.visit_count = 1
-        self.value = value + 1 * (math.exp(-Node.pseudo_count_factor * self.visit_count)) #(Node.pseudo_count_factor * (self.visit_count ** -1))
+        self.value = value #+ 1 * (math.exp(-Node.pseudo_count_factor * self.visit_count)) #(Node.pseudo_count_factor * (self.visit_count ** -1))
 
     def get_value(self):
         return self.value
@@ -64,10 +64,13 @@ class Node:
         return self.state
 
     def set_value(self, value):
-        self.value = value + 1 *(math.exp(-Node.pseudo_count_factor * self.visit_count)) #(Node.pseudo_count_factor * (self.visit_count ** -1))
+        self.value = value #+ 1 * (math.exp(-Node.pseudo_count_factor * self.visit_count)) #(Node.pseudo_count_factor * (self.visit_count ** -1))
 
     def visited(self):
         self.visit_count += 1
+
+    def get_n_visits(self):
+        return self.visit_count
 
     def __eq__(self, other):
         return self.state == other.state
@@ -137,13 +140,15 @@ class Graph:
 
         self.current_node = node
 
+        return self.node_list[self.node_list.index(old_node)], self.current_node
+
     def abstract_state_discovery(self, sample):
         old_node = Node(sample[0]["manager"], 0)
 
         new_node = Node(sample[3]["manager"], sample[2])
 
-        self.node_update(old_node, new_node, sample[2])
-        self.edge_update(old_node, new_node, sample[2])
+        old_node_in_list, new_node_in_list = self.node_update(old_node, new_node, sample[2])
+        self.edge_update(old_node_in_list, new_node_in_list, sample[2])
 
         return self.new_node_encontered, self.new_edge_encontered
 
@@ -266,15 +271,18 @@ class Graph:
 
             root_origin=self.node_list[0]
 
-            distances = self.value_iteration(1000)
+            distances = self.bellman_ford(root) #self.value_iteration(100)
 
 
-            #print("DISTANCES")
-            #print("\nroot", root.state)
+            print("DISTANCES")
+            print("\nroot", root.state)
+            for node in self.node_list:
+              print(node.state, " = ", distances[node])
+            print()
+            self.print_best_path(root, distances)
+
             #for node in self.node_list:
-            #  print(node.state, " = ", distances[node])
-            #print()
-            #self.print_best_path(root, distances)
+            #    print(node)
 
             return distances
 
