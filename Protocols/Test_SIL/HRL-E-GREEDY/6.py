@@ -32,8 +32,8 @@ class variables():
 
         self.wrapper_params = {
             "stack_images_length": 1,
-            "width": 10,
-            "height": 10,
+            "width": 20,
+            "height": 20,
             "n_zones": 9
         }
 
