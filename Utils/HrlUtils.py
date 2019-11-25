@@ -30,7 +30,7 @@ class Edge:
         self.origin = origin
         self.destination = destination
         self.edge_cost = edge_cost
-        self.value = value + self.edge_cost + 1 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count))
+        self.value = value + self.edge_cost + round(1 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count)), 2)
         self.option = None
 
     def get_value(self):
@@ -43,10 +43,10 @@ class Edge:
         return self.destination
 
     def set_value(self, value):
-        self.value = value + self.edge_cost + 1 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count))
+        self.value = value + self.edge_cost + round(1 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count)), 2)
 
     def refresh_value(self):
-        self.value =  self.edge_cost + 1 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count))
+        self.value =  self.edge_cost + round(1 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count)), 2)
 
     def update_value(self, value):
         self.value = (self.value + self.edge_cost + value)/2
@@ -331,14 +331,17 @@ class Graph:
 
             #root_origin=self.node_list[0]
 
-            self.distances= self.value_iteration(0.001)
+            distances= self.value_iteration(0.001)
 
-            print("DISTANCES")
-            print("\nroot", root.state)
-            for node in self.node_list:
-             print(node.state, " = ", distances[node])
-            print()
-            self.print_best_path(root, distances)
+            # for edge in self.edge_list:
+            #     print(edge.origin, edge.destination, edge.value)
+
+            # print("DISTANCES")
+            # print("\nroot", root.state)
+            # for node in self.node_list:
+            #  print(node.state, " = ", distances[node])
+            # print()
+            # self.print_best_path(root, distances)
 
             #for node in self.node_list:
             #    print(node)
@@ -346,7 +349,7 @@ class Graph:
 
 
 
-            return self.distances
+            return distances
 
         else:
             return None
