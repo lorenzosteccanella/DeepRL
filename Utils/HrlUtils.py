@@ -1,14 +1,36 @@
 import math
 import random
+import numpy as np
+
+class Distances:
+
+    def __init__(self, node_list):
+        self.distances = {}
+        for node in node_list:
+            self.distances[node] = 0 # distances for all node setted to 0
+            edges = self.get_edges_of_a_node(node)
+            if (len(edges) == 0):
+                self.distances[node] = node.value
+
+    def update(self, graph):
+        for node in graph.node_list:
+            if node not in self.distances:
+                self.distances[node] = 0
+            edges = graph.get_edges_of_a_node(node)
+            if (len(edges) == 0):
+                self.distances[node] = node.value
+
+
+
 
 class Edge:
 
-    def __init__(self, origin, destination, value=0, edge_cost = +0):
+    def __init__(self, origin, destination, value=0, edge_cost = 0):
 
         self.origin = origin
         self.destination = destination
         self.edge_cost = edge_cost
-        self.value = value + self.edge_cost + 2 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count))
+        self.value = value + self.edge_cost + 1 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count))
         self.option = None
 
     def get_value(self):
@@ -21,10 +43,10 @@ class Edge:
         return self.destination
 
     def set_value(self, value):
-        self.value = value + self.edge_cost + 2 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count))
+        self.value = value + self.edge_cost + 1 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count))
 
     def refresh_value(self):
-        self.value =  self.edge_cost + 2 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count))
+        self.value =  self.edge_cost + 1 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count))
 
     def update_value(self, value):
         self.value = (self.value + self.edge_cost + value)/2
@@ -99,6 +121,24 @@ class Graph:
         self.new_node_encontered = False
         self.new_edge_encontered = False
         self.index_4_bestpathprint = 0
+        self.distances = {}
+
+    # def init_distances(self):
+    #     distances = {}
+    #     for node in self.node_list:
+    #         distances[node] = 0 # distances for all node setted to 0
+    #         edges = self.get_edges_of_a_node(node)
+    #         if (len(edges) == 0):
+    #             distances[node] = node.value
+    #     return distances
+    #
+    # def update_distances(self):
+    #     for node in self.node_list:
+    #         if node not in self.distances:
+    #             self.distances[node] = 0
+    #         edges = self.get_edges_of_a_node(node)
+    #         if (len(edges) == 0):
+    #             self.distances[node] = node.value
 
     def edge_update(self, old_node, new_node, reward):
 
@@ -221,12 +261,19 @@ class Graph:
         print(best_edge.destination.state)
         return self.print_best_path(best_edge.destination, distances)
 
-    def value_iteration(self, n_steps):
+    def value_iteration(self, theta, discount_factor=0.95):
         distances = {}
         for node in self.node_list:
             distances[node] = 0 # distances for all node setted to 0
-        # distances[root] = 0. # the source distance is set to 0
-        for _ in range(n_steps):
+            edges = self.get_edges_of_a_node(node)
+            if (len(edges) == 0):
+                distances[node] = node.value
+
+        #self.update_distances()
+
+        while True:
+            # Stopping condition
+            delta = 0
             for node in self.node_list:
                 edges = self.get_edges_of_a_node(node)
                 values = []
@@ -235,19 +282,23 @@ class Graph:
                         origin = edge.get_origin()
                         destination = edge.get_destination()
                         # if((distances[node] + edge.get_value())<distances[node]):
-                        V = edge.get_value() + 0.95 * distances[destination]
+                        V = edge.get_value() + node.value + discount_factor * distances[destination]
                         values.append(V)
 
+                    delta = max(delta, np.abs(max(values) - distances[node]))
                     distances[node] = max(values)
-                else:
-                    distances[node] = node.value
+            # Check if we can stop
+            if delta < theta:
+                break
 
         return distances
 
     def bellman_ford(self, root):
         distances = {}
+        predecessors = {}
         for node in self.node_list:
-            distances[node] = - float("inf")  # distances for all node setted to - inf
+            distances[node] = float("inf")  # distances for all node setted to - inf
+            predecessors[node] = None
         distances[root] = 0. # the source distance is set to 0
 
         for i in range(len(self.node_list) - 1):
@@ -255,8 +306,9 @@ class Graph:
             for edge in self.edge_list:
                 origin = edge.get_origin()
                 destination = edge.get_destination()
-                if distances[origin] != - float("inf") and distances[origin] + edge.get_value() + destination.value > distances[destination]:
+                if distances[origin] != float("inf") and distances[origin] + edge.get_value() + destination.value < distances[destination]:
                     distances[destination] = distances[origin] + edge.get_value() + destination.value
+                    predecessors[destination] = origin
 
         #for edge in self.edge_list:
             #origin = edge.get_origin()
@@ -275,22 +327,26 @@ class Graph:
         """
         if len(self.node_list) > 0 and len(self.edge_list) > 0:
 
-            root_origin=self.node_list[0]
+            #if len(self.distances) < len(self.node_list):
 
-            distances = self.value_iteration(1000)
+            #root_origin=self.node_list[0]
 
+            self.distances= self.value_iteration(0.001)
 
-            #print("DISTANCES")
-            #print("\nroot", root.state)
-            #for node in self.node_list:
-            #  print(node.state, " = ", distances[node])
-            #print()
-            #self.print_best_path(root, distances)
+            print("DISTANCES")
+            print("\nroot", root.state)
+            for node in self.node_list:
+             print(node.state, " = ", distances[node])
+            print()
+            self.print_best_path(root, distances)
 
             #for node in self.node_list:
             #    print(node)
 
-            return distances
+
+
+
+            return self.distances
 
         else:
             return None
