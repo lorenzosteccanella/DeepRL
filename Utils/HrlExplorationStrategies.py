@@ -11,7 +11,7 @@ def get_best_action(self, distances):
 
             for option in self.options:
                 for edge in option.get_edge_list():
-                    if best_edge == best_edge:
+                    if edge == best_edge:
                         return option
 
             self.path_2_print.append("best choice " + str(self.current_node.state) + " - " + str(self.target.state))
@@ -50,7 +50,7 @@ def get_epsilon_best_action(self, distances):
 
                 for option in self.options:
                     for edge in option.get_edge_list():
-                        if best_edge == best_edge:
+                        if edge == best_edge:
                             return option
 
                 self.path_2_print.append("best choice " + str(self.current_node.state) + " - " + str(self.target.state))
@@ -83,7 +83,7 @@ def get_epsilon_exploration(self, distances):
 
                 for option in self.options:
                     for edge in option.get_edge_list():
-                        if best_edge == best_edge:
+                        if edge == best_edge:
                             return option
 
                 self.path_2_print.append("best choice " + str(self.current_node.state) + " - " + str(self.target.state))
@@ -116,7 +116,7 @@ def get_epsilon_count_exploration(self, distances):
 
                 for option in self.options:
                     for edge in option.get_edge_list():
-                        if best_edge == best_edge:
+                        if edge == best_edge:
                             return option
 
                 self.path_2_print.append("best choice " + str(self.current_node.state) + " - " + str(self.target.state))
