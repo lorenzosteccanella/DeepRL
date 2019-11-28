@@ -30,7 +30,7 @@ class Edge:
         self.origin = origin
         self.destination = destination
         self.edge_cost = edge_cost
-        self.value = value + self.edge_cost + round(1 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count)), 2)
+        self.value = value + self.edge_cost + round(0.5 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count)), 3)
         self.option = None
 
     def get_value(self):
@@ -43,10 +43,10 @@ class Edge:
         return self.destination
 
     def set_value(self, value):
-        self.value = value + self.edge_cost + round(1 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count)), 2)
+        self.value = value + self.edge_cost + round(0.5 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count)), 3)
 
     def refresh_value(self):
-        self.value =  self.edge_cost + round(1 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count)), 2)
+        self.value =  self.edge_cost + round(0.5 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count)), 3)
 
     def update_value(self, value):
         self.value = (self.value + self.edge_cost + value)/2
@@ -73,11 +73,14 @@ class Edge:
 class Node:
 
     pseudo_count_factor = 1000
+    lambda_node = 1000
 
     def __init__(self, state, value=0):
         self.state = state
         self.visit_count = 1
         self.value = value #+ 1 * (math.exp(-Node.pseudo_count_factor * self.visit_count)) #(Node.pseudo_count_factor * (self.visit_count ** -1))
+        self.lambda_node = Node.lambda_node
+        self.epsilon = 1 * (math.exp(-self.lambda_node * self.visit_count))
 
     def get_value(self):
         return self.value
@@ -90,6 +93,7 @@ class Node:
 
     def visited(self):
         self.visit_count += 1
+        self.epsilon = 1 * (math.exp(-self.lambda_node * self.visit_count))
 
     def get_n_visits(self):
         return self.visit_count
@@ -109,6 +113,10 @@ class Node:
     @staticmethod
     def set_pseudo_count(pseudo_count_factor):
         Node.pseudo_count_factor = pseudo_count_factor
+
+    @staticmethod
+    def set_lambda_node(lambda_node):
+        Node.lambda_node = lambda_node
 
 
 class Graph:
@@ -331,7 +339,7 @@ class Graph:
 
             #root_origin=self.node_list[0]
 
-            distances= self.value_iteration(0.001)
+            distances= self.value_iteration(0.0001)
 
             # for edge in self.edge_list:
             #     print(edge.origin, edge.destination, edge.value)

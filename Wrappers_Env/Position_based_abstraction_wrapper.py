@@ -76,13 +76,15 @@ class PositionGridenv_GE_MazeKeyDoor_v0(gym.Wrapper):
             # if x == self.width - 1 or y == self.height - 1:
             #     return "died"
 
-            # key taken
-            if x == self.width - 2 and y == 1 and r == 1:
-                self.KEY = True
-                return "key taken"
+
             # door close
-            elif x == 1 and y == 1:
+            if x == 1 and y == 1:
                 return "door close"
+
+            # key taken
+            if r == 1:
+                self.KEY = True
+                return "key taken %i %i" % (x, y)
 
             for grid_x in range(step_x, (self.width - 1), step_x):
                 for grid_y in range(step_y, (self.height - 1), step_y):
@@ -111,9 +113,9 @@ class PositionGridenv_GE_MazeKeyDoor_v0(gym.Wrapper):
             # if x == self.width - 1 or y == self.height - 1:
             #     return "died with key"
 
-            # door close
-            if x == 1 and y == 1:
-                return "door open"
+            # door open
+            if r == 1:
+                return "door open %i %i" % (x, y)
 
             for grid_x in range(step_x, (self.width - 1), step_x):
                 for grid_y in range(step_y, (self.height - 1), step_y):

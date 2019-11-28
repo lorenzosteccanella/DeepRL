@@ -37,10 +37,12 @@ for experiment in args[1::]:
     for seed in variables.seeds:
         variables.reset()
         variables.SAVE_RESULT.set_seed(seed)
+        parameters = vars(variables)
+        variables.SAVE_RESULT.save_settings(parameters)
         tf.set_random_seed(seed)
         random.seed(seed)
         np.random.seed(seed)
-        #variables.env.env.seed(seed)   # Should I set the seed of the environment as well?
+        variables.env.env.seed(seed)   # Should I set the seed of the environment as well?
 
         print(variables.FILE_NAME)
 
@@ -76,8 +78,6 @@ for experiment in args[1::]:
 
         message = [str(e) + " " + str(nstep) + " " + str(r) + "\n" for e, r, nstep in zip(epochs, moving_average_reward, n_steps)]
         variables.SAVE_RESULT.save_data(variables.FILE_NAME, message)
-        parameters = vars(variables)
-        variables.SAVE_RESULT.save_settings(parameters)
         variables.SAVE_RESULT.plot_results(variables.FILE_NAME, "reward-over-episodes", "episodes", "reward")
         variables.SAVE_RESULT.plot_success_rate_transitions("Transitions_performance")
 

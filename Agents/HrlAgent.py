@@ -10,7 +10,7 @@ class HrlAgent(AbstractAgent):
 
     epsilon = 1
 
-    def __init__(self, option_params, exploration_option, pseudo_count_exploration = 1000, LAMBDA=1000, MIN_EPSILON=0, correct_option_end_reward=1.1, wrong_option_end_reward=-1.1, SaveResult = False):
+    def __init__(self, option_params, exploration_option, exploration_fn, pseudo_count_exploration = 1000, LAMBDA=1000, MIN_EPSILON=0, correct_option_end_reward=1.1, wrong_option_end_reward=-1.1, SaveResult = False):
 
         self.option_params = option_params
 
@@ -40,7 +40,12 @@ class HrlAgent(AbstractAgent):
         self.LAMBDA = LAMBDA
         self.correct_option_end_reward = correct_option_end_reward
         self.wrong_end_option_reward = wrong_option_end_reward
+
+        HrlAgent.exploration_fn = exploration_fn
+
         self.pseudo_count_exploration(pseudo_count_exploration)
+        self.epsilon_count_exploration(self.INITIAL_LAMBDA)
+
 
     def act(self, s):
         node = Node(s["manager"], 0)
@@ -56,94 +61,20 @@ class HrlAgent(AbstractAgent):
             self.current_node = self.graph.get_current_node()
             distances = self.graph.find_distances(self.current_node)
             self.distances_2_print.append(distances)
-            self.best_option_action = self.get_epsilon_best_action(distances)
+            self.best_option_action = self.exploration_fn(distances)
         elif self.current_node != node:
             self.current_node = self.graph.get_current_node()
             distances = self.graph.find_distances(self.current_node)
             self.distances_2_print.append(distances)
-            self.best_option_action = self.get_epsilon_best_action(distances)
+            self.best_option_action = self.exploration_fn(distances)
 
         return self.best_option_action.act(s["option"])
 
-    def get_best_action(self, distances):
-        if distances is not None:
-            edges_from_current_node = self.graph.get_edges_of_a_node(self.current_node)
-            if len(edges_from_current_node) > 0:
-                    max_distance = - float("inf")
-                    best_edge_index = []
-                    for i, edge in zip(range(len(edges_from_current_node)), edges_from_current_node):
-                        if distances[edge.destination]==max_distance:
-                            best_edge_index.append(i)
-                        elif distances[edge.destination] > max_distance:
-                            best_edge_index.clear()
-                            best_edge_index.append(i)
-                            max_distance = distances[edge.destination]
-                    #if random.random() < self.epsilon:              #
-                    #    best_edge = random.choice(best_edge_index)  # Better to check carefully this part
-                    #else:                                           # Changed  so now when exploration finish the plan will become deterministic
-                    #    best_edge = best_edge_index[0]              #
-
-                    best_edge = random.choice(best_edge_index)
-                    self.target = edges_from_current_node[best_edge].get_destination()
-                    self.options[best_edge].add_edge(edges_from_current_node[best_edge])
-                    return self.options[best_edge]
-            else:
-                self.target = None
-                return self.exploration_option
-        else:
-            self.target = None
-            return self.exploration_option
-
-    def get_epsilon_best_action(self, distances):
-        if distances is not None:
-            #print(distances)
-            edges_from_current_node = self.graph.get_edges_of_a_node(self.current_node)
-            #print(self.current_node, edges_from_current_node)
-            if len(edges_from_current_node) > 0:
-                if random.random() < self.epsilon:
-                    random_edge_index = random.choice(range(len(edges_from_current_node)+1))
-                    if random_edge_index >= len(edges_from_current_node):
-                        # here it means we choose the exploration option
-                        self.target = None
-                        self.path_2_print.append("exploration " + str(self.current_node.state) + " - " + str(self.target))
-                        return self.exploration_option
-                    else:
-                        self.target = edges_from_current_node[random_edge_index].get_destination()
-                        self.path_2_print.append(self.target)
-                        return self.options[random_edge_index]
-                else:
-                    best_edge_index= self.graph.get_node_best_edge_index(self.current_node, distances, edges_from_current_node, False)
-                    #max_distance = - float("inf")
-                    #best_edge_index = []
-                    #for i, edge in zip(range(len(edges_from_current_node)), edges_from_current_node):
-                    #    if distances[edge.destination]==max_distance:
-                    #        best_edge_index.append(i)
-                    #    elif distances[edge.destination] > max_distance:
-                    #        best_edge_index.clear()
-                    #        best_edge_index.append(i)
-                    #        max_distance = distances[edge.destination]
-
-                    #if random.random() < self.epsilon:              #
-                    #    best_edge = random.choice(best_edge_index)  # Better to check carefully this part
-                    #else:                                           # Changed  so now when exploration finish the plan will become deterministic
-                    #    best_edge = best_edge_index[0]              #
-
-                    best_edge = random.choice(best_edge_index)
-                    self.target = edges_from_current_node[best_edge].get_destination()
-                    self.path_2_print.append("best choice " + str(self.current_node.state) + " - " + str(self.target.state))
-                    self.options[best_edge].add_edge(edges_from_current_node[best_edge])
-                    return self.options[best_edge]
-            else:
-                self.target = None
-                self.path_2_print.append("exploration " + str(self.current_node.state) + " - " + str(self.target))
-                return self.exploration_option
-        else:
-            self.target = None
-            self.path_2_print.append("exploration " + str(self.current_node.state) + " - " + str(self.target))
-            return self.exploration_option
-
     def pseudo_count_exploration(self, pseudo_count_factor):
         Node.set_pseudo_count(pseudo_count_factor)
+
+    def epsilon_count_exploration(self, LAMBDA):
+        Node.set_lambda_node(LAMBDA)
 
     def create_options(self, edges_from_current_node):
 
