@@ -5,7 +5,7 @@ from Environment import Environment
 from Utils import AnaliseResults, Preprocessing, AnalyzeMemory
 from Agents import A2CSILAgent
 import gym
-import Environments.Gridenv_envs.examples
+import gridenvs.examples
 from Utils import SaveResult
 
 class variables():

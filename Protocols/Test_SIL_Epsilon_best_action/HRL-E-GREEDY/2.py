@@ -8,7 +8,7 @@ from Utils import ToolEpsilonDecayExploration, Preprocessing
 from Models.A2CnetworksEager import *
 from Utils import SaveResult
 from Utils.HrlExplorationStrategies import get_best_action, get_epsilon_best_action, get_epsilon_exploration, get_epsilon_count_exploration
-import Environments.Gridenv_envs.examples
+import gridenvs.examples
 
 
 class variables():

@@ -8,4 +8,4 @@ tensorflow==1.14.0
 gym-minigrid
 scikit-image==0.16.2
 
--e git+https://github.com/aig-upf/gridenvs.git#egg=gridenvs
+-e git+https://github.com/aig-upf/gridenvs.git@lorenzo#egg=gridenvs

@@ -4,7 +4,7 @@ import os
 from Environment import Environment
 from Agents import A2CAgent
 import gym
-import Environments.Gridenv_envs.examples
+import gridenvs.examples
 from Utils import SaveResult, Preprocessing
 
 class variables():
