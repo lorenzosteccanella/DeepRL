@@ -26,7 +26,7 @@ class variables():
         self.FILE_NAME = 'Key_Door_HRL_PSEUDO_COUNT'
         self.NUMBER_OF_EPOCHS = 4000
 
-        self.PROBLEM = 'GE_MazeKeyDoor-v20'
+        self.PROBLEM = 'GE_MazeKeyDoor-v18'
         environment = gym.make(self.PROBLEM)
 
         self.ACTION_SPACE = [0, 1, 2, 3, 4]
