@@ -79,7 +79,7 @@ class variables():
         }
 
         self.random_agent = RandomAgentOption(self.ACTION_SPACE)
-        self.LAMBDA = 0.05
+        self.LAMBDA = 0.5
         self.MIN_EPSILON = 0
         self.PSEUDO_COUNT = 0.1
 

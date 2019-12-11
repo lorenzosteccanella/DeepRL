@@ -17,7 +17,7 @@ class variables():
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
         self.seeds = range(3)
-        self.PROBLEM = 'GE_MazeKeyDoor-v20'
+        self.PROBLEM = 'GE_MazeKeyDoor-v18'
         self.ACTION_SPACE = [0, 1, 2, 3, 4]
         self.GAMMA = 0.99
         self.LEARNING_RATE = 0.0001

@@ -20,6 +20,10 @@ class HrlAgent(AbstractAgent):
 
         self.save_result = SaveResult
 
+        #exploration variables
+        self.MIN_EPSILON = MIN_EPSILON
+        self.LAMBDA = LAMBDA
+
 
         # variables to keep statistics of the execution
         self.number_of_options_executed = 1
@@ -35,16 +39,15 @@ class HrlAgent(AbstractAgent):
         self.options = []
         self.target = None
 
-        self.INITIAL_LAMBDA = LAMBDA
-        self.MIN_EPSILON = MIN_EPSILON
-        self.LAMBDA = LAMBDA
         self.correct_option_end_reward = correct_option_end_reward
         self.wrong_end_option_reward = wrong_option_end_reward
 
         HrlAgent.exploration_fn = exploration_fn
 
         self.pseudo_count_exploration(pseudo_count_exploration)
-        self.epsilon_count_exploration(self.INITIAL_LAMBDA)
+        self.epsilon_count_exploration(self.LAMBDA)
+
+        self.FILE_NAME = ""
 
 
     def act(self, s):
@@ -84,6 +87,49 @@ class HrlAgent(AbstractAgent):
             option = option(self.option_params)
             self.options.append(option)
 
+    def save_statistics(self):
+
+        if self.number_of_options_executed % 10000 == 0 and self.old_number_of_options != self.number_of_options_executed:
+            if self.save_result is not False:
+                message = ""
+                for target in self.path_2_print:
+                    message += (str(target) + "\n-> ")
+                message += "\n\n"
+                self.save_result.save_data(self.FILE_NAME + "Path", message)
+                self.path_2_print.clear()
+
+            if self.save_result is not False:
+                message = ""
+                if self.distances_2_print is not None:
+                    for distance in self.distances_2_print:
+                        message += (str(distance) + " \n")
+                    message += "\n\n"
+                    self.save_result.save_data(self.FILE_NAME + "Distances", message)
+                    self.distances_2_print.clear()
+            if self.save_result is not False:
+                message = (str(self.number_of_options_executed) + " "
+                           + str(self.number_of_successfull_option) + " "
+                           + str(self.number_of_successfull_option/self.number_of_options_executed*100)
+                           +"\n")
+                self.save_result.save_data(self.FILE_NAME + "Transitions_performance", message)
+                message = ("number of options executed:  ", str(self.number_of_options_executed)
+                           + "  number of succesfull termination  "
+                           + str(self.number_of_successfull_option)
+                           + "\n\n Nodes discovered: \n"
+                           + self.graph.string_node_list()
+                           + "\n\n Edges discovered: \n"
+                           + self.graph.string_edge_list()
+                           + "\n")
+                self.save_result.save_data(self.FILE_NAME + "Nodes_Edge_discovered", message)
+            self.old_number_of_options = self.number_of_options_executed
+
+        #print(r, done, end=" ")
+        #if self.number_of_successfull_option > 0:
+        #    print("percentage of successfull options", self.number_of_successfull_option/self.number_of_options_executed,
+        #          " number of abstract states:", self.graph.get_number_of_nodes())
+        #    self.graph.print_node_list()
+
+
     def update_option(self, sample):
         s = sample[0]["option"]
         a = sample[1]
@@ -110,50 +156,9 @@ class HrlAgent(AbstractAgent):
                     r += self.wrong_end_option_reward
                     done = True
 
-        if self.number_of_options_executed % 10000 == 0 and self.old_number_of_options != self.number_of_options_executed:
-            if self.save_result is not False:
-                message = ""
-                for target in self.path_2_print:
-                    message += (str(target) + "\n-> ")
-                message += "\n\n"
-                self.save_result.save_data("Path", message)
-                self.path_2_print.clear()
-
-            if self.save_result is not False:
-                message = ""
-                if self.distances_2_print is not None:
-                    for distance in self.distances_2_print:
-                        message += (str(distance) + " \n")
-                    message += "\n\n"
-                    self.save_result.save_data("Distances", message)
-                    self.distances_2_print.clear()
-            if self.save_result is not False:
-                message = (str(self.number_of_options_executed) + " "
-                           + str(self.number_of_successfull_option) + " "
-                           + str(self.number_of_successfull_option/self.number_of_options_executed*100)
-                           +"\n")
-                self.save_result.save_data("Transitions_performance", message)
-                message = ("number of options executed:  ", str(self.number_of_options_executed)
-                           + "  number of succesfull termination  "
-                           + str(self.number_of_successfull_option)
-                           + "\n\n Nodes discovered: \n"
-                           + self.graph.string_node_list()
-                           + "\n\n Edges discovered: \n"
-                           + self.graph.string_edge_list()
-                           + "\n")
-                self.save_result.save_data("Nodes_Edge_discovered", message)
-            self.old_number_of_options = self.number_of_options_executed
-
-        #print(r, done, end=" ")
-        #if self.number_of_successfull_option > 0:
-        #    print("percentage of successfull options", self.number_of_successfull_option/self.number_of_options_executed,
-        #          " number of abstract states:", self.graph.get_number_of_nodes())
-        #    self.graph.print_node_list()
+        self.save_statistics()
 
         self.best_option_action.observe((s, a, r, s_, done, info))
-
-    def reset_exploration(self):
-        self.LAMBDA = self.INITIAL_LAMBDA
 
     def observe(self, sample):  # in (s, a, r, s_, done, info) format
 
@@ -178,3 +183,28 @@ class HrlAgent(AbstractAgent):
 
     def replay(self):
         pass
+
+    def set_name_file_2_save(self, filename):
+        self.FILE_NAME = filename + " - "
+
+    def reset_exploration(self):
+        self.manager_exp = 0
+
+    def reset_pseudo_count_exploration(self):
+        for node in self.graph.node_list:
+            node.reset_n_visits()
+
+    def reset_statistics(self):
+
+        # variables to keep statistics of the execution
+        self.number_of_options_executed = 1
+        self.number_of_successfull_option = 0
+        self.list_percentual_of_successfull_options = []
+        self.old_number_of_options = 0
+        self.path_2_print = []
+        self.distances_2_print = []
+
+
+        self.best_option_action = None
+        self.current_node = None
+

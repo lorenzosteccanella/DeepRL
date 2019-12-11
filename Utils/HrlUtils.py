@@ -98,6 +98,9 @@ class Node:
     def get_n_visits(self):
         return self.visit_count
 
+    def reset_n_visits(self):
+        self.visit_count=1
+
     def __eq__(self, other):
         return self.state == other.state
 

@@ -26,15 +26,15 @@ class variables():
         self.FILE_NAME = 'Key_Door_HRL_SIL_PSEUDO_COUNT'
         self.NUMBER_OF_EPOCHS = 4000
 
-        self.PROBLEM = 'GE_MazeKeyDoor-v20'
+        self.PROBLEM = 'GE_MazeKeyDoor-v18'
         environment = gym.make(self.PROBLEM)
 
         self.ACTION_SPACE = [0, 1, 2, 3, 4]
 
         self.wrapper_params = {
             "stack_images_length": 1,
-            "width": 20,
-            "height": 20,
+            "width": 18,
+            "height": 18,
             "n_zones": 2
         }
 
@@ -84,7 +84,7 @@ class variables():
         }
 
         self.random_agent = RandomAgentOption(self.ACTION_SPACE)
-        self.LAMBDA = 0.05
+        self.LAMBDA = 0.5
         self.MIN_EPSILON = 0
         self.PSEUDO_COUNT = 0.1
 

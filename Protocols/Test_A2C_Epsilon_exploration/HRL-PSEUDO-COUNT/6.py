@@ -33,9 +33,9 @@ class variables():
 
         self.wrapper_params = {
             "stack_images_length": 1,
-            "width": 20,
-            "height": 20,
-            "n_zones": 9
+            "width": 18,
+            "height": 18,
+            "n_zones": 8
         }
 
         self.wrapper = PositionGridenv_GE_MazeKeyDoor_v0(environment, self.wrapper_params)
@@ -79,7 +79,7 @@ class variables():
         }
 
         self.random_agent = RandomAgentOption(self.ACTION_SPACE)
-        self.LAMBDA = 0.05
+        self.LAMBDA = 0.5
         self.MIN_EPSILON = 0
         self.PSEUDO_COUNT = 0.1
 

@@ -14,6 +14,8 @@ class variables():
 
     def __init__(self):
 
+        self.index_execution = 0
+
         tf.enable_eager_execution()
 
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
@@ -24,6 +26,10 @@ class variables():
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Key_Door_HRL_E_GREEDY'
         self.NUMBER_OF_EPOCHS = 2000
+
+        self.PROBLEM = 'GE_MazeKeyDoor10key1-v0'
+        self.TEST_TRANSFER_PROBLEM = ['GE_MazeKeyDoor10key2-v0', 'GE_MazeKeyDoor10key3-v0']
+        environment = gym.make(self.PROBLEM)
 
         self.ACTION_SPACE = [0, 1, 2, 3, 4]
 
@@ -47,6 +53,8 @@ class variables():
         self.env = Environment(self.wrapper, preprocessing=False, rendering_custom_class=rendering)
 
     def reset(self):
+        self.index_execution = 0
+
         self.env.close()
 
         # Just to be sure that we don't have some others graph loaded
@@ -74,7 +82,7 @@ class variables():
         }
 
         self.random_agent = RandomAgentOption(self.ACTION_SPACE)
-        self.LAMBDA = 0.05
+        self.LAMBDA = 0.5
         self.MIN_EPSILON = 0
         self.PSEUDO_COUNT = 1000
 
@@ -84,6 +92,49 @@ class variables():
         ToolEpsilonDecayExploration.epsilon_decay_end_steps(self.MIN_EPSILON, self.LAMBDA)
 
         self.agent = HrlAgent(self.option_params, self.random_agent, self.exploration_fn, self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1, self.SAVE_RESULT)
+
+
+    def transfer_learning_test(self):
+
+        environment = gym.make(self.TEST_TRANSFER_PROBLEM[self.index_execution])
+
+        self.TRANSFER_FILE_NAME = self.FILE_NAME + " - " + self.TEST_TRANSFER_PROBLEM[self.index_execution]
+
+        self.agent.set_name_file_2_save(self.TRANSFER_FILE_NAME)
+
+        self.wrapper = PositionGridenv_GE_MazeKeyDoor_v0(environment, self.wrapper_params)
+
+        display_env = False
+
+        if display_env:
+            from Utils import ShowRenderHRL
+            rendering = ShowRenderHRL
+        else:
+            rendering = False
+
+        self.env = Environment(self.wrapper, preprocessing=False, rendering_custom_class=rendering)
+
+        for node in self.agent.graph.node_list:
+            if node.state == "key taken":
+                self.agent.graph.node_list.remove(node)
+
+        for edge in self.agent.graph.edge_list:
+
+            if edge.origin.state == "key taken":
+                self.agent.graph.edge_list.remove(edge)
+
+            if edge.destination.state == "key taken":
+                self.agent.graph.edge_list.remove(edge)
+
+        self.agent.reset_exploration()
+        self.agent.reset_pseudo_count_exploration()
+
+        self.agent.reset_statistics()
+
+
+        self.index_execution += 1
+
+
 
 
 
