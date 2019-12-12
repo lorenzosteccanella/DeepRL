@@ -23,7 +23,7 @@ class HrlAgent(AbstractAgent):
         #exploration variables
         self.MIN_EPSILON = MIN_EPSILON
         self.LAMBDA = LAMBDA
-        self.RESET_EXPLORATION_WHEN_NEW_NODE = TRUE
+        self.RESET_EXPLORATION_WHEN_NEW_NODE = True
 
 
         # variables to keep statistics of the execution
