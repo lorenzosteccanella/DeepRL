@@ -1,1 +1,1 @@
-source /homedtic/lsteccanella/DeepRL/Cluster_utils/run-multiple-nodes.sh Test_SIL_Epsilon_best_action.A2C_SIL.1 Test_SIL_Epsilon_best_action.A2C_SIL.2 Test_A2C_Epsilon_best_action.A2C.1 Test_A2C_Epsilon_best_action.A2C.2
+source /homedtic/lsteccanella/DeepRL/Cluster_utils/run-multiple-nodes.sh Test_A2C_Epsilon_best_action.A2C.1 Test_A2C_Epsilon_best_action.A2C.2 Test_SIL_Epsilon_best_action.A2C_SIL.1 Test_SIL_Epsilon_best_action.A2C_SIL.2
