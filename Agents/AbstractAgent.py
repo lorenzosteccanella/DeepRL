@@ -3,6 +3,8 @@ import abc
 
 class AbstractAgent(abc.ABC):
 
+    FILE_NAME = ""
+
     @abc.abstractmethod
     def act(self, s):
         pass

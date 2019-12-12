@@ -21,7 +21,7 @@ class variables():
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
         self.seeds = range(2)
-        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  TEST_HRL_PSEUDO_COUNT_6/')
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  TEST_HRL_PSEUDO_COUNT_5/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Key_Door_HRL_PSEUDO_COUNT'
         self.NUMBER_OF_EPOCHS = 4000
@@ -35,7 +35,7 @@ class variables():
             "stack_images_length": 1,
             "width": 18,
             "height": 18,
-            "n_zones": 8
+            "n_zones": 4
         }
 
         self.wrapper = PositionGridenv_GE_MazeKeyDoor_v0(environment, self.wrapper_params)
@@ -79,11 +79,11 @@ class variables():
         }
 
         self.random_agent = RandomAgentOption(self.ACTION_SPACE)
-        self.LAMBDA = 0.5
+        self.LAMBDA = 1000
         self.MIN_EPSILON = 0
         self.PSEUDO_COUNT = 0.1
 
-        self.exploration_fn = get_epsilon_exploration
+        self.exploration_fn = get_epsilon_best_action
 
         # to know in how many episodes the epsilon will decay
         ToolEpsilonDecayExploration.epsilon_decay_end_steps(self.MIN_EPSILON, self.LAMBDA)

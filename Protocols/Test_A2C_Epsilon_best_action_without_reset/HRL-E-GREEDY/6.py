@@ -21,9 +21,9 @@ class variables():
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
         self.seeds = range(2)
-        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  TEST_HRL_PSEUDO_COUNT_6/')
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + "  -  TEST_HRL_E_GREEDY_6/")
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
-        self.FILE_NAME = 'Key_Door_HRL_PSEUDO_COUNT'
+        self.FILE_NAME = 'Key_Door_HRL_E_GREEDY'
         self.NUMBER_OF_EPOCHS = 4000
 
         self.PROBLEM = 'GE_MazeKeyDoor-v18'
@@ -79,18 +79,18 @@ class variables():
         }
 
         self.random_agent = RandomAgentOption(self.ACTION_SPACE)
-        self.LAMBDA = 0.5
+        self.LAMBDA = 0.05
         self.MIN_EPSILON = 0
-        self.PSEUDO_COUNT = 0.1
+        self.PSEUDO_COUNT = 1000
 
-        self.exploration_fn = get_epsilon_exploration
+        self.exploration_fn = get_epsilon_best_action
 
         # to know in how many episodes the epsilon will decay
         ToolEpsilonDecayExploration.epsilon_decay_end_steps(self.MIN_EPSILON, self.LAMBDA)
 
         self.agent = HrlAgent(self.option_params, self.random_agent, self.exploration_fn, self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1, self.SAVE_RESULT)
 
-
+        self.agent.set_RESET_EXPLORATION_WHEN_NEW_NODE(False)
 
 
 

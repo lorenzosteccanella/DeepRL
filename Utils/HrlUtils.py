@@ -27,6 +27,7 @@ class Edge:
 
     def __init__(self, origin, destination, value=0, edge_cost = 0):
 
+        self.succes_execution_counter = 0
         self.origin = origin
         self.destination = destination
         self.edge_cost = edge_cost
@@ -56,6 +57,9 @@ class Edge:
 
     def get_option(self):
         return self.option
+
+    def update_succes_execution_counter(self, value):
+        self.succes_execution_counter += 1
 
     def __eq__(self, other):
         if self.origin == other.origin and self.destination == other.destination:

@@ -10,14 +10,15 @@ import sys
 # Parse command line arguments
 args = sys.argv
 
-import tensorflow as tf
 import time
 import random
 import numpy as np
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import importlib.util
+import tensorflow as tf
 
+from Agents import HrlAgent
 
 
 
@@ -87,7 +88,8 @@ for experiment in args[1::]:
         message = [str(e) + " " + str(nstep) + " " + str(r) + "\n" for e, r, nstep in zip(epochs, moving_average_reward, n_steps)]
         variables.SAVE_RESULT.save_data(variables.FILE_NAME, message)
         variables.SAVE_RESULT.plot_results(variables.FILE_NAME, "reward-over-episodes", "episodes", "reward")
-        variables.SAVE_RESULT.plot_success_rate_transitions(variables.agent.FILE_NAME + "Transitions_performance")
+        if isinstance(variables.agent, HrlAgent):
+            variables.SAVE_RESULT.plot_success_rate_transitions(variables.agent.FILE_NAME + "Transitions_performance")
 
         if(has_method(variables, 'transfer_learning_test')):
             for _ in range(len(variables.TEST_TRANSFER_PROBLEM)):
@@ -98,14 +100,16 @@ for experiment in args[1::]:
                 message = [str(e) + " " + str(nstep) + " " + str(r) + "\n" for e, r, nstep in zip(epochs, moving_average_reward, n_steps)]
                 variables.SAVE_RESULT.save_data(variables.TRANSFER_FILE_NAME, message)
                 variables.SAVE_RESULT.plot_results(variables.TRANSFER_FILE_NAME, "reward-over-episodes", "episodes", "reward")
-                variables.SAVE_RESULT.plot_success_rate_transitions(variables.agent.FILE_NAME + "Transitions_performance")
+                if isinstance(variables.agent, HrlAgent):
+                    variables.SAVE_RESULT.plot_success_rate_transitions(variables.agent.FILE_NAME + "Transitions_performance")
 
 
     variables.SAVE_RESULT.plot_multiple_seeds(variables.FILE_NAME, "reward-over-episodes", "episodes", "reward")
     #variables.SAVE_RESULT.plot_multiple_seeds("Transitions_performance", "success rate of options' transitions",
     #                                          "number of options executed", "% of successful option executions")
-    for file_name_transfer in variables.TEST_TRANSFER_PROBLEM:
-        variables.SAVE_RESULT.plot_multiple_seeds(variables.FILE_NAME+" - "+ file_name_transfer, "reward-over-episodes", "episodes", "reward")
+    if (has_method(variables, 'transfer_learning_test')):
+        for file_name_transfer in variables.TEST_TRANSFER_PROBLEM:
+            variables.SAVE_RESULT.plot_multiple_seeds(variables.FILE_NAME+" - "+ file_name_transfer, "reward-over-episodes", "episodes", "reward")
 
 
 

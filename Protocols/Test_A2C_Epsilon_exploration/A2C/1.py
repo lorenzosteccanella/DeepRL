@@ -1,11 +1,11 @@
-from Models.A2CnetworksEager import *
-import tensorflow as tf
 import os
 from Environment import Environment
 from Agents import A2CAgent
 import gym
 import gridenvs.examples
 from Utils import SaveResult, Preprocessing
+from Models.A2CnetworksEager import *
+import tensorflow as tf
 
 class variables():
 
@@ -21,7 +21,7 @@ class variables():
         self.ACTION_SPACE = [0, 1, 2, 3, 4]
         self.GAMMA = 0.99
         self.LEARNING_RATE = 0.0001
-        self.RESULTS_FOLDER = 'TEST_A2C/'
+        self.RESULTS_FOLDER = 'TEST_A2C_grid10/'
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Key_Door_A2C'
         self.BATCH_SIZE = 6

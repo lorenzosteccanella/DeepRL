@@ -23,6 +23,7 @@ class HrlAgent(AbstractAgent):
         #exploration variables
         self.MIN_EPSILON = MIN_EPSILON
         self.LAMBDA = LAMBDA
+        self.RESET_EXPLORATION_WHEN_NEW_NODE = TRUE
 
 
         # variables to keep statistics of the execution
@@ -46,8 +47,6 @@ class HrlAgent(AbstractAgent):
 
         self.pseudo_count_exploration(pseudo_count_exploration)
         self.epsilon_count_exploration(self.LAMBDA)
-
-        self.FILE_NAME = ""
 
 
     def act(self, s):
@@ -164,9 +163,10 @@ class HrlAgent(AbstractAgent):
 
         self.graph.abstract_state_discovery(sample)
 
-        if self.graph.new_node_encontered:
-            print("new node discovered, resetting the exploration!!!")
-            self.reset_exploration()
+        if self.RESET_EXPLORATION_WHEN_NEW_NODE:
+            if self.graph.new_node_encontered:
+                print("new node discovered, resetting the exploration!!!")
+                self.reset_exploration()
 
         edges_from_current_node = self.graph.get_edges_of_a_node(self.current_node)
         self.create_options(edges_from_current_node)
@@ -183,6 +183,9 @@ class HrlAgent(AbstractAgent):
 
     def replay(self):
         pass
+
+    def set_RESET_EXPLORATION_WHEN_NEW_NODE(self,value):
+        self.RESET_EXPLORATION_WHEN_NEW_NODE = value
 
     def set_name_file_2_save(self, filename):
         self.FILE_NAME = filename + " - "
