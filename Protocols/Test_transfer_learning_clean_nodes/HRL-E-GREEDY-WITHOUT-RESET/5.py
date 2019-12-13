@@ -22,7 +22,7 @@ class variables():
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
         self.seeds = range(2)
-        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  TEST_HRL_E_GREEDY_6/')
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  TEST_HRL_E_GREEDY_5/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Key_Door_HRL_E_GREEDY'
         self.NUMBER_OF_EPOCHS = 2000
@@ -37,7 +37,7 @@ class variables():
             "stack_images_length": 1,
             "width": 18,
             "height": 18,
-            "n_zones": 8
+            "n_zones": 4
         }
 
         self.wrapper = PositionGridenv_GE_MazeKeyDoor_v0(environment, self.wrapper_params)
@@ -82,7 +82,7 @@ class variables():
         }
 
         self.random_agent = RandomAgentOption(self.ACTION_SPACE)
-        self.LAMBDA = 0.5
+        self.LAMBDA = 0.05
         self.MIN_EPSILON = 0
         self.PSEUDO_COUNT = 1000
 
@@ -92,6 +92,8 @@ class variables():
         ToolEpsilonDecayExploration.epsilon_decay_end_steps(self.MIN_EPSILON, self.LAMBDA)
 
         self.agent = HrlAgent(self.option_params, self.random_agent, self.exploration_fn, self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1, self.SAVE_RESULT)
+
+        self.agent.set_RESET_EXPLORATION_WHEN_NEW_NODE(False)
 
 
     def transfer_learning_test(self):
@@ -114,17 +116,9 @@ class variables():
 
         self.env = Environment(self.wrapper, preprocessing=False, rendering_custom_class=rendering)
 
-        for node in self.agent.graph.node_list:
-            if node.state == "key taken":
-                self.agent.graph.node_list.remove(node)
+        self.agent.graph.node_list.clear()
 
-        for edge in self.agent.graph.edge_list:
-
-            if edge.origin.state == "key taken":
-                self.agent.graph.edge_list.remove(edge)
-
-            if edge.destination.state == "key taken":
-                self.agent.graph.edge_list.remove(edge)
+        self.agent.graph.edge_list.clear()
 
         self.agent.reset_exploration()
         self.agent.reset_pseudo_count_exploration()

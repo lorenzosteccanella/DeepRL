@@ -22,22 +22,22 @@ class variables():
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
         self.seeds = range(2)
-        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  TEST_HRL_E_GREEDY_6/')
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  TEST_HRL_E_GREEDY_1/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Key_Door_HRL_E_GREEDY'
         self.NUMBER_OF_EPOCHS = 2000
 
-        self.PROBLEM = 'GE_MazeKeyDoor18key1-v0'
-        self.TEST_TRANSFER_PROBLEM = ['GE_MazeKeyDoor18key2-v0', 'GE_MazeKeyDoor18key3-v0']
+        self.PROBLEM = 'GE_MazeKeyDoor10key1-v0'
+        self.TEST_TRANSFER_PROBLEM = ['GE_MazeKeyDoor10key2-v0', 'GE_MazeKeyDoor10key3-v0']
         environment = gym.make(self.PROBLEM)
 
         self.ACTION_SPACE = [0, 1, 2, 3, 4]
 
         self.wrapper_params = {
             "stack_images_length": 1,
-            "width": 18,
-            "height": 18,
-            "n_zones": 8
+            "width": 10,
+            "height": 10,
+            "n_zones": 2
         }
 
         self.wrapper = PositionGridenv_GE_MazeKeyDoor_v0(environment, self.wrapper_params)
@@ -86,7 +86,7 @@ class variables():
         self.MIN_EPSILON = 0
         self.PSEUDO_COUNT = 1000
 
-        self.exploration_fn = get_epsilon_best_action
+        self.exploration_fn = get_epsilon_count_exploration
 
         # to know in how many episodes the epsilon will decay
         ToolEpsilonDecayExploration.epsilon_decay_end_steps(self.MIN_EPSILON, self.LAMBDA)
@@ -114,17 +114,9 @@ class variables():
 
         self.env = Environment(self.wrapper, preprocessing=False, rendering_custom_class=rendering)
 
-        for node in self.agent.graph.node_list:
-            if node.state == "key taken":
-                self.agent.graph.node_list.remove(node)
+        self.agent.graph.node_list.clear()
 
-        for edge in self.agent.graph.edge_list:
-
-            if edge.origin.state == "key taken":
-                self.agent.graph.edge_list.remove(edge)
-
-            if edge.destination.state == "key taken":
-                self.agent.graph.edge_list.remove(edge)
+        self.agent.graph.edge_list.clear()
 
         self.agent.reset_exploration()
         self.agent.reset_pseudo_count_exploration()

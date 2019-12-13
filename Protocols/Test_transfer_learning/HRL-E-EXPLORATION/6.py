@@ -86,7 +86,7 @@ class variables():
         self.MIN_EPSILON = 0
         self.PSEUDO_COUNT = 1000
 
-        self.exploration_fn = get_epsilon_best_action
+        self.exploration_fn = get_epsilon_exploration
 
         # to know in how many episodes the epsilon will decay
         ToolEpsilonDecayExploration.epsilon_decay_end_steps(self.MIN_EPSILON, self.LAMBDA)

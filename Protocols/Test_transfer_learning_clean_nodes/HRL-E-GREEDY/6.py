@@ -114,17 +114,9 @@ class variables():
 
         self.env = Environment(self.wrapper, preprocessing=False, rendering_custom_class=rendering)
 
-        for node in self.agent.graph.node_list:
-            if node.state == "key taken":
-                self.agent.graph.node_list.remove(node)
+        self.agent.graph.node_list.clear()
 
-        for edge in self.agent.graph.edge_list:
-
-            if edge.origin.state == "key taken":
-                self.agent.graph.edge_list.remove(edge)
-
-            if edge.destination.state == "key taken":
-                self.agent.graph.edge_list.remove(edge)
+        self.agent.graph.edge_list.clear()
 
         self.agent.reset_exploration()
         self.agent.reset_pseudo_count_exploration()

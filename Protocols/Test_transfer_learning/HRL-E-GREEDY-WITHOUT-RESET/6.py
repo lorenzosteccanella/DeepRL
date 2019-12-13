@@ -82,7 +82,7 @@ class variables():
         }
 
         self.random_agent = RandomAgentOption(self.ACTION_SPACE)
-        self.LAMBDA = 0.5
+        self.LAMBDA = 0.05
         self.MIN_EPSILON = 0
         self.PSEUDO_COUNT = 1000
 
@@ -92,6 +92,8 @@ class variables():
         ToolEpsilonDecayExploration.epsilon_decay_end_steps(self.MIN_EPSILON, self.LAMBDA)
 
         self.agent = HrlAgent(self.option_params, self.random_agent, self.exploration_fn, self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1, self.SAVE_RESULT)
+
+        self.agent.set_RESET_EXPLORATION_WHEN_NEW_NODE(False)
 
 
     def transfer_learning_test(self):

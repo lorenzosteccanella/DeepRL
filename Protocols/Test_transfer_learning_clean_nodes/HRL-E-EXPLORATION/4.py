@@ -22,7 +22,7 @@ class variables():
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
         self.seeds = range(2)
-        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  TEST_HRL_E_GREEDY_6/')
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  TEST_HRL_E_GREEDY_4/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Key_Door_HRL_E_GREEDY'
         self.NUMBER_OF_EPOCHS = 2000
@@ -37,7 +37,7 @@ class variables():
             "stack_images_length": 1,
             "width": 18,
             "height": 18,
-            "n_zones": 8
+            "n_zones": 2
         }
 
         self.wrapper = PositionGridenv_GE_MazeKeyDoor_v0(environment, self.wrapper_params)
@@ -86,7 +86,7 @@ class variables():
         self.MIN_EPSILON = 0
         self.PSEUDO_COUNT = 1000
 
-        self.exploration_fn = get_epsilon_best_action
+        self.exploration_fn = get_epsilon_exploration
 
         # to know in how many episodes the epsilon will decay
         ToolEpsilonDecayExploration.epsilon_decay_end_steps(self.MIN_EPSILON, self.LAMBDA)
@@ -114,17 +114,9 @@ class variables():
 
         self.env = Environment(self.wrapper, preprocessing=False, rendering_custom_class=rendering)
 
-        for node in self.agent.graph.node_list:
-            if node.state == "key taken":
-                self.agent.graph.node_list.remove(node)
+        self.agent.graph.node_list.clear()
 
-        for edge in self.agent.graph.edge_list:
-
-            if edge.origin.state == "key taken":
-                self.agent.graph.edge_list.remove(edge)
-
-            if edge.destination.state == "key taken":
-                self.agent.graph.edge_list.remove(edge)
+        self.agent.graph.edge_list.clear()
 
         self.agent.reset_exploration()
         self.agent.reset_pseudo_count_exploration()
