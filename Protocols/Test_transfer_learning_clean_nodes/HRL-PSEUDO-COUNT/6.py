@@ -100,17 +100,7 @@ class variables():
 
         environment = gym.make(self.TEST_TRANSFER_PROBLEM[self.index_execution])
 
-        self.TRANSFER_FILE_NAME = self.FILE_NAME + " - " + self.        for node in self.agent.graph.node_list:
-            if node.state == "key taken":
-                self.agent.graph.node_list.remove(node)
-
-        for edge in self.agent.graph.edge_list:
-
-            if edge.origin.state == "key taken":
-                self.agent.graph.edge_list.remove(edge)
-
-            if edge.destination.state == "key taken":
-                self.agent.graph.edge_list.remove(edge)TEST_TRANSFER_PROBLEM[self.index_execution]
+        self.TRANSFER_FILE_NAME = self.FILE_NAME + " - " + self.TEST_TRANSFER_PROBLEM[self.index_execution]
 
         self.agent.set_name_file_2_save(self.TRANSFER_FILE_NAME)
 
