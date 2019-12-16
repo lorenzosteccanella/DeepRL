@@ -29,7 +29,7 @@ class variables():
         self.WEIGHT_MSE = 0.5
         self.WEIGHT_CE_EXPLORATION = 0.01
 
-        self.NUMBER_OF_EPOCHS = 4000
+        self.NUMBER_OF_EPOCHS = 2000
 
         self.preprocess = None
 

@@ -27,8 +27,8 @@ class variables():
         self.FILE_NAME = 'Key_Door_HRL_E_GREEDY'
         self.NUMBER_OF_EPOCHS = 2000
 
-        self.PROBLEM = 'GE_MazeKeyDoor10key1color1-v0'
-        self.TEST_TRANSFER_PROBLEM = ['GE_MazeKeyDoor10key2color2-v0', 'GE_MazeKeyDoor10key3color3-v0']
+        self.PROBLEM = 'GE_MazeKeyDoor18key1color1-v0'
+        self.TEST_TRANSFER_PROBLEM = ['GE_MazeKeyDoor18key2color2-v0', 'GE_MazeKeyDoor18key3color3-v0']
         environment = gym.make(self.PROBLEM)
 
         self.ACTION_SPACE = [0, 1, 2, 3, 4]

@@ -29,12 +29,12 @@ class variables():
         self.WEIGHT_MSE = 0.5
         self.WEIGHT_CE_EXPLORATION = 0.01
 
-        self.NUMBER_OF_EPOCHS = 4000
+        self.NUMBER_OF_EPOCHS = 2000
 
         self.preprocess = None
 
-        self.PROBLEM = 'GE_MazeKeyDoor10key1color1-v0'
-        self.TEST_TRANSFER_PROBLEM = ['GE_MazeKeyDoor10key2color2-v0', 'GE_MazeKeyDoor10key3color3-v0']
+        self.PROBLEM = 'GE_MazeKeyDoor18key1color1-v0'
+        self.TEST_TRANSFER_PROBLEM = ['GE_MazeKeyDoor18key2color2-v0', 'GE_MazeKeyDoor18key3color3-v0']
         environment = gym.make(self.PROBLEM)
 
         self.number_of_stacked_frames = 1
