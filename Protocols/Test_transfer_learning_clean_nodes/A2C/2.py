@@ -61,7 +61,7 @@ class variables():
 
         shared_conv_layers = SharedConvLayers()
 
-        self.a2cDNN = A2CEagerSync(60, len(self.ACTION_SPACE), CriticNetwork, ActorNetwork,
+        self.a2cDNN = A2CEagerSync(30, len(self.ACTION_SPACE), CriticNetwork, ActorNetwork,
                                    self.LEARNING_RATE, self.WEIGHT_MSE, self.WEIGHT_CE_EXPLORATION, shared_conv_layers)
 
         self.agent = A2CAgent(self.ACTION_SPACE, self.a2cDNN, self.GAMMA, self.BATCH_SIZE)
