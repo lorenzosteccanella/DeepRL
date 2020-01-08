@@ -68,6 +68,8 @@ class variables():
 
     def transfer_learning_test(self):
 
+        self.env.close()
+
         environment = gym.make(self.TEST_TRANSFER_PROBLEM[self.index_execution])
 
         self.TRANSFER_FILE_NAME = self.FILE_NAME + " - " + self.TEST_TRANSFER_PROBLEM[self.index_execution]

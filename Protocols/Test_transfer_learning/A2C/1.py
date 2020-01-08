@@ -29,7 +29,7 @@ class variables():
         self.WEIGHT_MSE = 0.5
         self.WEIGHT_CE_EXPLORATION = 0.01
 
-        self.NUMBER_OF_EPOCHS = 4000
+        self.NUMBER_OF_EPOCHS = 2000
 
         self.preprocess = None
 
@@ -67,6 +67,8 @@ class variables():
         self.agent = A2CAgent(self.ACTION_SPACE, self.a2cDNN, self.GAMMA, self.BATCH_SIZE)
 
     def transfer_learning_test(self):
+
+        self.env.close()
 
         environment = gym.make(self.TEST_TRANSFER_PROBLEM[self.index_execution])
 
