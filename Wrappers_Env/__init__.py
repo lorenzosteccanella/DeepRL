@@ -1,2 +1,3 @@
 from .WrapperObsHRL import WrapperObsHRL
 from .Position_based_abstraction_wrapper import PositionGridenv_GE_MazeKeyDoor_v0
+from .Gridenv_position import Gridenv_position

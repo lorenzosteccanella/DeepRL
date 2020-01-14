@@ -5,14 +5,20 @@ from Losses.Losses import Losses
 import tensorflow.contrib.slim as slim
 import inspect
 
+#        self.conv1 = keras.layers.Conv2D(8, 8, (4, 4), padding='VALID', activation='elu', kernel_initializer='he_normal', )
+#        self.conv2 = keras.layers.Conv2D(16, 4, (2, 2), padding='VALID', activation='elu', kernel_initializer='he_normal')
+#        self.conv3 = keras.layers.Conv2D(16, 3, (1, 1), padding='VALID', activation='elu', kernel_initializer='he_normal')
+#        self.flatten = keras.layers.Flatten()
+#        self.dense = keras.layers.Dense(256)
+
 class SharedConvLayers(keras.Model):
     def __init__(self, learning_rate_observation_adjust=1):
         super(SharedConvLayers, self).__init__(name="SharedConvLayers")
-        self.conv1 = keras.layers.Conv2D(32, 8, (4, 4), padding='VALID', activation='elu', kernel_initializer='he_normal', )
-        self.conv2 = keras.layers.Conv2D(64, 4, (2, 2), padding='VALID', activation='elu', kernel_initializer='he_normal')
-        self.conv3 = keras.layers.Conv2D(64, 3, (1, 1), padding='VALID', activation='elu', kernel_initializer='he_normal')
+        self.conv1 = keras.layers.Conv2D(8, 8, (4, 4), padding='VALID', activation='elu', kernel_initializer='he_normal', )
+        self.conv2 = keras.layers.Conv2D(16, 4, (2, 2), padding='VALID', activation='elu', kernel_initializer='he_normal')
+        self.conv3 = keras.layers.Conv2D(16, 3, (1, 1), padding='VALID', activation='elu', kernel_initializer='he_normal')
         self.flatten = keras.layers.Flatten()
-        self.dense = keras.layers.Dense(256)
+        self.dense = keras.layers.Dense(32)
         self.learning_rate_adjust = learning_rate_observation_adjust
 
     def call(self, x):
@@ -21,10 +27,10 @@ class SharedConvLayers(keras.Model):
         x = self.conv2(x)
         x = self.conv3(x)
         x = self.flatten(x)
-        x = self.dense(x)
-        x = self.learning_rate_adjust * x + (1-self.learning_rate_adjust) * tf.stop_gradient(x)  # U have to test this!!!
+        denseOut = self.dense(x)
+        x = self.learning_rate_adjust * denseOut + (1-self.learning_rate_adjust) * tf.stop_gradient(denseOut)  # U have to test this!!!
 
-        return [x] # super importante ricordati che negli actor e critic modelli stai indicizzando a 0 ho bisogno di questo per la vae observation
+        return [x, denseOut] # super importante ricordati che negli actor e critic modelli stai indicizzando a 0 ho bisogno di questo per la vae observation
 
 
 class SharedDenseLayers(keras.Model):
@@ -37,7 +43,7 @@ class SharedDenseLayers(keras.Model):
         x = self.dense1(x)
         x = self.dense2(x)
 
-        return [x]
+        return [x, x]
 
 
 class CriticNetwork(keras.Model):
@@ -81,13 +87,15 @@ class ActorCriticNetwork(keras.Model):
 
         if self.shared_observation_model is not None:
 
-            x = self.shared_observation_model(x)[0] # Just the dense output
+            obs = self.shared_observation_model(x)[0] # Just the dense output
 
-        actor = self.actor_model(x)
+        denseOut = self.shared_observation_model(x)[1]
 
-        critic = self.critic_model(x)
+        actor = self.actor_model(obs)
 
-        return actor, critic
+        critic = self.critic_model(obs)
+
+        return actor, critic, denseOut
 
 
 class A2CEagerSync:
@@ -140,11 +148,19 @@ class A2CEagerSync:
 
         return self.model_actor_critic(s)[1].numpy()
 
+    def prediction_h(self, s):
+
+        s = np.array(s, dtype=np.float32)
+
+        s = tf.convert_to_tensor(s)
+
+        return self.model_actor_critic(s)[2].numpy()
+
 
     def grad(self, model_actor_critic, inputs, targets, one_hot_a, advantage, weight_ce, weight_mse = 0.5):
 
         with tf.GradientTape() as tape:
-            softmax_logits, value_critic = model_actor_critic(inputs)
+            softmax_logits, value_critic, _ = model_actor_critic(inputs)
             loss_pg = Losses.reinforce_loss(softmax_logits, one_hot_a, advantage)
             loss_ce = Losses.entropy_exploration_loss(softmax_logits)
             loss_critic = Losses.mse_loss(value_critic, targets)

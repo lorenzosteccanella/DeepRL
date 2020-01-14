@@ -62,20 +62,25 @@ class SaveResult:
 
     def plot_results(self, file_name, title, xlabel, ylabel):
         x, y = [], []
-        with open(str(self.dir_path_seed) + "/" + file_name) as f:
-            print(str(self.dir_path_seed) + "/" + file_name)
-            for line in f:
-                x.append(float(line.split()[0]))
-                y.append(float(line.split()[2]))
+        try:
+            with open(str(self.dir_path_seed) + "/" + file_name) as f:
+                print(str(self.dir_path_seed) + "/" + file_name)
+                for line in f:
+                    x.append(float(line.split()[0]))
+                    y.append(float(line.split()[2]))
 
-        plt.plot(x, y)
-        plt.title(title)
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
-        # plt.draw()
-        # plt.pause(0.01)
-        plt.savefig(str(self.dir_path_seed) + "/" + file_name)
-        plt.close()
+                plt.plot(x, y)
+                plt.title(title)
+                plt.xlabel(xlabel)
+                plt.ylabel(ylabel)
+                # plt.draw()
+                # plt.pause(0.01)
+                plt.savefig(str(self.dir_path_seed) + "/" + file_name)
+                plt.close()
+
+        except IOError:
+            print("Error: File does not appear to exist.")
+            return 0
 
     def plot_multiple_seeds(self, file_name, title, xlabel, ylabel):
         list_results_x = []

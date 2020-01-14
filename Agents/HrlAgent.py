@@ -72,6 +72,12 @@ class HrlAgent(AbstractAgent):
 
         return self.best_option_action.act(s["option"])
 
+    def observation_encoding(self, s):
+
+        option = self.options[0]
+
+        return option.get_observation_encoding(s)
+
     def pseudo_count_exploration(self, pseudo_count_factor):
         Node.set_pseudo_count(pseudo_count_factor)
 

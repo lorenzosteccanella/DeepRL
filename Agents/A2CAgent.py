@@ -62,6 +62,10 @@ class A2CAgent(AbstractAgent):
 
         self.buffer.add(sample)
 
+    def get_observation_encoding(self,s):
+        h = self.main_model_nn.prediction_h([s])
+        return h
+
     def replay(self):
 
         if self.buffer.buffer_len() >= self.batch_size:

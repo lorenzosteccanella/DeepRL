@@ -67,7 +67,6 @@ class variables():
         self.agent = A2CAgent(self.ACTION_SPACE, self.a2cDNN, self.GAMMA, self.BATCH_SIZE)
 
     def transfer_learning_test(self):
-
         self.env.close()
 
         environment = gym.make(self.TEST_TRANSFER_PROBLEM[self.index_execution])
