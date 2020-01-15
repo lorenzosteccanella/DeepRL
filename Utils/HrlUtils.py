@@ -115,7 +115,10 @@ class Node:
         return "["+str(self.state) + ", " + str(self.value)+", " + str(self.visit_count) + "]"
 
     def __hash__(self):
-        return hash(self.state)
+        if type(self.state).__name__ == "ndarray":
+            return hash(self.state.tostring())
+        else:
+            return hash(self.state)
 
     @staticmethod
     def set_pseudo_count(pseudo_count_factor):

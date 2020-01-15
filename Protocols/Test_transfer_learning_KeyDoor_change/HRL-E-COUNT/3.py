@@ -119,8 +119,10 @@ class variables():
         for node in self.agent.graph.node_list:
             if node.state == "key taken":
                 self.agent.graph.node_list.remove(node)
+        for node in self.agent.graph.node_list:
             if node.state == "door close":
                 self.agent.graph.node_list.remove(node)
+        for node in self.agent.graph.node_list:
             if node.state == "door open":
                 self.agent.graph.node_list.remove(node)
 
@@ -132,11 +134,15 @@ class variables():
             if edge.destination.state == "key taken":
                 self.agent.graph.edge_list.remove(edge)
 
+        for edge in self.agent.graph.edge_list:
+
             if edge.origin.state == "door close":
                 self.agent.graph.edge_list.remove(edge)
 
             if edge.destination.state == "door close":
                 self.agent.graph.edge_list.remove(edge)
+
+        for edge in self.agent.graph.edge_list:
 
             if edge.origin.state == "door open":
                 self.agent.graph.edge_list.remove(edge)

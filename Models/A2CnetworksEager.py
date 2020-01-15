@@ -5,20 +5,20 @@ from Losses.Losses import Losses
 import tensorflow.contrib.slim as slim
 import inspect
 
-#        self.conv1 = keras.layers.Conv2D(8, 8, (4, 4), padding='VALID', activation='elu', kernel_initializer='he_normal', )
-#        self.conv2 = keras.layers.Conv2D(16, 4, (2, 2), padding='VALID', activation='elu', kernel_initializer='he_normal')
-#        self.conv3 = keras.layers.Conv2D(16, 3, (1, 1), padding='VALID', activation='elu', kernel_initializer='he_normal')
-#        self.flatten = keras.layers.Flatten()
-#        self.dense = keras.layers.Dense(256)
+# self.conv1 = keras.layers.Conv2D(32, 8, (4, 4), padding='VALID', activation='elu', kernel_initializer='he_normal', )
+# self.conv2 = keras.layers.Conv2D(64, 4, (2, 2), padding='VALID', activation='elu', kernel_initializer='he_normal')
+# self.conv3 = keras.layers.Conv2D(64, 3, (1, 1), padding='VALID', activation='elu', kernel_initializer='he_normal')
+# self.flatten = keras.layers.Flatten()
+# self.dense = keras.layers.Dense(256)
 
 class SharedConvLayers(keras.Model):
     def __init__(self, learning_rate_observation_adjust=1):
         super(SharedConvLayers, self).__init__(name="SharedConvLayers")
-        self.conv1 = keras.layers.Conv2D(8, 8, (4, 4), padding='VALID', activation='elu', kernel_initializer='he_normal', )
-        self.conv2 = keras.layers.Conv2D(16, 4, (2, 2), padding='VALID', activation='elu', kernel_initializer='he_normal')
-        self.conv3 = keras.layers.Conv2D(16, 3, (1, 1), padding='VALID', activation='elu', kernel_initializer='he_normal')
+        self.conv1 = keras.layers.Conv2D(32, 8, (4, 4), padding='VALID', activation='elu', kernel_initializer='he_normal', )
+        self.conv2 = keras.layers.Conv2D(64, 4, (2, 2), padding='VALID', activation='elu', kernel_initializer='he_normal')
+        self.conv3 = keras.layers.Conv2D(64, 3, (1, 1), padding='VALID', activation='elu', kernel_initializer='he_normal')
         self.flatten = keras.layers.Flatten()
-        self.dense = keras.layers.Dense(32)
+        self.dense = keras.layers.Dense(256)
         self.learning_rate_adjust = learning_rate_observation_adjust
 
     def call(self, x):
@@ -206,3 +206,9 @@ class A2CEagerSync:
                                                    self.global_step)
 
         return [None, None]
+
+    def save_weights(self):
+        self.model_actor_critic.save_weights("/home/lorenzo/Documenti/UPF/DeepRL/TF_models_weights/A2C_weights")
+
+    def load_weights(self):
+        self.model_actor_critic.load_weights("/home/lorenzo/Documenti/UPF/DeepRL/TF_models_weights/A2C_weights")
