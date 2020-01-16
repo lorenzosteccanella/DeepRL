@@ -2,10 +2,8 @@ import gym
 from Utils import normalize, get_pixels_from_obs, np_in_list, ssim_in_list, SSIM_equal, sample_colors, make_gray_scale, hash_numpy_array_equal, make_downsampled_image
 from collections import deque
 import numpy as np
-from sklearn.naive_bayes import GaussianNB
-import pickle
 
-class Gridenv_GaussianNB_wrapper(gym.Wrapper):
+class PositionGridenv_GE_pick_up_objects_v0(gym.Wrapper):
 
 
     def __init__(self, env, parameters):
@@ -14,13 +12,9 @@ class Gridenv_GaussianNB_wrapper(gym.Wrapper):
         self.parameters = parameters
         self.width = self.parameters["width"]
         self.height = self.parameters["height"]
+        self.n_zones = self.parameters["n_zones"]
         self.images_stack = deque([], maxlen=self.parameters["stack_images_length"])
         self.KEY = False
-        self.model = self.load_model('/home/lorenzo/Documenti/UPF/DeepRL/Wrappers_Env/GaussianNB_encoder.pkl')
-
-    def load_model(self, path):
-        with open(path, 'rb') as fid:
-            return pickle.load(fid)
 
     def reset(self, **kwargs):
         observation = self.env.reset(**kwargs)
@@ -62,23 +56,35 @@ class Gridenv_GaussianNB_wrapper(gym.Wrapper):
 
         return img_option_stacked
 
-    def encode(self,s):
-        return self.model.predict(s)
-
     def get_position_abstract_state_gridenv_GE_MazeKeyDoor_v0(self, position, reward):
+        step_x = int((self.width - 2) / self.n_zones)
+        step_y = int((self.height - 2) / self.n_zones)
 
         #initial state returned when the environments is resetted
         if position is None:
-            x = 1
-            y = self.height-2
-            r = 0
-        else:
-            x = position[0]
-            y = position[1]
-            r = reward
+            return "abstract state %i %i" % (step_x, self.height-2)
 
-        state = np.asarray([x,y], dtype=np.float32).reshape(1, -1)
-        return self.encode(state)
+        x = position[0]
+        y = position[1]
+        r = reward
 
+        for grid_x in range(step_x, (self.width - 1), step_x):
+            for grid_y in range(step_y, (self.height - 1), step_y):
 
+                # dying
+                if x == 0:
+                    if y<=grid_y:
+                        return "died %i %i" % (x + grid_x, grid_y)
+                elif x == self.width - 1:
+                    if y<=grid_y:
+                        return "died %i %i" % (x -1, grid_y)
+                # dying
+                if y == 0:
+                    if x <= grid_x:
+                        return "died %i %i" % (grid_x, y + grid_y)
+                elif y == self.height - 1:
+                    if x <= grid_x:
+                        return "died %i %i" % (grid_x, y -1)
 
+                if x <= grid_x and y <= grid_y:
+                    return "abstract state %i %i" % (grid_x, grid_y)

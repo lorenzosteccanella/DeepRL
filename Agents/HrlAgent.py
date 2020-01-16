@@ -183,9 +183,9 @@ class HrlAgent(AbstractAgent):
             self.manager_exp += 1
             self.epsilon = self.MIN_EPSILON + (1 - self.MIN_EPSILON) * math.exp(-self.LAMBDA * self.manager_exp)
 
-        if sample[4]:
-            self.path_2_print.clear()
-            self.distances_2_print.clear()
+        #if sample[4]:
+        #    self.path_2_print.clear()
+        #    self.distances_2_print.clear()
 
     def replay(self):
         pass

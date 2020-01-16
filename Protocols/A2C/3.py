@@ -20,7 +20,7 @@ class variables():
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-        self.seeds = [100]
+        self.seeds = [10]
         self.PROBLEM = 'GE_MazeKeyDoor-v10'
         self.ACTION_SPACE = [0, 1, 2, 3, 4]
         self.GAMMA = 0.99
@@ -63,7 +63,7 @@ class variables():
         # Just to be sure that we don't have some others graph loaded
         tf.reset_default_graph()
 
-        shared_dense_layers = SharedDenseLayers(30)
+        shared_dense_layers = SharedDenseLayers(32)
 
         self.a2cDNN = A2CEagerSync(30, len(self.ACTION_SPACE), CriticNetwork, ActorNetwork,
                                    self.LEARNING_RATE, self.WEIGHT_MSE, self.WEIGHT_CE_EXPLORATION, shared_dense_layers)

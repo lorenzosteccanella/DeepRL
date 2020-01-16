@@ -2,11 +2,10 @@ from Agents import HrlAgent, RandomAgentOption, A2COption
 import gym
 import tensorflow as tf
 import os
-from Environment import Environment
-from Wrappers_Env import Gridenv_GaussianNB_wrapper
+from Wrappers_Env import PositionGridenv_GE_MazeKeyDoor_v0, PositionGridenv_GE_pick_up_objects_v0
 from Utils import ToolEpsilonDecayExploration, Preprocessing
 from Models.A2CnetworksEager import *
-from Utils import SaveResult
+from Utils import SaveResult, LoadEnvironment
 from Utils.HrlExplorationStrategies import get_best_action, get_epsilon_best_action, get_epsilon_exploration, get_epsilon_count_exploration
 import gridenvs.examples
 
@@ -14,18 +13,21 @@ class variables():
 
     def __init__(self):
 
+        self.index_execution = 0
+
         tf.enable_eager_execution()
 
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
         self.seeds = range(2)
-        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  TEST_HRL_E_GREEDY_1/')
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + " - " + (os.path.basename(os.path.dirname(__file__))) + ' - 5/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Key_Door_HRL_E_GREEDY'
-        self.NUMBER_OF_EPOCHS = 4000
+        self.NUMBER_OF_EPOCHS = 2000
 
-        self.PROBLEM = 'GE_MazeKeyDoor-v10'
+        self.PROBLEM = 'GE_MazeKeyDoor18key1color1-v0'
+        self.TEST_TRANSFER_PROBLEM = ['GE_MazeKeyDoor18pick_up_objects1color1-v0']
         environment = gym.make(self.PROBLEM)
 
         self.ACTION_SPACE = [0, 1, 2, 3, 4]
@@ -34,22 +36,22 @@ class variables():
             "stack_images_length": 1,
             "width": 10,
             "height": 10,
+            "n_zones": 4
         }
 
-        self.wrapper = Gridenv_GaussianNB_wrapper(environment, self.wrapper_params)
-
-        display_env = False
-
-        if display_env:
-            from Utils import ShowRenderHRL
-            rendering = ShowRenderHRL
-        else:
-            rendering = False
-
-        self.env = Environment(self.wrapper, preprocessing=False, rendering_custom_class=rendering)
+        self.load_environment = LoadEnvironment()
+        self.env = None
 
     def reset(self):
-        self.env.close()
+        self.index_execution = 0
+
+        if self.env is not None:
+            self.env.close()
+
+        self.number_of_stacked_frames = 1
+        environment = gym.make(self.PROBLEM)
+        wrapper = PositionGridenv_GE_MazeKeyDoor_v0(environment, self.wrapper_params)
+        self.env = self.load_environment.Load(wrapper, False, False)
 
         # Just to be sure that we don't have some others graph loaded
         tf.reset_default_graph()
@@ -86,6 +88,35 @@ class variables():
         ToolEpsilonDecayExploration.epsilon_decay_end_steps(self.MIN_EPSILON, self.LAMBDA)
 
         self.agent = HrlAgent(self.option_params, self.random_agent, self.exploration_fn, self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1, self.SAVE_RESULT)
+
+
+    def transfer_learning_test(self):
+
+        if self.env is not None:
+            self.env.close()
+
+        self.number_of_stacked_frames = 1
+        environment = gym.make(self.TEST_TRANSFER_PROBLEM[self.index_execution])
+        wrapper = PositionGridenv_GE_pick_up_objects_v0(environment, self.wrapper_params)
+        self.env = self.load_environment.Load(wrapper, False, False)
+
+        self.TRANSFER_FILE_NAME = self.FILE_NAME + " - " + self.TEST_TRANSFER_PROBLEM[self.index_execution]
+
+        self.agent.set_name_file_2_save(self.TRANSFER_FILE_NAME)
+
+        self.agent.graph.node_list.clear()
+
+        self.agent.graph.edge_list.clear()
+
+        self.agent.reset_exploration()
+        self.agent.reset_pseudo_count_exploration()
+
+        self.agent.reset_statistics()
+
+
+        self.index_execution += 1
+
+
 
 
 

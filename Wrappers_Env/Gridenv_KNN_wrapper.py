@@ -2,10 +2,10 @@ import gym
 from Utils import normalize, get_pixels_from_obs, np_in_list, ssim_in_list, SSIM_equal, sample_colors, make_gray_scale, hash_numpy_array_equal, make_downsampled_image
 from collections import deque
 import numpy as np
-from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
 import pickle
 
-class Gridenv_GaussianNB_wrapper(gym.Wrapper):
+class Gridenv_KNN_wrapper(gym.Wrapper):
 
 
     def __init__(self, env, parameters):
@@ -16,7 +16,7 @@ class Gridenv_GaussianNB_wrapper(gym.Wrapper):
         self.height = self.parameters["height"]
         self.images_stack = deque([], maxlen=self.parameters["stack_images_length"])
         self.KEY = False
-        self.model = self.load_model('/home/lorenzo/Documenti/UPF/DeepRL/Wrappers_Env/GaussianNB_encoder.pkl')
+        self.model = self.load_model('/home/lorenzo/Documenti/UPF/DeepRL/Wrappers_Env/KNN_encoder.pkl')
 
     def load_model(self, path):
         with open(path, 'rb') as fid:

@@ -1,2 +1,0 @@
-model_checkpoint_path: "A2C_weights"
-all_model_checkpoint_paths: "A2C_weights"
