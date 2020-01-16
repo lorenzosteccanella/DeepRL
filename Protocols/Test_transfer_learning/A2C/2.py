@@ -1,11 +1,10 @@
 from Models.A2CnetworksEager import *
 import tensorflow as tf
 import os
-from Environment import Environment
 from Agents import A2CAgent
 import gym
 import gridenvs.examples
-from Utils import SaveResult, Preprocessing
+from Utils import SaveResult, Preprocessing, LoadEnvironment
 
 class variables():
 
@@ -35,26 +34,20 @@ class variables():
 
         self.PROBLEM = 'GE_MazeKeyDoor18key1-v0'
         self.TEST_TRANSFER_PROBLEM = ['GE_MazeKeyDoor18key2-v0', 'GE_MazeKeyDoor18key3-v0']
-        environment = gym.make(self.PROBLEM)
 
-        self.number_of_stacked_frames = 1
-
-        preprocessing = Preprocessing(84, 84, 3, self.number_of_stacked_frames)
-
-        display_env = False
-
-        if display_env:
-            from Utils import ShowRenderHRL
-            rendering = ShowRenderHRL
-        else:
-            rendering = False
-
-        self.env = Environment(environment, preprocessing=preprocessing, rendering_custom_class=rendering)
+        self.load_environment = LoadEnvironment()
+        self.env = None
 
     def reset(self):
         self.index_execution = 0
 
-        self.env.close()
+        if self.env is not None:
+            self.env.close()
+
+        self.number_of_stacked_frames = 1
+        preprocessing = Preprocessing(84, 84, 3, self.number_of_stacked_frames)
+        environment = gym.make(self.PROBLEM)
+        self.env = self.load_environment.Load(environment, preprocessing, False)
 
         # Just to be sure that we don't have some others graph loaded
         tf.reset_default_graph()
@@ -68,22 +61,15 @@ class variables():
 
     def transfer_learning_test(self):
 
-        self.env.close()
+        if self.env is not None:
+            self.env.close()
 
+        self.number_of_stacked_frames = 1
+        preprocessing = Preprocessing(84, 84, 3, self.number_of_stacked_frames)
         environment = gym.make(self.TEST_TRANSFER_PROBLEM[self.index_execution])
+        self.env = self.load_environment.Load(environment, preprocessing, False)
 
         self.TRANSFER_FILE_NAME = self.FILE_NAME + " - " + self.TEST_TRANSFER_PROBLEM[self.index_execution]
 
-        preprocessing = Preprocessing(84, 84, 3, self.number_of_stacked_frames)
-
-        display_env = False
-
-        if display_env:
-            from Utils import ShowRenderHRL
-            rendering = ShowRenderHRL
-        else:
-            rendering = False
-
-        self.env = Environment(environment, preprocessing=preprocessing, rendering_custom_class=rendering)
-
         self.index_execution += 1
+

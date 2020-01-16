@@ -93,6 +93,7 @@ for experiment in args[1::]:
 
         if(has_method(variables, 'transfer_learning_test')):
             for _ in range(len(variables.TEST_TRANSFER_PROBLEM)):
+                tf.set_random_seed(seed)
                 random.seed(seed)
                 np.random.seed(seed)
                 variables.env.env.seed(seed)  # Should I set the seed of the environment as well?

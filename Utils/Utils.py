@@ -10,6 +10,22 @@ import cv2
 import gym
 from gym import spaces
 import math
+from Environment import Environment
+
+
+class LoadEnvironment:
+
+    def Load(self, environment, preprocessing, display_env = True):
+        if display_env:
+            from Utils import ShowRenderHRL
+            rendering = ShowRenderHRL
+        else:
+            rendering = False
+
+        env = Environment(environment, preprocessing=preprocessing, rendering_custom_class=rendering)
+
+        return env
+
 
 
 class Preprocessing:

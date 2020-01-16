@@ -2,11 +2,10 @@ from Agents import HrlAgent, RandomAgentOption, A2COption
 import gym
 import tensorflow as tf
 import os
-from Environment import Environment
 from Wrappers_Env import PositionGridenv_GE_MazeKeyDoor_v0
 from Utils import ToolEpsilonDecayExploration, Preprocessing
 from Models.A2CnetworksEager import *
-from Utils import SaveResult
+from Utils import SaveResult, LoadEnvironment
 from Utils.HrlExplorationStrategies import get_best_action, get_epsilon_best_action, get_epsilon_exploration, get_epsilon_count_exploration
 import gridenvs.examples
 
@@ -27,8 +26,8 @@ class variables():
         self.FILE_NAME = 'Key_Door_HRL_E_GREEDY'
         self.NUMBER_OF_EPOCHS = 2000
 
-        self.PROBLEM = 'GE_MazeKeyDoor10keyDoor1-v0'
-        self.TEST_TRANSFER_PROBLEM = ['GE_MazeKeyDoor10keyDoor2-v0', 'GE_MazeKeyDoor10keyDoor3-v0']
+        self.PROBLEM = 'GE_MazeKeyDoor18keyDoor1-v0'
+        self.TEST_TRANSFER_PROBLEM = ['GE_MazeKeyDoor18keyDoor2-v0', 'GE_MazeKeyDoor18keyDoor3-v0']
         environment = gym.make(self.PROBLEM)
 
         self.ACTION_SPACE = [0, 1, 2, 3, 4]
@@ -40,22 +39,19 @@ class variables():
             "n_zones": 8
         }
 
-        self.wrapper = PositionGridenv_GE_MazeKeyDoor_v0(environment, self.wrapper_params)
-
-        display_env = False
-
-        if display_env:
-            from Utils import ShowRenderHRL
-            rendering = ShowRenderHRL
-        else:
-            rendering = False
-
-        self.env = Environment(self.wrapper, preprocessing=False, rendering_custom_class=rendering)
+        self.load_environment = LoadEnvironment()
+        self.env = None
 
     def reset(self):
         self.index_execution = 0
 
-        self.env.close()
+        if self.env is not None:
+            self.env.close()
+
+        self.number_of_stacked_frames = 1
+        environment = gym.make(self.PROBLEM)
+        wrapper = PositionGridenv_GE_MazeKeyDoor_v0(environment, self.wrapper_params)
+        self.env = self.load_environment.Load(wrapper, False, False)
 
         # Just to be sure that we don't have some others graph loaded
         tf.reset_default_graph()
@@ -96,25 +92,17 @@ class variables():
 
     def transfer_learning_test(self):
 
-        self.env.close()
+        if self.env is not None:
+            self.env.close()
 
+        self.number_of_stacked_frames = 1
         environment = gym.make(self.TEST_TRANSFER_PROBLEM[self.index_execution])
+        wrapper = PositionGridenv_GE_MazeKeyDoor_v0(environment, self.wrapper_params)
+        self.env = self.load_environment.Load(wrapper, False, False)
 
         self.TRANSFER_FILE_NAME = self.FILE_NAME + " - " + self.TEST_TRANSFER_PROBLEM[self.index_execution]
 
         self.agent.set_name_file_2_save(self.TRANSFER_FILE_NAME)
-
-        self.wrapper = PositionGridenv_GE_MazeKeyDoor_v0(environment, self.wrapper_params)
-
-        display_env = False
-
-        if display_env:
-            from Utils import ShowRenderHRL
-            rendering = ShowRenderHRL
-        else:
-            rendering = False
-
-        self.env = Environment(self.wrapper, preprocessing=False, rendering_custom_class=rendering)
 
         for node in self.agent.graph.node_list:
             if node.state == "key taken":
