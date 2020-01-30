@@ -35,6 +35,7 @@ class Environment:
 
         self.total_r_episode = 0  # total reward
         while True:
+
             a = agent.act(s)
             img, r, done, info = self.env.step(a)
             if False: #and r > 0:  # just to check the correct episodes
@@ -45,13 +46,9 @@ class Environment:
             else:
                 s_ = self.preprocessing.preprocess_image(img)  # reshape and preprocess the image
 
-            # position_ = info["position"]
             r = float(r)
             #Stocastich_reward = np.random.normal(1.0, 1.0)
             r = np.clip(r, -1, 1)
-
-            #if done:  # terminal state
-            #    s_ = None
 
             agent.observe((s, a, r, s_, done, info))
             agent.replay()
@@ -59,13 +56,7 @@ class Environment:
             self.total_r_episode += r
             self.n_step += 1
 
-            # h_s = agent.get_observation_encoding(s)
-            # h_s_ = agent.get_observation_encoding(s_)
-            #
-            # self.save_trajectory((position, s, h_s, a, r, position_, s_, h_s_, done), self.total_r_episode, done)
-
             s = s_
-            # position = position_
 
             if done:
                 if self.preprocessing:
@@ -73,8 +64,6 @@ class Environment:
                 break
 
         self.n_episodes += 1
-
-        #agent.main_model_nn.save_weights()
 
         return self.n_episodes, self.n_step, self.total_r_episode
 
@@ -84,18 +73,19 @@ class Environment:
         self.n_step = 0
         self.total_r_episode = 0
 
-    # def save_trajectory(self, sample, total_r_episode, done):
-    #
-    #     self.trajectory.append(sample)
-    #
-    #     if(done):
-    #         with open('experts_trajectories.pkl', 'ab') as f:
-    #             pickle.dump(self.trajectory, f)
-    #             self.trajectory.clear()
-    #             self.number_of_trajectory_saved += 1
-    #
-    #     if done:
-    #         self.trajectory.clear()
-    #
-    #     if(self.number_of_trajectory_saved>=1000):
-    #         raise NameError('Finished to Collect data')
+    def save_trajectory(self, sample, total_r_episode, done):
+
+        self.trajectory.append(sample)
+
+        if(done):
+            with open('experts_trajectories.pkl', 'ab') as f:
+                pickle.dump(self.trajectory, f)
+                self.trajectory.clear()
+                self.number_of_trajectory_saved += 1
+
+        if done:
+            self.trajectory.clear()
+
+        if(self.number_of_trajectory_saved>=1000):
+            raise NameError('Finished to Collect data')
+

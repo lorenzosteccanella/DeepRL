@@ -41,3 +41,6 @@ class A2COption(AbstractOption):
 
     def __str__(self):
         return "option " + str(self.id)
+
+    def get_state_value(self, s):
+        return self.a2cDNN.prediction_critic([s])[0][0]

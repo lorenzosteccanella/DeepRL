@@ -140,6 +140,7 @@ class Graph:
         self.new_edge_encontered = False
         self.index_4_bestpathprint = 0
         self.distances = {}
+        self.total_reward_node = 0
 
     # def init_distances(self):
     #     distances = {}
@@ -176,10 +177,11 @@ class Graph:
                 #edge.update_value(reward)
                 self.current_edge = edge
 
-    def node_update(self, old_node, new_node=False, reward=False):
+    def node_update(self, old_node, new_node=False, reward=False, done=False):
 
         self.new_node_encontered = False
 
+        # if the nodes are new I add them to the list
         if old_node not in self.node_list:
             self.node_list.append(old_node)
             self.new_node_encontered = True
@@ -188,10 +190,32 @@ class Graph:
             if new_node not in self.node_list:
                 self.node_list.append(new_node)
                 self.new_node_encontered = True
-        if new_node:
+
+
+        #setting the value for the specific abstract node
+        if new_node: # if we recived the new node together with the old node as parameters
             node = self.node_list[self.node_list.index(new_node)]
-            node.set_value((node.get_value() + reward) / 2)
-        else:
+
+            if( old_node != new_node): # first step in a new abstract state
+                node_value = self.node_list[self.node_list.index(old_node)]  # we get the old node from the list
+
+                #print(node_value.state, node.state, self.total_reward_node)
+                #node.set_value((node.get_value() * node.get_n_visits) + reward) / (node.get_n_visits + 1)) # iterative average
+                node.set_value(0.6*node.get_value() + 0.4*reward) # iterative moving average
+                self.total_reward_node = 0
+                self.total_reward_node += reward
+
+            elif( old_node == new_node):
+                #print(old_node.state, new_node.state, self.total_reward_node)
+                self.total_reward_node += reward
+
+            if done:
+                self.total_reward_node = 0
+
+
+
+        #this is just used to add the first abstract state at the beginning of a epoch
+        else: # if we recived just the old node as parameter i.e. new_node = False and reward = False
             node = self.node_list[self.node_list.index(old_node)]
 
         node.visited() # to augment the visit counter
@@ -205,7 +229,7 @@ class Graph:
 
         new_node = Node(sample[3]["manager"], sample[2])
 
-        old_node_in_list, new_node_in_list = self.node_update(old_node, new_node, sample[2])
+        old_node_in_list, new_node_in_list = self.node_update(old_node, new_node, sample[2], sample[4])
         self.edge_update(old_node_in_list, new_node_in_list, sample[2])
 
         return self.new_node_encontered, self.new_edge_encontered

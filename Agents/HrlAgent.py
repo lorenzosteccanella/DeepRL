@@ -94,7 +94,7 @@ class HrlAgent(AbstractAgent):
 
     def save_statistics(self):
 
-        if self.number_of_options_executed % 2000 == 0 and self.old_number_of_options != self.number_of_options_executed:
+        if self.number_of_options_executed % 10000 == 0 and self.old_number_of_options != self.number_of_options_executed:
             if self.save_result is not False:
                 message = ""
                 for target in self.path_2_print:

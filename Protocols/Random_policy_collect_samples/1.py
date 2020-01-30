@@ -19,7 +19,7 @@ class variables():
         self.seeds = [1]
         self.PROBLEM = 'GE_MazeKeyDoor-v10'
         self.ACTION_SPACE = [0, 1, 2, 3, 4]
-        self.RESULTS_FOLDER = 'A2C/'
+        self.RESULTS_FOLDER = 'RandomPolicy/'
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Key_Door_A2C'
 

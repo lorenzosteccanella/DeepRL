@@ -12,24 +12,45 @@ class Gridenv_position(gym.Wrapper):
         self.parameters = parameters
         self.width = self.parameters["width"]
         self.height = self.parameters["height"]
+        self.KEY = False
 
     def reset(self, **kwargs):
         observation = self.env.reset(**kwargs)
-        return self.get_position_gridenv_GE_MazeKeyDoor_v0(None)
+        return self.get_position_gridenv_GE_MazeKeyDoor_v0(None, None)
 
     def step(self, action):
         observation, reward, done, info = self.env.step(action)
-        observation = self.get_position_gridenv_GE_MazeKeyDoor_v0(info["position"])
+        observation = self.get_position_gridenv_GE_MazeKeyDoor_v0(info["position"], reward)
         return observation, reward, done, info
 
-    def get_position_gridenv_GE_MazeKeyDoor_v0(self, position):
+    def get_position_gridenv_GE_MazeKeyDoor_v0(self, position, reward):
 
         if position is None:
-            return (1, self.height-2)
+            self.KEY = False
+            return (1,self.height-2,0)
 
-        else:
-
+        # key taken
+        if reward == 1 and self.KEY == False:
+            self.KEY = True
             x = position[0]
             y = position[1]
+            return (x,y,1)
 
-            return (x,y)
+        else:
+            if self.KEY == False:
+                x = position[0]
+                y = position[1]
+
+                return (x,y,0)
+
+            if self.KEY == True:
+                x = position[0]
+                y = position[1]
+
+                return (x,y,1)
+
+    def setKey(self, bool):
+        self.KEY = bool
+
+
+

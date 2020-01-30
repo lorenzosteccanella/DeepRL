@@ -4,3 +4,5 @@ from .Gridenv_position import Gridenv_position
 from .Gridenv_GaussianNB_wrapper import Gridenv_GaussianNB_wrapper
 from .Gridenv_KNN_wrapper import Gridenv_KNN_wrapper
 from .Position_based_abstraction_wrapper_change_task import PositionGridenv_GE_pick_up_objects_v0
+from .Origin_wrapper import Origin_wrapper
+from .Gridenv_DiffusionTimeCluster import Gridenv_DiffusionTimeCluster

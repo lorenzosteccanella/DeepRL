@@ -26,3 +26,6 @@ class AbstractOption(abc.ABC):
 
     def get_edge_list(self):
         return self.edge_list
+
+    def get_state_value(self, s):
+        pass
