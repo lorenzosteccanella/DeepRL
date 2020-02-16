@@ -48,9 +48,9 @@ class Environment:
 
             r = float(r)
             #Stocastich_reward = np.random.normal(1.0, 1.0)
-            r = np.clip(r, -1, 1)
+            r_a = np.clip(r, -1, 1)
 
-            agent.observe((s, a, r, s_, done, info))
+            agent.observe((s, a, r_a, s_, done, info))   # qui stai passando la reward clipped!!!
             agent.replay()
 
             self.total_r_episode += r

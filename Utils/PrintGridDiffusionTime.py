@@ -31,7 +31,7 @@ for k in range(depth):
         print("")
 
 
-N = 10
+N = 14
 
 print("")
 print("")

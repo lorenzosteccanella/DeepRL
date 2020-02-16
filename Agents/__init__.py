@@ -10,3 +10,5 @@ from .A2CSILAgent import A2CSILAgent
 from .A2CSILOption import A2CSILOption
 from .RandomAgentWithNeuralNetwork import RandomAgentWithNeuralNetwork
 from .DiffusionTimeAgent import DiffusionTimeAgent
+from .ExplorationEffortAgent_nn import ExplorationEffortAgent_nn
+from .ExplorationEffortAgent_tabular import ExplorationEffortAgent_tabular

@@ -6,3 +6,4 @@ from .Gridenv_KNN_wrapper import Gridenv_KNN_wrapper
 from .Position_based_abstraction_wrapper_change_task import PositionGridenv_GE_pick_up_objects_v0
 from .Origin_wrapper import Origin_wrapper
 from .Gridenv_DiffusionTimeCluster import Gridenv_DiffusionTimeCluster
+from .Montezuma_RAM_position_wrapper import Montezuma_RAM_position_wrapper

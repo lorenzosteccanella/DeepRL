@@ -31,6 +31,9 @@ class A2COption(AbstractOption):
         if self.preprocessing:
             s = self.preprocessing.preprocess_image(sample[0])
             s_ = self.preprocessing.preprocess_image(sample[3])
+        else:
+            s = sample[0]
+            s_ = sample[3]
         sample = (s, sample[1], sample[2], s_, sample[4], sample[5])
         #print(sample[2])
         self.agent.observe(sample)

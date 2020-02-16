@@ -141,6 +141,7 @@ class Graph:
         self.index_4_bestpathprint = 0
         self.distances = {}
         self.total_reward_node = 0
+        self.graph = {} # this is the graph representation with nodes as key and eges list as values, this structure is just used to speed up computation
 
     # def init_distances(self):
     #     distances = {}

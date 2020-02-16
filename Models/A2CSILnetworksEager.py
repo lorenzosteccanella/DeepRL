@@ -12,7 +12,7 @@ class SharedConvLayers(keras.Model):
         self.conv2 = keras.layers.Conv2D(64, 4, (2, 2), padding='VALID', activation='elu', kernel_initializer='he_normal')
         self.conv3 = keras.layers.Conv2D(64, 3, (1, 1), padding='VALID', activation='elu', kernel_initializer='he_normal')
         self.flatten = keras.layers.Flatten()
-        self.dense = keras.layers.Dense(256)
+        self.dense = keras.layers.Dense(256, activation='elu', kernel_initializer='he_normal')
         self.learning_rate_adjust = learning_rate_observation_adjust
 
     def call(self, x):

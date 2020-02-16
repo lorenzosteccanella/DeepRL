@@ -46,7 +46,7 @@ class A2CAgent(AbstractAgent):
         returns = np.append(np.zeros_like(rewards), next_value, axis=-1)
         # returns are calculated as discounted sum of future rewards
         for t in reversed(range(rewards.shape[0])):
-            returns[t] = rewards[t] + self.gamma * returns[t + 1] * (1 - dones[t])
+            returns[t] = rewards[t] + self.gamma * returns[t + 1] * (1 - dones[t])   # is it gamma corrected here?
         returns = returns[:-1]
         # advantages are returns - baseline, value estimates in our case
         advantages = returns - values
