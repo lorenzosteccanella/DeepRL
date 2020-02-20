@@ -16,12 +16,14 @@ class Montezuma_RAM_position_wrapper(gym.Wrapper):
         self.n_zones = self.parameters["n_zones"] # the parameter to which we will divide the position
         self.images_stack = deque([], maxlen=self.parameters["stack_images_length"])
         self.KEY = False
+        self.total_reward = 0
+        self.old_position = None
 
     def reset(self, **kwargs):
         observation = self.env.reset(**kwargs)
         observation = self.observation(observation)
 
-        observation["manager"] = self.get_position_montezuma(observation, 0)
+        observation["manager"] = self.get_position_montezuma(observation, 0, False)
         return observation
 
     def step(self, action):
@@ -29,7 +31,7 @@ class Montezuma_RAM_position_wrapper(gym.Wrapper):
 
         observation = self.observation(observation)
 
-        observation["manager"] = self.get_position_montezuma(observation, reward)
+        observation["manager"] = self.get_position_montezuma(observation, reward, done)
 
         return observation, reward, done, info
 
@@ -48,7 +50,13 @@ class Montezuma_RAM_position_wrapper(gym.Wrapper):
         y = obs["vanilla"][_hex_to_int('0xAB')]
         return x, y
 
-    def get_position_montezuma(self, ram, reward):
+    def get_position_montezuma(self, ram, reward, done):
+
+        if done:
+            self.total_reward = 0
+            self.old_position = None
+
+        self.total_reward += reward
 
         x, y = self.get_xy(ram)
 
@@ -56,8 +64,21 @@ class Montezuma_RAM_position_wrapper(gym.Wrapper):
 
         d_y = math.modf(y / self.n_zones)[1] # you have to get the int of this
 
-        if reward > 0 :
-            return (d_x, d_y, reward)
+        if self.old_position:
 
-        else : 
-            return (d_x, d_y, 0)
+            if self.old_position != (d_x, d_y, self.total_reward):
+                print(d_x, d_y, self.total_reward)
+
+        else:
+
+            print(d_x, d_y, self.total_reward)
+
+        self.old_position = (d_x, d_y, self.total_reward)
+
+        return (d_x, d_y, self.total_reward)
+
+        #if total_reward > 0 :
+        #    return (d_x, d_y, reward)
+
+        #else :
+        #    return (d_x, d_y, 0)

@@ -14,7 +14,7 @@ class variables():
         tf.enable_eager_execution()
 
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
-        os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2"
+        os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5"
 
         self.seeds = [1]
         self.PROBLEM = 'GE_MazeKeyDoor-v10'
@@ -23,7 +23,7 @@ class variables():
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Key_Door_A2C'
 
-        self.NUMBER_OF_EPOCHS = 4000
+        self.NUMBER_OF_EPOCHS = 20000
 
         self.preprocess = None
 
@@ -49,7 +49,7 @@ class variables():
         # Just to be sure that we don't have some others graph loaded
         tf.reset_default_graph()
 
-        self.buffer = ExperienceReplay(10000)
+        self.buffer = ExperienceReplay(5000)
 
         learning_rate = 0.0001
         observation = SharedConvLayers()

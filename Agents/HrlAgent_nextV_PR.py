@@ -38,11 +38,23 @@ class HrlAgent_nextV_PR(HrlAgent):
                     self.number_of_options_executed += 1
                     self.number_of_successfull_option += 1
 
-                    values = []
-                    for option in self.options:
-                        values.append(option.get_state_value(s_))
+                    edges_from_current_node = self.graph.get_edges_of_a_node(self.target)
 
-                    max_value = max(values)
+                    if len(edges_from_current_node)>0:
+                        values = []
+                        for i in range(len(edges_from_current_node)):
+                            values.append(self.options[i].get_state_value(s_))
+
+                        max_value = max(values)
+
+                    else:
+                        max_value = 0
+
+                    #values = []
+                    #for option in self.options:
+                    #    values.append(option.get_state_value(s_))
+
+                    #max_value = max(values)
 
                     # let's update the dictionary first
 

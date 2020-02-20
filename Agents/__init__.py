@@ -12,3 +12,4 @@ from .RandomAgentWithNeuralNetwork import RandomAgentWithNeuralNetwork
 from .DiffusionTimeAgent import DiffusionTimeAgent
 from .ExplorationEffortAgent_nn import ExplorationEffortAgent_nn
 from .ExplorationEffortAgent_tabular import ExplorationEffortAgent_tabular
+from .ExplorationEffortRepresentativeStates import ExplorationEffortRepresentativeStates

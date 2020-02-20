@@ -76,8 +76,8 @@ class variables():
             "learning_rate": 0.0001,
             "gamma": 0.99,
             "batch_size": 6,
-            "sil_batch_size": 64,
-            "imitation_buffer_size":64*100,
+            "sil_batch_size": 32,
+            "imitation_buffer_size":32*100,
             "imitation_learning_steps": 4,
 
             "preprocessing": preprocessing

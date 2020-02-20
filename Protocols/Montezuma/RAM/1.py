@@ -1,4 +1,4 @@
-from Agents import HrlAgent, RandomAgentOption, A2COption
+from Agents import HrlAgent, HrlAgent_nextV_PR, RandomAgentOption, A2COption
 import gym
 import tensorflow as tf
 import os
@@ -34,7 +34,7 @@ class variables():
 
         self.wrapper_params = {
             "stack_images_length": 1,
-            "n_zones": 10
+            "n_zones": 30
         }
 
         self.wrapper = Montezuma_RAM_position_wrapper(environment, self.wrapper_params)
@@ -61,7 +61,7 @@ class variables():
 
         self.option_params = {
             "option": A2COption,
-            "h_size": 30,
+            "h_size": 128,
             "action_space": self.ACTION_SPACE,
             "critic_network": CriticNetwork,
             "actor_network": ActorNetwork,
@@ -75,7 +75,7 @@ class variables():
         }
 
         self.random_agent = RandomAgentOption(self.ACTION_SPACE)
-        self.LAMBDA = 0.5
+        self.LAMBDA = 0.005
         self.MIN_EPSILON = 0
         self.PSEUDO_COUNT = 1000
 
@@ -84,7 +84,7 @@ class variables():
         # to know in how many episodes the epsilon will decay
         ToolEpsilonDecayExploration.epsilon_decay_end_steps(self.MIN_EPSILON, self.LAMBDA)
 
-        self.agent = HrlAgent(self.option_params, self.random_agent, self.exploration_fn, self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1, self.SAVE_RESULT)
+        self.agent = HrlAgent_nextV_PR(self.option_params, self.random_agent, self.exploration_fn, self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1, self.SAVE_RESULT)
 
 
 

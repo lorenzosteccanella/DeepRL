@@ -65,6 +65,8 @@ class Environment:
 
         self.n_episodes += 1
 
+        #agent.nn.save_weights()
+
         return self.n_episodes, self.n_step, self.total_r_episode
 
     def close(self):

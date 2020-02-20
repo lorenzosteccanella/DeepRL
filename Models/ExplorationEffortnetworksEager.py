@@ -2,8 +2,9 @@ import tensorflow as tf
 from tensorflow import keras
 import numpy as np
 from Losses.Losses import Losses
-import tensorflow.contrib.slim as slim
+#import tensorflow.contrib.slim as slim
 import inspect
+import sys
 
 class SharedConvLayers(keras.Model):
     def __init__(self, learning_rate_observation_adjust=1):
@@ -67,7 +68,7 @@ class SiameseNetwork(keras.Model):
 
 class EffortExplorationNN:
 
-    def __init__(self, n_actions, learning_rate, shared_observation_model):
+    def __init__(self, n_actions, learning_rate, shared_observation_model, weights_path=None):
 
         self.shared_observation_model = shared_observation_model
 
@@ -75,6 +76,7 @@ class EffortExplorationNN:
 
         self.optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate)
         self.global_step = tf.Variable(0)
+        self.weights_path = weights_path
 
     def prediction_distance(self, s1, s2):
 
@@ -117,8 +119,11 @@ class EffortExplorationNN:
         return [None, None]
 
 
-    def save_weights(self):
-        self.model_actor_critic.save_weights("/home/lorenzo/Documenti/UPF/DeepRL/TF_models_weights/EffortExploration_weights")
+#    def save_weights(self):
+#        self.model_exploration_effort.save_weights("/home/lorenzo/Documenti/UPF/DeepRL/TF_models_weights/EffortExploration_weights_Montezuma")
 
     def load_weights(self):
-        self.model_actor_critic.load_weights("/home/lorenzo/Documenti/UPF/DeepRL/TF_models_weights/EffortExploration_weights")
+        if self.weights_path is not None:
+            self.model_exploration_effort.load_weights(self.weights_path)
+        else:
+            sys.exit('Error wrong path weights!')

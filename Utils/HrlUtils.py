@@ -141,7 +141,7 @@ class Graph:
         self.index_4_bestpathprint = 0
         self.distances = {}
         self.total_reward_node = 0
-        self.graph = {} # this is the graph representation with nodes as key and eges list as values, this structure is just used to speed up computation
+        self.node_edges_dictionary = {} # this is the graph representation with nodes as key and eges list as values, this structure is just used to speed up computation
 
     # def init_distances(self):
     #     distances = {}
@@ -166,14 +166,15 @@ class Graph:
 
         if old_node != new_node:
             current_edge = Edge(old_node, new_node)
-            if current_edge not in self.edge_list:
+            if current_edge not in self.node_edges_dictionary[old_node]:
                 self.new_edge_encontered = True
                 self.edge_list.append(current_edge)
+                self.node_edges_dictionary[old_node].append(current_edge)
                 #current_edge.set_value(reward)
                 current_edge.refresh_value()
                 self.current_edge = current_edge
             else:
-                edge = self.edge_list[self.edge_list.index(current_edge)]
+                edge = self.node_edges_dictionary[old_node][self.node_edges_dictionary[old_node].index(current_edge)]
                 edge.refresh_value()
                 #edge.update_value(reward)
                 self.current_edge = edge
@@ -186,11 +187,13 @@ class Graph:
         if old_node not in self.node_list:
             self.node_list.append(old_node)
             self.new_node_encontered = True
+            self.node_edges_dictionary[old_node] = []
 
         if new_node:
             if new_node not in self.node_list:
                 self.node_list.append(new_node)
                 self.new_node_encontered = True
+                self.node_edges_dictionary[new_node] = []
 
 
         #setting the value for the specific abstract node
@@ -212,8 +215,6 @@ class Graph:
 
             if done:
                 self.total_reward_node = 0
-
-
 
         #this is just used to add the first abstract state at the beginning of a epoch
         else: # if we recived just the old node as parameter i.e. new_node = False and reward = False
@@ -398,12 +399,14 @@ class Graph:
             return None
 
     def get_edges_of_a_node(self, node):
-        edge_node = []
-        for edge in self.edge_list:
-            if edge.origin == node:
-                edge_node.append(edge)
+        #edge_node = []
+        #for edge in self.edge_list:
+        #    if edge.origin == node:
+        #        edge_node.append(edge)
 
-        return edge_node
+        #return edge_node
+
+        return self.node_edges_dictionary[node]
 
     def get_current_node(self):
         return self.current_node
@@ -416,6 +419,8 @@ class Graph:
 
     def add_node(self, node):
         self.node_list.append(node)
+        self.node_edges_dictionary[node] = []
 
     def add_edge(self, edge):
         self.edge_list.append(edge)
+        self.node_edges_dictionary[edge.origin].append(edge)

@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow import keras
 import numpy as np
 from Losses.Losses import Losses
-import tensorflow.contrib.slim as slim
+#import tensorflow.contrib.slim as slim
 import inspect
 
 # self.conv1 = keras.layers.Conv2D(32, 8, (4, 4), padding='VALID', activation='elu', kernel_initializer='he_normal', )
@@ -19,6 +19,7 @@ class SharedConvLayers(keras.Model):
         self.conv3 = keras.layers.Conv2D(64, 3, (1, 1), padding='VALID', activation='elu', kernel_initializer='he_normal')
         self.flatten = keras.layers.Flatten()
         self.dense = keras.layers.Dense(256, activation='elu', kernel_initializer='he_normal')
+        self.normalization_layer = keras.layers.LayerNormalization()
         self.learning_rate_adjust = learning_rate_observation_adjust
 
     def call(self, x):
@@ -28,6 +29,7 @@ class SharedConvLayers(keras.Model):
         x = self.conv3(x)
         x = self.flatten(x)
         denseOut = self.dense(x)
+        #denseOut = self.normalization_layer(denseOut)
         x = self.learning_rate_adjust * denseOut + (1-self.learning_rate_adjust) * tf.stop_gradient(denseOut)  # U have to test this!!!
 
         return [x, denseOut] # super importante ricordati che negli actor e critic modelli stai indicizzando a 0 ho bisogno di questo per la vae observation

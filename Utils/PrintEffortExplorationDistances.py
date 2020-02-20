@@ -62,7 +62,7 @@ for k in range(depth):
 
         print("")
 
-N = 0.8
+N = 0.1
 
 print("")
 print("")

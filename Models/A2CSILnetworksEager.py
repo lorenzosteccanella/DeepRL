@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow import keras
 import numpy as np
 from Losses.Losses import Losses
-import tensorflow.contrib.slim as slim
+#import tensorflow.contrib.slim as slim
 import inspect
 
 class SharedConvLayers(keras.Model):

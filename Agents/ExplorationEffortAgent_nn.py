@@ -180,7 +180,7 @@ class ExplorationEffortAgent_nn(AbstractAgent):
         self.observe_EE(sample)
 
     def replay(self):
-        if self.buffer.buffer_len() >= 32:
+        if self.buffer.buffer_len() >= 5000:
             batch, _ = self.buffer.sample(32)
 
             for index, sample in batch:
