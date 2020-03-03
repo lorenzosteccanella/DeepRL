@@ -326,7 +326,7 @@ class Graph:
                         origin = edge.get_origin()
                         destination = edge.get_destination()
                         # if((distances[node] + edge.get_value())<distances[node]):
-                        V = edge.get_value() + node.value + discount_factor * distances[destination]
+                        V = edge.value + node.value + discount_factor * distances[destination]
                         values.append(V)
 
                     delta = max(delta, np.abs(max(values) - distances[node]))

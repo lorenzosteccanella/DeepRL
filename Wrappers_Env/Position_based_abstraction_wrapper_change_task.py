@@ -17,6 +17,8 @@ class PositionGridenv_GE_pick_up_objects_v0(gym.Wrapper):
         self.KEY = False
 
     def reset(self, **kwargs):
+        self.images_stack.clear()
+
         observation = self.env.reset(**kwargs)
         observation = self.observation(observation)
 
@@ -36,12 +38,12 @@ class PositionGridenv_GE_pick_up_objects_v0(gym.Wrapper):
         image = observation
 
         # option observation
-        img_option = self.get_option_obs(image.copy())
+        img_option = self.get_obs(image.copy())
 
         # render it
         return {"vanilla": image, "manager": None, "option": img_option}
 
-    def get_option_obs(self, image):
+    def get_obs(self, image):
         img_option = normalize(image)
         self.images_stack.append(img_option)
 

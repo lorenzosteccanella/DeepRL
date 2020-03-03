@@ -7,3 +7,4 @@ from .Position_based_abstraction_wrapper_change_task import PositionGridenv_GE_p
 from .Origin_wrapper import Origin_wrapper
 from .Gridenv_DiffusionTimeCluster import Gridenv_DiffusionTimeCluster
 from .Montezuma_RAM_position_wrapper import Montezuma_RAM_position_wrapper
+from .EffortExploration.EE_wrapper import EE_wrapper
