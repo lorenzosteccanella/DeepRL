@@ -25,13 +25,16 @@ class Distances:
 
 class Edge:
 
+    pseudo_count_factor = 1000
+
     def __init__(self, origin, destination, value=0, edge_cost = 0):
 
         self.succes_execution_counter = 0
         self.origin = origin
+        self.visit_count = 1
         self.destination = destination
         self.edge_cost = edge_cost
-        self.value = value + self.edge_cost + round(0.5 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count)), 3)
+        self.value = value + self.edge_cost + round(0.5 * (math.exp(-Edge.pseudo_count_factor * self.visit_count)), 3)
         self.option = None
 
     def get_value(self):
@@ -44,13 +47,11 @@ class Edge:
         return self.destination
 
     def set_value(self, value):
-        self.value = value + self.edge_cost + round(0.5 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count)), 3)
+        self.value = value + self.edge_cost + round(0.5 * (math.exp(-Edge.pseudo_count_factor * self.visit_count)), 3)
 
-    def refresh_value(self):
-        self.value =  self.edge_cost + round(0.5 * (math.exp(-Node.pseudo_count_factor * self.destination.visit_count)), 3)
-
-    def update_value(self, value):
-        self.value = (self.value + self.edge_cost + value)/2
+    def visited(self):
+        self.visit_count += 1
+        self.value = self.value + self.edge_cost + round(0.5 * (math.exp(-Edge.pseudo_count_factor * self.visit_count)),3)
 
     def set_option(self, option):
         self.option = option
@@ -62,10 +63,16 @@ class Edge:
         self.succes_execution_counter += 1
 
     def __eq__(self, other):
-        if self.origin == other.origin and self.destination == other.destination:
-            return True
+        if type(self.origin).__name__ == "ndarray":
+            if np.array_equal(self.origin, other.origin) and np.array_equal(self.destination, other.destination):
+                return True
+            else:
+                return False
         else:
-            return False
+            if self.origin == other.origin and self.destination == other.destination:
+                return True
+            else:
+                return False
 
     def __repr__(self):
         return "Edge ["+str(self.origin) + ", " + str(self.destination) + ", " + str(self.value)+"]"
@@ -73,10 +80,13 @@ class Edge:
     def __str__(self):
         return "["+str(self.origin.state) + ", " + str(self.destination.state) + ", " + str(self.value)+"]\n"
 
+    @staticmethod
+    def set_pseudo_count(pseudo_count_factor):
+        Edge.pseudo_count_factor = pseudo_count_factor
+
 
 class Node:
 
-    pseudo_count_factor = 1000
     lambda_node = 1000
 
     def __init__(self, state, value=0):
@@ -106,10 +116,13 @@ class Node:
         self.visit_count=1
 
     def __eq__(self, other):
-        return self.state == other.state
+        if type(self.state).__name__ == "ndarray":
+            return np.array_equal(self.state, other.state)
+        else:
+            return self.state == other.state
 
     def __repr__(self):
-        return "Node ["+str(self.state) + ", " + str(self.value)+"]"
+        return "Node ["+str(self.state)+"]"
 
     def __str__(self):
         return "["+str(self.state) + ", " + str(self.value)+", " + str(self.visit_count) + "]"
@@ -119,10 +132,6 @@ class Node:
             return hash(self.state.tostring())
         else:
             return hash(self.state)
-
-    @staticmethod
-    def set_pseudo_count(pseudo_count_factor):
-        Node.pseudo_count_factor = pseudo_count_factor
 
     @staticmethod
     def set_lambda_node(lambda_node):
@@ -141,8 +150,9 @@ class Graph:
         self.index_4_bestpathprint = 0
         self.distances = {}
         self.total_reward_node = 0
+        self.total_reward_edge = 0
         self.node_edges_dictionary = {} # this is the graph representation with nodes as key and eges list as values, this structure is just used to speed up computation
-
+        self.destination_node_edges_dictionary = {}
     # def init_distances(self):
     #     distances = {}
     #     for node in self.node_list:
@@ -160,24 +170,34 @@ class Graph:
     #         if (len(edges) == 0):
     #             self.distances[node] = node.value
 
-    def edge_update(self, old_node, new_node, reward):
+    def edge_update(self, old_node, new_node, reward, target):
 
         self.new_edge_encontered = False
 
         if old_node != new_node:
-            current_edge = Edge(old_node, new_node)
-            if current_edge not in self.node_edges_dictionary[old_node]:
+            edge = Edge(old_node, new_node)
+
+            self.total_reward_edge += reward
+
+            # if is a new edge I add it
+            if edge not in self.node_edges_dictionary[old_node]:
                 self.new_edge_encontered = True
-                self.edge_list.append(current_edge)
-                self.node_edges_dictionary[old_node].append(current_edge)
-                #current_edge.set_value(reward)
-                current_edge.refresh_value()
-                self.current_edge = current_edge
-            else:
-                edge = self.node_edges_dictionary[old_node][self.node_edges_dictionary[old_node].index(current_edge)]
-                edge.refresh_value()
-                #edge.update_value(reward)
-                self.current_edge = edge
+                edge.set_value(self.total_reward_edge)
+                self.edge_list.append(edge)
+                self.node_edges_dictionary[old_node].append(edge)
+                self.destination_node_edges_dictionary[new_node].append(edge)  # this structure is just to speed up at the cost of memory
+
+            edge = self.node_edges_dictionary[old_node][self.node_edges_dictionary[old_node].index(edge)]
+            edge.visited()
+
+            if target is not None:
+                if new_node == target:
+                    edge.set_value(0.8 * edge.get_value() + 0.2 * self.total_reward_edge)
+
+            self.total_reward_edge = 0
+
+        elif target is not None:
+            self.total_reward_edge += reward
 
     def node_update(self, old_node, new_node=False, reward=False, done=False):
 
@@ -188,13 +208,14 @@ class Graph:
             self.node_list.append(old_node)
             self.new_node_encontered = True
             self.node_edges_dictionary[old_node] = []
+            self.destination_node_edges_dictionary[old_node] = [] # this structure is just to speed up at the cost of memory
 
         if new_node:
             if new_node not in self.node_list:
                 self.node_list.append(new_node)
                 self.new_node_encontered = True
                 self.node_edges_dictionary[new_node] = []
-
+                self.destination_node_edges_dictionary[new_node] = [] # this structure is just to speed up at the cost of memory
 
         #setting the value for the specific abstract node
         if new_node: # if we recived the new node together with the old node as parameters
@@ -205,16 +226,16 @@ class Graph:
 
                 #print(node_value.state, node.state, self.total_reward_node)
                 #node.set_value((node.get_value() * node.get_n_visits) + reward) / (node.get_n_visits + 1)) # iterative average
-                node.set_value(0.6*node.get_value() + 0.4*reward) # iterative moving average
-                self.total_reward_node = 0
-                self.total_reward_node += reward
+                #node.set_value(0.6*node.get_value() + 0.4*reward) # iterative moving average # shouldn't this be node.set_value(0.6*node.get_value() + 0.4*self.total_reward_node)
+                #self.total_reward_node = 0
+                #self.total_reward_node += reward
 
-            elif( old_node == new_node):
+            #elif( old_node == new_node):
                 #print(old_node.state, new_node.state, self.total_reward_node)
-                self.total_reward_node += reward
+                #self.total_reward_node += reward
 
-            if done:
-                self.total_reward_node = 0
+            #if done:
+                #self.total_reward_node = 0
 
         #this is just used to add the first abstract state at the beginning of a epoch
         else: # if we recived just the old node as parameter i.e. new_node = False and reward = False
@@ -226,13 +247,24 @@ class Graph:
 
         return self.node_list[self.node_list.index(old_node)], self.current_node
 
-    def abstract_state_discovery(self, sample):
+    def abstract_state_discovery(self, sample, target):
         old_node = Node(sample[0]["manager"], 0)
 
-        new_node = Node(sample[3]["manager"], sample[2])
+        new_node = Node(sample[3]["manager"], 0)
 
-        old_node_in_list, new_node_in_list = self.node_update(old_node, new_node, sample[2], sample[4])
-        self.edge_update(old_node_in_list, new_node_in_list, sample[2])
+        done = sample[4]
+
+        r = sample[2]
+
+        old_node_in_list, new_node_in_list = self.node_update(old_node, new_node, r, done)
+
+        self.edge_update(old_node_in_list, new_node_in_list, r, target)
+
+        if done:
+            self.total_reward_node = 0
+            self.total_reward_edge = 0
+            self.current_edge = None
+            #self.print_edge_list()
 
         return self.new_node_encontered, self.new_edge_encontered
 
@@ -305,15 +337,58 @@ class Graph:
         print(best_edge.destination.state)
         return self.print_best_path(best_edge.destination, distances)
 
+    # def value_iteration(self, theta, discount_factor=0.95):
+    #     distances = {}
+    #     for node in self.node_list:
+    #         distances[node] = 0 # distances for all node setted to 0
+    #         edges = self.get_edges_of_a_node(node)
+    #         if (len(edges) == 0):
+    #             distances[node] = node.value
+    #
+    #     #self.update_distances()
+    #
+    #     while True:
+    #         # Stopping condition
+    #         delta = 0
+    #         for node in self.node_list:
+    #             edges = self.get_edges_of_a_node(node)
+    #             values = []
+    #             if (len(edges) > 0):
+    #                 for edge in edges:
+    #                     origin = edge.get_origin()
+    #                     destination = edge.get_destination()
+    #                     # if((distances[node] + edge.get_value())<distances[node]):
+    #                     V = edge.value + node.value + discount_factor * distances[destination]
+    #                     values.append(V)
+    #
+    #                 delta = max(delta, np.abs(max(values) - distances[node]))
+    #                 distances[node] = max(values)
+    #         # Check if we can stop
+    #         if delta < theta:
+    #             break
+    #
+    #     return distances
+
     def value_iteration(self, theta, discount_factor=0.95):
         distances = {}
         for node in self.node_list:
             distances[node] = 0 # distances for all node setted to 0
             edges = self.get_edges_of_a_node(node)
             if (len(edges) == 0):
-                distances[node] = node.value
+                t_s = []
+                if len(self.destination_node_edges_dictionary[node]) == 0:
+                    print()
+                    print("ERROR NOT SURE WHAT IS HAPPENING HERE")
+                    print(node)
+                    print("*"*30)
+                    #print(self.destination_node_edges_dictionary[node])
+                    self.print_edge_list()
+                else:
+                    for edge in self.destination_node_edges_dictionary[node]:
+                            t_s.append(edge.value)
+                    distances[node] = max(t_s)
 
-        #self.update_distances()
+                #self.update_distances()
 
         while True:
             # Stopping condition
@@ -375,7 +450,7 @@ class Graph:
 
             #root_origin=self.node_list[0]
 
-            distances= self.value_iteration(0.0001)
+            distances= self.value_iteration(0.0001)#self.bellman_ford(root)
 
             # for edge in self.edge_list:
             #     print(edge.origin, edge.destination, edge.value)
@@ -385,7 +460,7 @@ class Graph:
             # for node in self.node_list:
             #  print(node.state, " = ", distances[node])
             # print()
-            # self.print_best_path(root, distances)
+            #self.print_best_path(root, distances)
 
             #for node in self.node_list:
             #    print(node)

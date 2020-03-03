@@ -71,5 +71,5 @@ def make_downsampled_image(image, zone_size_x, zone_size_y):
         return img_blurred
 
     else:
-        raise Exception("The gridworld " + str(len_x) + "x" + str(len_y) +
+        raise Exception("The image " + str(len_x) + "x" + str(len_y) +
                         " can not be fragmented into zones " + str(zone_size_x) + "x" + str(zone_size_y))

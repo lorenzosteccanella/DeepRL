@@ -13,3 +13,6 @@ from .DiffusionTimeAgent import DiffusionTimeAgent
 from .ExplorationEffortAgent_nn import ExplorationEffortAgent_nn
 from .ExplorationEffortAgent_tabular import ExplorationEffortAgent_tabular
 from .ExplorationEffortRepresentativeStates import ExplorationEffortRepresentativeStates
+from .GoalA2CAgent import GoalA2CAgent
+from .GoalA2COption import GoalA2COption
+from .GoalHrlAgent import GoalHrlAgent

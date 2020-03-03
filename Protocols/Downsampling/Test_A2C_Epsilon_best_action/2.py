@@ -1,11 +1,12 @@
-from Agents import HrlAgent, RandomAgentOption, A2COption
+from Agents import HrlAgent, HrlAgent_nextV_PR, RandomAgentOption, A2COption
+import Models.ExplorationEffortnetworksEager as ExplorationEffortnetworksEager
+import Models.A2CnetworksEager as A2CnetworksEager
 import gym
 import tensorflow as tf
 import os
 from Environment import Environment
-from Wrappers_Env import PositionGridenv_GE_MazeKeyDoor_v0
+from Wrappers_Env import DS_wrapper
 from Utils import ToolEpsilonDecayExploration, Preprocessing
-from Models.A2CnetworksEager import *
 from Utils import SaveResult
 from Utils.HrlExplorationStrategies import get_best_action, get_epsilon_best_action, get_epsilon_exploration, get_epsilon_count_exploration
 import gridenvs.examples
@@ -17,29 +18,35 @@ class variables():
         tf.enable_eager_execution()
 
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
-        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+        os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4"
 
-        self.seeds = range(1)
-        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  TEST_HRL_E_GREEDY_1/')
+        self.seeds = range(2)
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  TEST_HRL_E_GREEDY_2/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
-        self.FILE_NAME = 'Key_Door_HRL_E_GREEDY'
-        self.NUMBER_OF_EPOCHS = 4000
+        self.FILE_NAME = 'MontezumaRevenge-v0'
+        self.NUMBER_OF_EPOCHS = 1000
 
-        self.PROBLEM = 'GE_MazeKeyDoor-v10'
+        self.PROBLEM = 'MontezumaRevenge-v0'
         environment = gym.make(self.PROBLEM)
 
-        self.ACTION_SPACE = [0, 1, 2, 3, 4]
+        self.ACTION_SPACE = list(range(0, environment.action_space.n))
+
+        learning_rate = 0.0001
+        observation = ExplorationEffortnetworksEager.SharedConvLayers()
+
+        self.distance_cluster= 0
 
         self.wrapper_params = {
             "stack_images_length": 1,
-            "width": 10,
-            "height": 10,
-            "n_zones": 2
+            "NUMBER_ZONES_MANAGER_X": 6*3,
+            "NUMBER_ZONES_MANAGER_Y": 4*5,
+            "MAX_PIXEL_VALUE": 8,
+            "distance_cluster": self.distance_cluster
         }
 
-        self.wrapper = PositionGridenv_GE_MazeKeyDoor_v0(environment, self.wrapper_params)
+        self.wrapper = DS_wrapper(environment, self.wrapper_params)
 
-        display_env = False
+        display_env = True
 
         if display_env:
             from Utils import ShowRenderHRL
@@ -55,7 +62,7 @@ class variables():
         # Just to be sure that we don't have some others graph loaded
         tf.reset_default_graph()
 
-        self.shared_conv_layers = SharedConvLayers(0.05)
+        self.shared_conv_layers = A2CnetworksEager.SharedConvLayers(0.05)
 
         self.number_of_stacked_frames = 1
 
@@ -65,8 +72,8 @@ class variables():
             "option": A2COption,
             "h_size": 30,
             "action_space": self.ACTION_SPACE,
-            "critic_network": CriticNetwork,
-            "actor_network": ActorNetwork,
+            "critic_network": A2CnetworksEager.CriticNetwork,
+            "actor_network": A2CnetworksEager.ActorNetwork,
             "shared_representation": self.shared_conv_layers,
             "weight_mse": 0.5,
             "weight_ce_exploration": 0.01,
@@ -77,7 +84,7 @@ class variables():
         }
 
         self.random_agent = RandomAgentOption(self.ACTION_SPACE)
-        self.LAMBDA = 0.5
+        self.LAMBDA = 0.005
         self.MIN_EPSILON = 0
         self.PSEUDO_COUNT = 1000
 
@@ -86,7 +93,7 @@ class variables():
         # to know in how many episodes the epsilon will decay
         ToolEpsilonDecayExploration.epsilon_decay_end_steps(self.MIN_EPSILON, self.LAMBDA)
 
-        self.agent = HrlAgent(self.option_params, self.random_agent, self.exploration_fn, self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1, self.SAVE_RESULT)
+        self.agent = HrlAgent_nextV_PR(self.option_params, self.random_agent, self.exploration_fn, self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1, 0, self.SAVE_RESULT)
 
 
 

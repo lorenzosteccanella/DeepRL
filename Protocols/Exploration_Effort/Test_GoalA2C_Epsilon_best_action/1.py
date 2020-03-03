@@ -1,11 +1,12 @@
-from Agents import HrlAgent, RandomAgentOption, A2COption
+from Agents import GoalHrlAgent, RandomAgentOption, GoalA2COption
+import Models.ExplorationEffortnetworksEager as ExplorationEffortnetworksEager
+import Models.GoalA2CnetworksEager as GoalA2CnetworksEager
 import gym
 import tensorflow as tf
 import os
 from Environment import Environment
-from Wrappers_Env import PositionGridenv_GE_MazeKeyDoor_v0
+from Wrappers_Env import EE_wrapper
 from Utils import ToolEpsilonDecayExploration, Preprocessing
-from Models.A2CnetworksEager import *
 from Utils import SaveResult
 from Utils.HrlExplorationStrategies import get_best_action, get_epsilon_best_action, get_epsilon_exploration, get_epsilon_count_exploration
 import gridenvs.examples
@@ -19,7 +20,7 @@ class variables():
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-        self.seeds = range(1)
+        self.seeds = range(2)
         self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  TEST_HRL_E_GREEDY_1/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Key_Door_HRL_E_GREEDY'
@@ -30,14 +31,23 @@ class variables():
 
         self.ACTION_SPACE = [0, 1, 2, 3, 4]
 
+        learning_rate = 0.0001
+        observation = ExplorationEffortnetworksEager.SharedConvLayers()
+
+        self.nn = ExplorationEffortnetworksEager.EffortExplorationNN(len(self.ACTION_SPACE), learning_rate, observation, "/home/lorenzo/Documenti/UPF/DeepRL/TF_models_weights/EffortExploration_weights")
+        self.nn.load_weights()
+
+        self.distance_cluster= 2
+
         self.wrapper_params = {
             "stack_images_length": 1,
             "width": 10,
             "height": 10,
-            "n_zones": 2
+            "nn": self.nn,
+            "distance_cluster": self.distance_cluster
         }
 
-        self.wrapper = PositionGridenv_GE_MazeKeyDoor_v0(environment, self.wrapper_params)
+        self.wrapper = EE_wrapper(environment, self.wrapper_params)
 
         display_env = False
 
@@ -55,18 +65,20 @@ class variables():
         # Just to be sure that we don't have some others graph loaded
         tf.reset_default_graph()
 
-        self.shared_conv_layers = SharedConvLayers(0.05)
+        self.shared_conv_layers = GoalA2CnetworksEager.SharedConvLayers(0.05)
+        self.critic = GoalA2CnetworksEager.CriticNetwork(30)
+        self.actor = GoalA2CnetworksEager.ActorNetwork(30, len(self.ACTION_SPACE))
 
         self.number_of_stacked_frames = 1
 
         preprocessing = Preprocessing(84, 84, 3, self.number_of_stacked_frames, False)
 
         self.option_params = {
-            "option": A2COption,
+            "option": GoalA2COption,
             "h_size": 30,
             "action_space": self.ACTION_SPACE,
-            "critic_network": CriticNetwork,
-            "actor_network": ActorNetwork,
+            "critic_network": self.critic,
+            "actor_network": self.actor,
             "shared_representation": self.shared_conv_layers,
             "weight_mse": 0.5,
             "weight_ce_exploration": 0.01,
@@ -86,7 +98,7 @@ class variables():
         # to know in how many episodes the epsilon will decay
         ToolEpsilonDecayExploration.epsilon_decay_end_steps(self.MIN_EPSILON, self.LAMBDA)
 
-        self.agent = HrlAgent(self.option_params, self.random_agent, self.exploration_fn, self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1, self.SAVE_RESULT)
+        self.agent = GoalHrlAgent(self.option_params, self.random_agent, self.exploration_fn, self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1, self.SAVE_RESULT)
 
 
 

@@ -4,21 +4,23 @@ from collections import deque
 import numpy as np
 from numpy import array_equal
 import matplotlib.pyplot as plt
-from time import sleep
 
-class EE_wrapper(gym.Wrapper):
-
+class LS_wrapper(gym.Wrapper):
 
     def __init__(self, env, parameters):
 
         super().__init__(env)
         self.parameters = parameters
+        self.width = self.parameters["width"]
+        self.height = self.parameters["height"]
         self.nn = self.parameters["nn"]
         self.distance_cluster = self.parameters["distance_cluster"]
         self.images_stack = deque([], maxlen=self.parameters["stack_images_length"])
         self.list_of_repr_states = []
         self.KEY = False
-        self.total_r = 0
+
+    def set_nn(self, nn):
+        self.nn = nn
 
     def reset(self, **kwargs):
         self.images_stack.clear()
@@ -27,9 +29,6 @@ class EE_wrapper(gym.Wrapper):
         observation = self.observation(observation)
 
         observation["manager"] = self.get_abstract_state(observation["option"], 0)
-
-        self.total_r = 0
-
         return observation
 
     def step(self, action):
@@ -69,25 +68,33 @@ class EE_wrapper(gym.Wrapper):
 
     def get_abstract_state(self, s, r):
 
-        self.total_r += r
+        if self.nn is not None:
 
-        if not self.list_of_repr_states:
-            self.list_of_repr_states.append(s)
+            h = self.nn.prediction_h([s])
 
-        distances = []
-        for state in self.list_of_repr_states:
-            distances.append(np.linalg.norm(self.nn.prediction_distance([state], [s])))
+            if not self.list_of_repr_states:
+                self.list_of_repr_states.append(h)
 
-        d = min(distances)
+            if r != 0:
+                if not self.arreq_in_list(h, self.list_of_repr_states):
+                    self.list_of_repr_states.append(h)
 
-        index = distances.index(d)
+            distances = []
+            for r_h in self.list_of_repr_states:
+                distances.append(np.linalg.norm(h-r_h))
 
-        if d>self.distance_cluster:
-            self.list_of_repr_states.append(s)
-            index = len(self.list_of_repr_states) - 1 # just to save computation otherwise self.list_of_repr_states.index(s)
-            plt.imshow(s)
-            plt.show(block=False)
-            sleep(2)
-            plt.close()
+            d = min(distances)
 
-        return (index, self.total_r) #self.list_of_repr_states[index] # index
+            index = distances.index(d)
+
+            if d>self.distance_cluster:
+                self.list_of_repr_states.append(h)
+                index = len(self.list_of_repr_states) - 1 # just to save computation otherwise self.list_of_repr_states.index(s)
+                #plt.imshow(s)
+                #plt.show()
+
+            return index #self.list_of_repr_states[index] # index
+
+        else:
+            print("MIAOOOOO")
+            return "MIAOOOOO"

@@ -8,3 +8,5 @@ from .Origin_wrapper import Origin_wrapper
 from .Gridenv_DiffusionTimeCluster import Gridenv_DiffusionTimeCluster
 from .Montezuma_RAM_position_wrapper import Montezuma_RAM_position_wrapper
 from .EffortExploration.EE_wrapper import EE_wrapper
+from .LatentSpace.LS_wrapper import LS_wrapper
+from .DownSamplingState.DS_wrapper import DS_wrapper

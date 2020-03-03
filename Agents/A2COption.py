@@ -1,6 +1,7 @@
 from Agents.AbstractOption import AbstractOption
 from Agents import A2CAgent
 from Models.A2CnetworksEager import *
+from copy import deepcopy
 
 class A2COption(AbstractOption):
 
@@ -16,7 +17,9 @@ class A2COption(AbstractOption):
 
         self.agent = A2CAgent(parameters["action_space"], self.a2cDNN, parameters["gamma"], parameters["batch_size"])
 
-        self.preprocessing = parameters["preprocessing"]
+        self.preprocessing = deepcopy(parameters["preprocessing"]) # remember these are options u need to use deepcopy
+        self.preprocessing1 = deepcopy(parameters["preprocessing"]) # remember these are options u need to use deepcopy
+        self.preprocessing2 = deepcopy(parameters["preprocessing"]) # remember these are options u need to use deepcopy
 
         self.parameters = parameters
 
@@ -29,8 +32,8 @@ class A2COption(AbstractOption):
 
     def observe(self, sample):  # in (s, a, r, s_, done, info) format
         if self.preprocessing:
-            s = self.preprocessing.preprocess_image(sample[0])
-            s_ = self.preprocessing.preprocess_image(sample[3])
+            s = self.preprocessing1.preprocess_image(sample[0])
+            s_ = self.preprocessing2.preprocess_image(sample[3])
         else:
             s = sample[0]
             s_ = sample[3]
@@ -41,6 +44,8 @@ class A2COption(AbstractOption):
         if self.preprocessing:
             if sample[4]:
                 self.preprocessing.reset(sample[4])
+                self.preprocessing1.reset(sample[4])
+                self.preprocessing2.reset(sample[4])
 
     def __str__(self):
         return "option " + str(self.id)

@@ -17,7 +17,9 @@ class A2CSILOption(AbstractOption):
         self.agent = A2CSILAgent(parameters["action_space"], self.a2cDNN_SIL, parameters["gamma"], parameters["batch_size"],
                                  parameters["sil_batch_size"], parameters["imitation_buffer_size"], parameters["imitation_learning_steps"] )
 
-        self.preprocessing = parameters["preprocessing"]
+        self.preprocessing = deepcopy(parameters["preprocessing"]) # remember these are options u need to use deepcopy
+        self.preprocessing1 = deepcopy(parameters["preprocessing"]) # remember these are options u need to use deepcopy
+        self.preprocessing2 = deepcopy(parameters["preprocessing"]) # remember these are options u need to use deepcopy
 
         self.parameters = parameters
 
@@ -30,8 +32,11 @@ class A2CSILOption(AbstractOption):
 
     def observe(self, sample):  # in (s, a, r, s_, done, info) format
         if self.preprocessing:
-            s = self.preprocessing.preprocess_image(sample[0])
-            s_ = self.preprocessing.preprocess_image(sample[3])
+            s = self.preprocessing1.preprocess_image(sample[0])
+            s_ = self.preprocessing2.preprocess_image(sample[3])
+        else:
+            s = sample[0]
+            s_ = sample[3]
         sample = (s, sample[1], sample[2], s_, sample[4], sample[5])
         #print(sample[2])
         self.agent.observe(sample)
@@ -39,6 +44,8 @@ class A2CSILOption(AbstractOption):
         if self.preprocessing:
             if sample[4]:
                 self.preprocessing.reset(sample[4])
+                self.preprocessing1.reset(sample[4])
+                self.preprocessing2.reset(sample[4])
 
     def __str__(self):
         return "option " + str(self.id)

@@ -18,7 +18,7 @@ class variables():
         tf.enable_eager_execution()
 
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
-        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+        os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4"
 
         self.seeds = range(2)
         self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  TEST_HRL_E_GREEDY_1/')
@@ -26,7 +26,7 @@ class variables():
         self.FILE_NAME = 'Key_Door_HRL_E_GREEDY'
         self.NUMBER_OF_EPOCHS = 4000
 
-        self.PROBLEM = 'GE_MazeKeyDoor-v10'
+        self.PROBLEM = 'GE_MazeKeyDoor-v18'
         environment = gym.make(self.PROBLEM)
 
         self.ACTION_SPACE = [0, 1, 2, 3, 4]
@@ -37,12 +37,10 @@ class variables():
         self.nn = ExplorationEffortnetworksEager.EffortExplorationNN(len(self.ACTION_SPACE), learning_rate, observation, "/home/lorenzo/Documenti/UPF/DeepRL/TF_models_weights/EffortExploration_weights")
         self.nn.load_weights()
 
-        self.distance_cluster= 2
+        self.distance_cluster= 1
 
         self.wrapper_params = {
             "stack_images_length": 1,
-            "width": 10,
-            "height": 10,
             "nn": self.nn,
             "distance_cluster": self.distance_cluster
         }
@@ -87,7 +85,7 @@ class variables():
         }
 
         self.random_agent = RandomAgentOption(self.ACTION_SPACE)
-        self.LAMBDA = 0.5
+        self.LAMBDA = 0.005
         self.MIN_EPSILON = 0
         self.PSEUDO_COUNT = 1000
 
@@ -96,7 +94,7 @@ class variables():
         # to know in how many episodes the epsilon will decay
         ToolEpsilonDecayExploration.epsilon_decay_end_steps(self.MIN_EPSILON, self.LAMBDA)
 
-        self.agent = HrlAgent(self.option_params, self.random_agent, self.exploration_fn, self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1, self.SAVE_RESULT)
+        self.agent = HrlAgent(self.option_params, self.random_agent, self.exploration_fn, self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1, 0, self.SAVE_RESULT)
 
 
 

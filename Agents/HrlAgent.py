@@ -3,6 +3,7 @@ from Agents.AbstractAgent import AbstractAgent
 from Utils import Edge, Node, Graph
 import time
 import math
+import numpy as np
 
 class HrlAgent(AbstractAgent):
 
@@ -64,11 +65,12 @@ class HrlAgent(AbstractAgent):
             distances = self.graph.find_distances(self.current_node)
             self.distances_2_print.append(distances)
             self.best_option_action = self.exploration_fn(distances)
+
         elif self.current_node != node:
-            self.current_node = self.graph.get_current_node()
-            distances = self.graph.find_distances(self.current_node)
-            self.distances_2_print.append(distances)
-            self.best_option_action = self.exploration_fn(distances)
+           self.current_node = self.graph.get_current_node()
+           distances = self.graph.find_distances(self.current_node)
+           self.distances_2_print.append(distances)
+           self.best_option_action = self.exploration_fn(distances)
 
         return self.best_option_action.act(s["option"])
 
@@ -79,7 +81,7 @@ class HrlAgent(AbstractAgent):
         return option.get_observation_encoding(s)
 
     def pseudo_count_exploration(self, pseudo_count_factor):
-        Node.set_pseudo_count(pseudo_count_factor)
+        Edge.set_pseudo_count(pseudo_count_factor)
 
     def epsilon_count_exploration(self, LAMBDA):
         Node.set_lambda_node(LAMBDA)
@@ -143,9 +145,9 @@ class HrlAgent(AbstractAgent):
         done = sample[4]
         info = sample[5]
 
-        if sample[0]["manager"] != sample[3]["manager"]:
+        if not self.equal(sample[0]["manager"], sample[3]["manager"]):
             if self.target is not None:
-                if sample[3]["manager"] == self.target.state:
+                if self.equal(sample[3]["manager"], self.target.state):
 
                     # to keep performance statistics
                     self.number_of_options_executed += 1
@@ -167,7 +169,7 @@ class HrlAgent(AbstractAgent):
 
     def observe(self, sample):  # in (s, a, r, s_, done, info) format
 
-        self.graph.abstract_state_discovery(sample)
+        self.graph.abstract_state_discovery(sample, self.target)
 
         if self.RESET_EXPLORATION_WHEN_NEW_NODE:
             if self.graph.new_node_encontered:
@@ -179,9 +181,12 @@ class HrlAgent(AbstractAgent):
         self.update_option(sample)
 
         # slowly decrease Epsilon based on manager experience
-        if sample[0]["manager"] != sample[3]["manager"]:
+        if not self.equal(sample[0]["manager"], sample[3]["manager"]):
             self.manager_exp += 1
             self.epsilon = self.MIN_EPSILON + (1 - self.MIN_EPSILON) * math.exp(-self.LAMBDA * self.manager_exp)
+
+        #if sample[4]:
+        #    print(self.path_2_print)
 
         #if sample[4]:
         #    self.path_2_print.clear()
@@ -202,6 +207,12 @@ class HrlAgent(AbstractAgent):
     def reset_pseudo_count_exploration(self):
         for node in self.graph.node_list:
             node.reset_n_visits()
+
+    def equal(self, a, b):
+        if type(a).__name__ == "ndarray":
+            return np.array_equal(a, b)
+        else:
+            return a == b
 
     def reset_statistics(self):
 

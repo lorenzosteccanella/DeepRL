@@ -14,9 +14,9 @@ import inspect
 class SharedConvLayers(keras.Model):
     def __init__(self, learning_rate_observation_adjust=1):
         super(SharedConvLayers, self).__init__(name="SharedConvLayers")
-        self.conv1 = keras.layers.Conv2D(32, 8, (4, 4), padding='VALID', activation='elu', kernel_initializer='he_normal', )
-        self.conv2 = keras.layers.Conv2D(64, 4, (2, 2), padding='VALID', activation='elu', kernel_initializer='he_normal')
-        self.conv3 = keras.layers.Conv2D(64, 3, (1, 1), padding='VALID', activation='elu', kernel_initializer='he_normal')
+        self.conv1 = keras.layers.Conv2D(16, 8, (4, 4), padding='VALID', activation='elu', kernel_initializer='he_normal', )
+        self.conv2 = keras.layers.Conv2D(16, 4, (2, 2), padding='VALID', activation='elu', kernel_initializer='he_normal')
+        self.conv3 = keras.layers.Conv2D(16, 3, (1, 1), padding='VALID', activation='elu', kernel_initializer='he_normal')
         self.flatten = keras.layers.Flatten()
         self.dense = keras.layers.Dense(256, activation='elu', kernel_initializer='he_normal')
         self.normalization_layer = keras.layers.LayerNormalization()
@@ -28,19 +28,11 @@ class SharedConvLayers(keras.Model):
         x = self.conv2(x)
         x = self.conv3(x)
         x = self.flatten(x)
-        denseOut = self.dense(x)
-        #denseOut = self.normalization_layer(denseOut)
+        x = self.dense(x)
+        denseOut = self.normalization_layer(x)
         x = self.learning_rate_adjust * denseOut + (1-self.learning_rate_adjust) * tf.stop_gradient(denseOut)  # U have to test this!!!
 
-        return [x, denseOut] # super importante ricordati che negli actor e critic modelli stai indicizzando a 0 ho bisogno di questo per la vae observation
-
-    def prediction_h(self, s):
-
-        s = np.array(s, dtype=np.float32)
-
-        s = tf.convert_to_tensor(s)
-
-        return self.call(s)[1].numpy()
+        return [x, denseOut]
 
 
 class SharedDenseLayers(keras.Model):
@@ -87,27 +79,26 @@ class ActorNetwork(keras.Model):
         return x
 
 
-class ActorCriticNetwork(keras.Model):
+class SiameseActorCriticNetwork(keras.Model):
 
     def __init__(self, critic_model, actor_model, shared_observation_model=None):
-        super(ActorCriticNetwork, self).__init__(name="ActorCriticNetwork")
+        super(SiameseActorCriticNetwork, self).__init__(name="SiameseActorCriticNetwork")
         self.shared_observation_model = shared_observation_model
         self.critic_model = critic_model
         self.actor_model = actor_model
 
-    def call(self, x):
+    def call(self, x1, x2):
 
-        if self.shared_observation_model is not None:
+        obs1 = self.shared_observation_model(x1)[0] # Just the dense output
+        obs2 = self.shared_observation_model(x2)[0] # Just the dense output
 
-            obs = self.shared_observation_model(x)[0] # Just the dense output
-
-        denseOut = self.shared_observation_model(x)[1]
+        obs = keras.layers.concatenate([obs1, obs2], axis=-1)
 
         actor = self.actor_model(obs)
 
         critic = self.critic_model(obs)
 
-        return actor, critic, denseOut
+        return actor, critic
 
 
 class A2CEagerSync:
@@ -129,7 +120,7 @@ class A2CEagerSync:
         else:
             self.model_actor = model_actor
 
-        self.model_actor_critic = ActorCriticNetwork(self.model_critic, self.model_actor, self.shared_observation_model)
+        self.model_actor_critic = SiameseActorCriticNetwork(self.model_critic, self.model_actor, self.shared_observation_model)
 
         self.train_observation = train_observation
         self.weight_mse = weight_mse
@@ -144,35 +135,34 @@ class A2CEagerSync:
             self.optimizer_observation = tf.train.RMSPropOptimizer(learning_rate=1e-3)
         self.global_step = tf.Variable(0)
 
-    def prediction_actor(self, s):
+    def prediction_actor(self, s1, s2):
 
-        s = np.array(s, dtype=np.float32)
+        s1 = np.array(s1, dtype=np.float32)
 
-        s = tf.convert_to_tensor(s)
+        s1 = tf.convert_to_tensor(s1)
 
-        return self.model_actor_critic(s)[0].numpy()
+        s2 = np.array(s2, dtype=np.float32)
 
-    def prediction_critic(self, s):
+        s2 = tf.convert_to_tensor(s2)
 
-        s = np.array(s, dtype=np.float32)
+        return self.model_actor_critic(s1, s2)[0].numpy()
 
-        s = tf.convert_to_tensor(s)
+    def prediction_critic(self, s1, s2):
 
-        return self.model_actor_critic(s)[1].numpy()
+        s1 = np.array(s1, dtype=np.float32)
 
-    def prediction_h(self, s):
+        s1 = tf.convert_to_tensor(s1)
 
-        s = np.array(s, dtype=np.float32)
+        s2 = np.array(s2, dtype=np.float32)
 
-        s = tf.convert_to_tensor(s)
+        s2 = tf.convert_to_tensor(s2)
 
-        return self.model_actor_critic(s)[2].numpy()
-
+        return self.model_actor_critic(s1, s2)[1].numpy()
 
     def grad(self, model_actor_critic, inputs, targets, one_hot_a, advantage, weight_ce, weight_mse = 0.5):
 
         with tf.GradientTape() as tape:
-            softmax_logits, value_critic, _ = model_actor_critic(inputs)
+            softmax_logits, value_critic = model_actor_critic(inputs[0], inputs[1])
             loss_pg = Losses.reinforce_loss(softmax_logits, one_hot_a, advantage)
             loss_ce = Losses.entropy_exploration_loss(softmax_logits)
             loss_critic = Losses.mse_loss(value_critic, targets)
@@ -180,42 +170,21 @@ class A2CEagerSync:
 
         return loss_value, tape.gradient(loss_value, model_actor_critic.trainable_variables)
 
-    def grad_observation(self, model, inputs):
+    def train(self, s1, s2, y, one_hot_a, advantage, max_grad_norm=5):
 
-        with tf.GradientTape() as tape:
-            outputs = model(inputs)
-            loss_value = Losses.vae_loss(inputs, outputs[3], outputs[1], outputs[2])
+        s1 = np.array(s1, dtype=np.float32)
 
-        return loss_value, tape.gradient(loss_value, model.trainable_variables)
+        s1 = tf.convert_to_tensor(s1)
 
-    def train(self, s, y, one_hot_a, advantage, max_grad_norm=5):
+        s2 = np.array(s2, dtype=np.float32)
 
-        s = np.array(s, dtype=np.float32)
+        s2 = tf.convert_to_tensor(s2)
 
-        s = tf.convert_to_tensor(s)
-
-        loss_value, grads = self.grad(self.model_actor_critic, s, y, one_hot_a, advantage, self.weight_ce, self.weight_mse)
+        loss_value, grads = self.grad(self.model_actor_critic, (s1, s2), y, one_hot_a, advantage, self.weight_ce, self.weight_mse)
 
         grads, grad_norm = tf.clip_by_global_norm(grads, max_grad_norm)
 
         self.optimizer.apply_gradients(zip(grads, self.model_actor_critic.trainable_variables), self.global_step)
-
-        return [None, None]
-
-    def train_obs(self, s):
-
-        s = np.array(s, dtype=np.float32)
-
-        s = tf.convert_to_tensor(s)
-
-        loss_value, grads = self.grad_observation(self.shared_observation_model, s)
-
-        print("OBSERVATION", loss_value)
-
-        # grads, grad_norm = tf.clip_by_global_norm(grads, max_grad_norm)
-
-        self.optimizer_observation.apply_gradients(zip(grads, self.shared_observation_model.trainable_variables),
-                                                   self.global_step)
 
         return [None, None]
 
