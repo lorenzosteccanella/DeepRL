@@ -19,7 +19,7 @@ class variables():
         self.seeds = [1]
         self.PROBLEM = 'GE_MazeKeyDoor-v10'
         self.ACTION_SPACE = [0, 1, 2, 3, 4]
-        self.RESULTS_FOLDER = 'ExplorationEffort/'
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + " - " + (os.path.basename(os.path.dirname(__file__))) + ' - 2/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Key_Door_A2C'
 
@@ -56,6 +56,6 @@ class variables():
         learning_rate = 0.0001
         observation = SharedConvLayers()
 
-        self.nn = EffortExplorationNN(len(self.ACTION_SPACE), learning_rate, observation, "/home/lorenzo/Documenti/UPF/DeepRL/TF_models_weights/EffortExploration_weights")
+        self.nn = EffortExplorationNN(len(self.ACTION_SPACE), learning_rate, observation, "./TF_models_weights/EffortExploration_weights")
         self.nn.load_weights()
         self.agent = ExplorationEffortRepresentativeStates(self.ACTION_SPACE, self.nn, self.distance_cluster, "KeyDoor")

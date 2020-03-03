@@ -1,1 +1,13 @@
-source /homedtic/lsteccanella/DeepRL/Cluster_utils/run-multiple-nodes.sh Test_A2C_Epsilon_best_action_without_reset.HRL-E-GREEDY.1 Test_A2C_Epsilon_best_action_without_reset.HRL-E-GREEDY.2 Test_A2C_Epsilon_best_action_without_reset.HRL-E-GREEDY.3 Test_A2C_Epsilon_best_action_without_reset.HRL-E-GREEDY.4 Test_A2C_Epsilon_best_action_without_reset.HRL-E-GREEDY.5 Test_A2C_Epsilon_best_action_without_reset.HRL-E-GREEDY.6 Test_A2C_pseudo-count-reward.HRL-PSEUDO-COUNT.1 Test_A2C_pseudo-count-reward.HRL-PSEUDO-COUNT.2 Test_A2C_pseudo-count-reward.HRL-PSEUDO-COUNT.3 Test_A2C_pseudo-count-reward.HRL-PSEUDO-COUNT.4 Test_A2C_pseudo-count-reward.HRL-PSEUDO-COUNT.5 Test_A2C_pseudo-count-reward.HRL-PSEUDO-COUNT.6 Test_transfer_learning.HRL-E-GREEDY.1 Test_transfer_learning.HRL-E-GREEDY.2 Test_transfer_learning.HRL-E-GREEDY.3 Test_transfer_learning.HRL-E-GREEDY.4 Test_transfer_learning.HRL-E-GREEDY.5 Test_transfer_learning.HRL-E-GREEDY.6
+E_PATH='/homedtic/lsteccanella/DeepRL/Protocols/Exploration_Effort/repr_states/Key_Door/'
+prefix='/homedtic/lsteccanella/DeepRL/Protocols/'
+suffix=
+for i in $(find $E_PATH -name '*.py' -type f);
+do 
+	PROT_PATH=${i#"$prefix"}
+	PROT_PATH=${PROT_PATH%.*}
+	PROT_PATH="$(tr / . <<<$PROT_PATH)"
+	sbatch /homedtic/lsteccanella/DeepRL/Cluster_utils/run-sbatch.sh $PROT_PATH
+	
+done
+
+

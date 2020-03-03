@@ -18,7 +18,7 @@ class variables():
 
         self.seeds = [4]
         self.PROBLEM = 'MontezumaRevenge-v0'
-        self.RESULTS_FOLDER = 'ExplorationEffort/'
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + " - " + (os.path.basename(os.path.dirname(__file__))) + ' - 9/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Key_Door_A2C'
 
@@ -57,6 +57,6 @@ class variables():
         learning_rate = 0.0001
         observation = SharedConvLayers()
 
-        self.nn = EffortExplorationNN(len(self.ACTION_SPACE), learning_rate, observation, "Montezuma", "/home/lorenzo/Documenti/UPF/DeepRL/TF_models_weights/EffortExploration_weights_Montezuma")
+        self.nn = EffortExplorationNN(len(self.ACTION_SPACE), learning_rate, observation, "./TF_models_weights/EffortExploration_weights_Montezuma")
         self.nn.load_weights()
         self.agent = ExplorationEffortRepresentativeStates(self.ACTION_SPACE, self.nn, self.distance_cluster, "Montezuma")
