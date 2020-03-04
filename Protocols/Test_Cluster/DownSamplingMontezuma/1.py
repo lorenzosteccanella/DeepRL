@@ -46,7 +46,7 @@ class variables():
 
         self.wrapper = DS_wrapper(environment, self.wrapper_params)
 
-        display_env = True
+        display_env = False
 
         if display_env:
             from Utils import ShowRenderHRL

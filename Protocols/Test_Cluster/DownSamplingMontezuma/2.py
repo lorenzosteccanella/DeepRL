@@ -21,7 +21,7 @@ class variables():
         os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4"
 
         self.seeds = range(2)
-        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  DownsamplingMontezuma_1/')
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  DownsamplingMontezuma_2/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'MontezumaRevenge-v0'
         self.NUMBER_OF_EPOCHS = 1000
@@ -46,7 +46,7 @@ class variables():
 
         self.wrapper = DS_wrapper(environment, self.wrapper_params)
 
-        display_env = True
+        display_env = False
 
         if display_env:
             from Utils import ShowRenderHRL
