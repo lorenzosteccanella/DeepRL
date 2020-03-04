@@ -34,6 +34,8 @@ class HrlAgent(AbstractAgent):
         self.old_number_of_options = 0
         self.path_2_print = []
         self.distances_2_print = []
+        self.total_r_2_print = []
+        self.total_r = 0
 
         self.best_option_action = None
         self.current_node = None
@@ -97,6 +99,14 @@ class HrlAgent(AbstractAgent):
     def save_statistics(self):
 
         if self.number_of_options_executed % 10000 == 0 and self.old_number_of_options != self.number_of_options_executed:
+            if self.save_result is not False:
+                message = ""
+                for tot_reward in self.total_r_2_print:
+                    message += (str(tot_reward) + "\n")
+                message += "\n\n"
+                self.save_result.save_data(self.FILE_NAME + "Total Reward", message)
+                self.total_r_2_print.clear()
+
             if self.save_result is not False:
                 message = ""
                 for target in self.path_2_print:
@@ -169,6 +179,12 @@ class HrlAgent(AbstractAgent):
 
     def observe(self, sample):  # in (s, a, r, s_, done, info) format
 
+        self.total_r += sample[2]
+
+        if sample[4]:
+            self.total_r_2_print.append(self.total_r)
+            self.total_r = 0
+
         self.graph.abstract_state_discovery(sample, self.target)
 
         if self.RESET_EXPLORATION_WHEN_NEW_NODE:
@@ -184,9 +200,6 @@ class HrlAgent(AbstractAgent):
         if not self.equal(sample[0]["manager"], sample[3]["manager"]):
             self.manager_exp += 1
             self.epsilon = self.MIN_EPSILON + (1 - self.MIN_EPSILON) * math.exp(-self.LAMBDA * self.manager_exp)
-
-        #if sample[4]:
-        #    print(self.path_2_print)
 
         #if sample[4]:
         #    self.path_2_print.clear()

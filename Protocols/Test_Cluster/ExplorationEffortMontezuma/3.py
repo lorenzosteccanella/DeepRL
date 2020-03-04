@@ -40,7 +40,7 @@ class variables():
         self.distance_cluster= 6
 
         self.wrapper_params = {
-            "stack_images_length": 1,
+            "stack_images_length": 4, # WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
             "nn": self.nn,
             "distance_cluster": self.distance_cluster
         }
@@ -67,7 +67,7 @@ class variables():
 
         self.number_of_stacked_frames = 1
 
-        preprocessing = Preprocessing(84, 84, 3, self.number_of_stacked_frames, False)
+        preprocessing = None #Preprocessing(84, 84, 3, self.number_of_stacked_frames, False)
 
         self.option_params = {
             "option": A2COption,

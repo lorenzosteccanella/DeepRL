@@ -22,14 +22,13 @@ class DS_wrapper(gym.Wrapper):
 
     def reset(self, **kwargs):
         self.images_stack.clear()
-
+        self.total_r = 0
         observation = self.env.reset(**kwargs)
         self.width, self.height, self.depth = observation.shape
         observation = self.observation(observation)
 
         observation["manager"] = self.get_abstract_state(observation["vanilla"], 0)
 
-        self.total_r = 0
         return observation
 
     def step(self, action):
@@ -48,7 +47,7 @@ class DS_wrapper(gym.Wrapper):
         img_ = self.get_obs(image.copy())
 
         # render it
-        return {"vanilla": image, "manager": img_, "option": img_}
+        return {"vanilla": image, "manager": None, "option": img_}
 
     def get_obs(self, image):
         img_option = normalize(image)

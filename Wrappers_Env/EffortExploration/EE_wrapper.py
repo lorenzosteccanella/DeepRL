@@ -22,13 +22,12 @@ class EE_wrapper(gym.Wrapper):
 
     def reset(self, **kwargs):
         self.images_stack.clear()
+        self.total_r = 0
 
         observation = self.env.reset(**kwargs)
         observation = self.observation(observation)
 
-        observation["manager"] = self.get_abstract_state(observation["option"], 0)
-
-        self.total_r = 0
+        observation["manager"] = self.get_abstract_state(normalize(observation["vanilla"]), 0)
 
         return observation
 
@@ -37,7 +36,7 @@ class EE_wrapper(gym.Wrapper):
 
         observation = self.observation(observation)
 
-        observation["manager"] = self.get_abstract_state(observation["option"], reward)
+        observation["manager"] = self.get_abstract_state(normalize(observation["vanilla"]), reward)
 
         return observation, reward, done, info
 
@@ -48,7 +47,7 @@ class EE_wrapper(gym.Wrapper):
         img_ = self.get_obs(image.copy())
 
         # render it
-        return {"vanilla": image, "manager": img_, "option": img_}
+        return {"vanilla": image, "manager": None, "option": img_}
 
     def get_obs(self, image):
         img_option = normalize(image)
