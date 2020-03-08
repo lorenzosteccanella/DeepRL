@@ -5,7 +5,7 @@ def get_best_action(self, distances):
         edges_from_current_node = self.graph.get_edges_of_a_node(self.current_node)
         if len(edges_from_current_node) > 0:
             best_edge_index = random.choice(
-                self.graph.get_node_best_edge_index(self.current_node, distances, edges_from_current_node, False))
+                self.graph.get_node_best_edge_index(self.current_node, distances, edges_from_current_node))
             best_edge = edges_from_current_node[best_edge_index]
             self.target = best_edge.get_destination()
 
@@ -44,7 +44,7 @@ def get_epsilon_best_action(self, distances):
                     return self.options[random_edge_index]
             else:
                 best_edge_index = random.choice(
-                    self.graph.get_node_best_edge_index(self.current_node, distances, edges_from_current_node, False))
+                    self.graph.get_node_best_edge_index(self.current_node, distances, edges_from_current_node))
                 best_edge = edges_from_current_node[best_edge_index]
                 self.target = best_edge.get_destination()
 
@@ -77,7 +77,7 @@ def get_epsilon_exploration(self, distances):
 
             else:
                 best_edge_index = random.choice(
-                    self.graph.get_node_best_edge_index(self.current_node, distances, edges_from_current_node, False))
+                    self.graph.get_node_best_edge_index(self.current_node, distances, edges_from_current_node))
                 best_edge = edges_from_current_node[best_edge_index]
                 self.target = best_edge.get_destination()
 
@@ -110,7 +110,7 @@ def get_epsilon_count_exploration(self, distances):
 
             else:
                 best_edge_index = random.choice(
-                    self.graph.get_node_best_edge_index(self.current_node, distances, edges_from_current_node, False))
+                    self.graph.get_node_best_edge_index(self.current_node, distances, edges_from_current_node))
                 best_edge = edges_from_current_node[best_edge_index]
                 self.target = best_edge.get_destination()
 

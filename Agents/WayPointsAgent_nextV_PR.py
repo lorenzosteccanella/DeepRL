@@ -4,7 +4,27 @@ from Utils import Edge, Node, Graph
 from collections import deque
 import math
 
-class HrlAgent_nextV_PR(HrlAgent):
+class WayPointsAgent_nextV_PR(HrlAgent):
+
+    def act(self, s):
+        node = Node(s["manager"], 0)
+        self.graph.node_update(node)
+
+        if self.current_node is None:
+            self.current_node = self.graph.get_current_node()
+            distances = self.graph.find_distances(self.current_node)
+            self.distances_2_print.append(distances)
+            self.best_option_action = self.exploration_fn(distances)
+
+        if self.target:
+
+            if self.current_node == self.target:
+               self.current_node = self.graph.get_current_node()
+               distances = self.graph.find_distances(self.current_node)
+               self.distances_2_print.append(distances)
+               self.best_option_action = self.exploration_fn(distances)
+
+        return self.best_option_action.act(s["option"])
 
     intra_reward_dictionary = {}
 
@@ -43,18 +63,13 @@ class HrlAgent_nextV_PR(HrlAgent):
                     if len(edges_from_current_node)>0:
                         values = []
                         for i in range(len(edges_from_current_node)):
-                            values.append(self.options[i].get_state_value(s_))
+                            if i in range(len(self.options)):
+                                values.append(self.options[i].get_state_value(s_))
 
                         max_value = max(values)
 
                     else:
                         max_value = 0
-
-                    #values = []
-                    #for option in self.options:
-                    #    values.append(option.get_state_value(s_))
-
-                    #max_value = max(values)
 
                     # let's update the dictionary first
 
@@ -69,37 +84,11 @@ class HrlAgent_nextV_PR(HrlAgent):
                         max_max_value = max(self.intra_reward_dictionary[key][1])
 
                         max_value_normalized = (max_value - min_max_value) / ((max_max_value - min_max_value) + 1e-7) # [0, 1] range
-                        #max_value_normalized = (2 * max_value) - 1 # [-1, 1] range
-
-                        # Normalization based on Z score, still not sure if it is the correct way to go
-
-                        #max_value_avg = sum(self.intra_reward_dictionary[key][1]) / self.intra_reward_dictionary[key][0]
-
-                        #sum_v=0
-                        #for value in self.intra_reward_dictionary[key][1]:
-                        #    sum_v += pow(value - max_value_avg,2)
-
-                        #max_value_std = math.sqrt(sum_v/self.intra_reward_dictionary[key][0])
-
-                        #max_value_std = ((sum(self.intra_reward_dictionary[key][2]) / self.intra_reward_dictionary[key][0]) - pow((sum(self.intra_reward_dictionary[key][1])/self.intra_reward_dictionary[key][0]),2))
-
-                        #max_value = max(-1, min(max_value, 1)) # To clip the intrareward value between -1 and 1
-
-                        #max_value_normalized = (max_value - max_value_avg) / (max_value_std)
-
-                        #max_value = (2 * max_value) - 1 # [-1, 1] range
 
                     else:
                         max_value_normalized=0
 
                     r += (self.correct_option_end_reward + (0.1 * max_value_normalized))
-                    done = True
-
-                else:
-                    # to keep performance statistics
-                    self.number_of_options_executed += 1
-
-                    r += self.wrong_end_option_reward
                     done = True
 
         self.save_statistics()

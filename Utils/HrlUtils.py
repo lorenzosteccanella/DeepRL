@@ -1,6 +1,13 @@
 import math
 import random
 import numpy as np
+import matplotlib.pyplot as plt
+import warnings
+warnings.filterwarnings("ignore")
+plt.rcParams["figure.figsize"] = (20, 20)
+plt.ion() # enable interactivity
+plt.show()
+#fig = plt.figure() # make a figure
 
 class Distances:
 
@@ -34,7 +41,7 @@ class Edge:
         self.visit_count = 1
         self.destination = destination
         self.edge_cost = edge_cost
-        self.value = value + self.edge_cost + round(0.5 * (math.exp(-Edge.pseudo_count_factor * self.visit_count)), 3)
+        self.value = value + self.edge_cost #+ (Edge.pseudo_count_factor/math.sqrt(self.visit_count)) #+ round(0.5 * (math.exp(-Edge.pseudo_count_factor * self.visit_count)), 3)
         self.option = None
 
     def get_value(self):
@@ -47,11 +54,11 @@ class Edge:
         return self.destination
 
     def set_value(self, value):
-        self.value = value + self.edge_cost + round(0.5 * (math.exp(-Edge.pseudo_count_factor * self.visit_count)), 3)
+        self.value = value + self.edge_cost #+ (Edge.pseudo_count_factor/math.sqrt(self.visit_count)) #+ round(0.5 * (math.exp(-Edge.pseudo_count_factor * self.visit_count)), 3)
 
     def visited(self):
         self.visit_count += 1
-        self.value = self.value + self.edge_cost + round(0.5 * (math.exp(-Edge.pseudo_count_factor * self.visit_count)),3)
+        self.value = self.value #+ (Edge.pseudo_count_factor/math.sqrt(self.visit_count)) #+ self.edge_cost + round(0.5 * (math.exp(-Edge.pseudo_count_factor * self.visit_count)),3)
 
     def set_option(self, option):
         self.option = option
@@ -153,6 +160,7 @@ class Graph:
         self.total_reward_edge = 0
         self.node_edges_dictionary = {} # this is the graph representation with nodes as key and eges list as values, this structure is just used to speed up computation
         self.destination_node_edges_dictionary = {}
+        self.path = []
     # def init_distances(self):
     #     distances = {}
     #     for node in self.node_list:
@@ -169,6 +177,57 @@ class Graph:
     #         edges = self.get_edges_of_a_node(node)
     #         if (len(edges) == 0):
     #             self.distances[node] = node.value
+
+    def print_networkx_graph(self, root, route, distances):
+        i = 0
+        if self.new_edge_encontered:
+            if i < 1:
+                i +=1
+                from time import sleep
+                import networkx as nx
+                # def plt_show():
+                #     '''Text-blocking version of plt.show()
+                #     Use this instead of plt.show()'''
+                #     #plt.draw()
+                #     #plt.pause(1)
+                #     #plt.clf()
+                #     ##input("Press enter to continue...")
+                #     #plt.close()
+                #     #fig.canvas.draw()
+                #     # Now we can save it to a numpy array.
+                #     #data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
+                #     #data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+                #
+                #     #cv2.imshow("", data)
+                #     #plt.imshow(data)
+                #     #plt.show()
+
+                G = nx.MultiDiGraph()
+                edge_lab={}
+
+                for node in self.node_list:
+                    G.add_node((node))
+
+                for edge in self.edge_list:
+                    G.add_edge(edge.origin, edge.destination, weight= edge.value)
+                    edge_lab.update({(edge.origin, edge.destination): round(edge.value, 5)})
+                pos = nx.drawing.nx_agraph.graphviz_layout(G)#nx.spring_layout(G, k = 5/math.sqrt(G.order()), iterations = 500, scale = 0.6)
+                nx.draw(G, pos, edge_color='black', width=1, linewidths=1, \
+                        node_size=500, node_color='pink', alpha=0.9, font_size=10, \
+                        labels={node: str(node.state) + " \n " + str(round(distances[node], 5)) for node in G.nodes()})
+
+                nx.draw_networkx_nodes(G, pos, nodelist=[(root)], node_color='y', alpha=1)
+                nx.draw_networkx_edge_labels(G, pos, edge_labels = edge_lab, font_color='red')
+                nx.draw_networkx_edges(G, pos, edgelist=route, edge_color='g', width=5)
+
+                #plt.show(block=False)
+                #sleep(4)
+                #plt.close()
+                plt.draw()
+                plt.pause(0.001)
+                plt.clf()
+
+
 
     def edge_update(self, old_node, new_node, reward, target):
 
@@ -221,8 +280,8 @@ class Graph:
         if new_node: # if we recived the new node together with the old node as parameters
             node = self.node_list[self.node_list.index(new_node)]
 
-            if( old_node != new_node): # first step in a new abstract state
-                node_value = self.node_list[self.node_list.index(old_node)]  # we get the old node from the list
+            #if( old_node != new_node): # first step in a new abstract state
+                #node_value = self.node_list[self.node_list.index(old_node)]  # we get the old node from the list
 
                 #print(node_value.state, node.state, self.total_reward_node)
                 #node.set_value((node.get_value() * node.get_n_visits) + reward) / (node.get_n_visits + 1)) # iterative average
@@ -264,7 +323,9 @@ class Graph:
             self.total_reward_node = 0
             self.total_reward_edge = 0
             self.current_edge = None
+            self.current_node = None
             #self.print_edge_list()
+            #self.print_networkx_graph()
 
         return self.new_node_encontered, self.new_edge_encontered
 
@@ -314,6 +375,33 @@ class Graph:
                 print("destination ->", edges[i].destination.state)
 
         return best_edge_index
+
+    def best_path(self, root, distances):
+        max_distance = - float("inf")
+        best_edge_index = []
+        self.index_4_bestpathprint += 1
+        if self.index_4_bestpathprint > 100:
+            self.index_4_bestpathprint = 0
+            return self.path
+
+        edges = self.get_edges_of_a_node(root)
+
+        if len(edges) == 0:
+            return self.path
+
+
+        for i, edge in zip(range(len(edges)), edges):
+            if distances[edge.destination] == max_distance:
+                best_edge_index.append(i)
+            elif distances[edge.destination] > max_distance:
+                best_edge_index.clear()
+                best_edge_index.append(i)
+                max_distance = distances[edge.destination]
+
+        for i in best_edge_index:
+            self.path.append((edges[i].origin, edges[i].destination))
+
+        return self.best_path(edges[random.choice(best_edge_index)].destination, distances)
 
     def print_best_path(self, root, distances):
         self.index_4_bestpathprint += 1
@@ -385,7 +473,7 @@ class Graph:
                     self.print_edge_list()
                 else:
                     for edge in self.destination_node_edges_dictionary[node]:
-                            t_s.append(edge.value)
+                        t_s.append(edge.value)
                     distances[node] = max(t_s)
 
                 #self.update_distances()
@@ -394,6 +482,14 @@ class Graph:
             # Stopping condition
             delta = 0
             for node in self.node_list:
+                t_s = []
+                edges = self.destination_node_edges_dictionary[node]
+                if len(edges)>0:
+                    for edge in self.destination_node_edges_dictionary[node]:
+                        t_s.append(edge.value)
+                    r = max(t_s)
+                else:
+                    r = 0
                 edges = self.get_edges_of_a_node(node)
                 values = []
                 if (len(edges) > 0):
@@ -401,7 +497,7 @@ class Graph:
                         origin = edge.get_origin()
                         destination = edge.get_destination()
                         # if((distances[node] + edge.get_value())<distances[node]):
-                        V = edge.value + node.value + discount_factor * distances[destination]
+                        V = r + (discount_factor * distances[destination])
                         values.append(V)
 
                     delta = max(delta, np.abs(max(values) - distances[node]))
@@ -416,24 +512,24 @@ class Graph:
         distances = {}
         predecessors = {}
         for node in self.node_list:
-            distances[node] = float("inf")  # distances for all node setted to - inf
+            distances[node] = float("inf")  # distances for all node setted to inf
             predecessors[node] = None
         distances[root] = 0. # the source distance is set to 0
 
         for i in range(len(self.node_list) - 1):
             #print("LOOP ", i)
             for edge in self.edge_list:
-                origin = edge.get_origin()
-                destination = edge.get_destination()
-                if distances[origin] != float("inf") and distances[origin] + edge.get_value() + destination.value < distances[destination]:
-                    distances[destination] = distances[origin] + edge.get_value() + destination.value
+                origin = edge.origin
+                destination = edge.destination
+                if distances[origin] != float("inf") and distances[origin] + edge.value < distances[destination]:
+                    distances[destination] = distances[origin] + edge.value
                     predecessors[destination] = origin
 
-        #for edge in self.edge_list:
-            #origin = edge.get_origin()
-            #destination = edge.get_destination()
-            #if distances[origin] != - float("inf") and distances[origin] + edge.get_value() + destination.value > distances[destination]:
-            #    print("Graph contains negative weights cycles")
+        for edge in self.edge_list:
+            origin = edge.origin
+            destination = edge.destination
+            if distances[origin] != float("inf") and distances[origin] + edge.value  < distances[destination]:
+                print("Graph contains negative weights cycles")
 
         return distances
 
@@ -449,10 +545,16 @@ class Graph:
             #if len(self.distances) < len(self.node_list):
 
             #root_origin=self.node_list[0]
+            if self.new_edge_encontered:
 
-            distances= self.value_iteration(0.0001)#self.bellman_ford(root)
+                self.distances= self.value_iteration(0.0001) #distances= self.value_iteration(0.0001) #
 
-            # for edge in self.edge_list:
+            self.path.clear()
+            path = self.best_path(root, self.distances)
+
+            self.print_networkx_graph(root, path, self.distances)
+
+            #for edge in self.edge_list:
             #     print(edge.origin, edge.destination, edge.value)
 
             # print("DISTANCES")
@@ -464,11 +566,11 @@ class Graph:
 
             #for node in self.node_list:
             #    print(node)
+            #print()
 
 
 
-
-            return distances
+            return self.distances
 
         else:
             return None

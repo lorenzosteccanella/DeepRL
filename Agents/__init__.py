@@ -16,3 +16,4 @@ from .ExplorationEffortRepresentativeStates import ExplorationEffortRepresentati
 from .GoalA2CAgent import GoalA2CAgent
 from .GoalA2COption import GoalA2COption
 from .GoalHrlAgent import GoalHrlAgent
+from .WayPointsAgent_nextV_PR import WayPointsAgent_nextV_PR

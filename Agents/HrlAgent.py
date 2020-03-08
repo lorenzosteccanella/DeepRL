@@ -205,6 +205,9 @@ class HrlAgent(AbstractAgent):
         #    self.path_2_print.clear()
         #    self.distances_2_print.clear()
 
+        if sample[4]:
+            self.current_node = None
+
     def replay(self):
         pass
 

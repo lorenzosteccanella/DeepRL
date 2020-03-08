@@ -17,12 +17,12 @@ class DS_wrapper(gym.Wrapper):
         self.images_stack = deque([], maxlen=self.parameters["stack_images_length"])
         self.list_of_repr_states = []
         self.KEY = False
-        self.total_r = 0
+        self.total_r = 0.
         self.distance_cluster = self.parameters["distance_cluster"]
 
     def reset(self, **kwargs):
         self.images_stack.clear()
-        self.total_r = 0
+        self.total_r = 0.
         observation = self.env.reset(**kwargs)
         self.width, self.height, self.depth = observation.shape
         observation = self.observation(observation)

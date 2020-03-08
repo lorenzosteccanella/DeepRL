@@ -2,8 +2,8 @@ from Agents import HrlAgent, HrlAgent_nextV_PR, RandomAgentOption, A2COption
 import gym
 import tensorflow as tf
 import os
-from Environment import Environment
-from Wrappers_Env import PositionGridenv_GE_MazeKeyDoor_v0
+from Environment import EnvironmentMontezuma1key
+from Wrappers_Env import Montezuma_Pixel_position_wrapper
 from Utils import ToolEpsilonDecayExploration, Preprocessing
 from Models.A2CnetworksEager import *
 from Utils import SaveResult
@@ -17,29 +17,27 @@ class variables():
         tf.enable_eager_execution()
 
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
-        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+        os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4"
 
         self.seeds = range(1)
-        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  TEST_HRL_E_GREEDY_1/')
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  Montezuma_position_abstraction_1/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
-        self.FILE_NAME = 'Key_Door_HRL_E_GREEDY'
-        self.NUMBER_OF_EPOCHS = 4000
+        self.FILE_NAME = 'Montezuma_position_abstraction'
+        self.NUMBER_OF_EPOCHS = 1000
 
-        self.PROBLEM = 'GE_MazeKeyDoor-v10'
+        self.PROBLEM = 'MontezumaRevenge-ram-v0'
         environment = gym.make(self.PROBLEM)
 
-        self.ACTION_SPACE = [0, 1, 2, 3, 4]
+        self.ACTION_SPACE = list(range(0, environment.action_space.n))
 
         self.wrapper_params = {
             "stack_images_length": 4,
-            "width": 10,
-            "height": 10,
-            "n_zones": 2
+            "n_zones": 40
         }
 
-        self.wrapper = PositionGridenv_GE_MazeKeyDoor_v0(environment, self.wrapper_params)
+        self.wrapper = Montezuma_Pixel_position_wrapper(environment, self.wrapper_params)
 
-        display_env = False
+        display_env = True
 
         if display_env:
             from Utils import ShowRenderHRL
@@ -47,7 +45,7 @@ class variables():
         else:
             rendering = False
 
-        self.env = Environment(self.wrapper, preprocessing=False, rendering_custom_class=rendering)
+        self.env = EnvironmentMontezuma1key(self.wrapper, preprocessing=False, rendering_custom_class=rendering)
 
     def reset(self):
         self.env.close()
@@ -59,7 +57,7 @@ class variables():
 
         self.number_of_stacked_frames = 1
 
-        preprocessing = None#Preprocessing(84, 84, 3, self.number_of_stacked_frames, False)
+        preprocessing = None #Preprocessing(84, 84, 3, self.number_of_stacked_frames, False)
 
         self.option_params = {
             "option": A2COption,
@@ -77,9 +75,9 @@ class variables():
         }
 
         self.random_agent = RandomAgentOption(self.ACTION_SPACE)
-        self.LAMBDA = 0.5
+        self.LAMBDA = 0.0005
         self.MIN_EPSILON = 0
-        self.PSEUDO_COUNT = 1000
+        self.PSEUDO_COUNT = None
 
         self.exploration_fn = get_epsilon_best_action
 
