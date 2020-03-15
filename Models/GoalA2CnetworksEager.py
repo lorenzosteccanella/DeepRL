@@ -49,6 +49,18 @@ class SharedDenseLayers(keras.Model):
 
         return [x, x]
 
+class SharedGoalModel(keras.Model):
+    def __init__(self, h_size=256, learning_rate_observation_adjust=1):
+        super(SharedGoalModel, self).__init__(name="SharedGoalModel")
+        self.dense1 = keras.layers.Dense(h_size, activation='elu', kernel_initializer='he_normal')
+        self.learning_rate_adjust = learning_rate_observation_adjust
+
+    def call(self, x):
+        x = self.dense1(x)
+        x = self.learning_rate_adjust * x + (1 - self.learning_rate_adjust) * tf.stop_gradient(x)  # U have to test this!!!
+
+        return [x, x]
+
 
 class CriticNetwork(keras.Model):
     def __init__(self, h_size):
@@ -81,16 +93,17 @@ class ActorNetwork(keras.Model):
 
 class SiameseActorCriticNetwork(keras.Model):
 
-    def __init__(self, critic_model, actor_model, shared_observation_model=None):
+    def __init__(self, critic_model, actor_model, shared_observation_model=None, shared_goal_model=None):
         super(SiameseActorCriticNetwork, self).__init__(name="SiameseActorCriticNetwork")
         self.shared_observation_model = shared_observation_model
+        self.shared_goal_model = shared_goal_model
         self.critic_model = critic_model
         self.actor_model = actor_model
 
     def call(self, x1, x2):
 
         obs1 = self.shared_observation_model(x1)[0] # Just the dense output
-        obs2 = self.shared_observation_model(x2)[0] # Just the dense output
+        obs2 = self.shared_goal_model(x2)[0] # Just the dense output
 
         obs = keras.layers.concatenate([obs1, obs2], axis=-1)
 
@@ -101,14 +114,20 @@ class SiameseActorCriticNetwork(keras.Model):
         return actor, critic
 
 
-class A2CEagerSync:
+class GoalA2CEagerSync:
 
-    def __init__(self, h_size, n_actions, model_critic, model_actor, learning_rate, weight_mse, weight_ce, shared_observation_model=None, train_observation=False):
+    def __init__(self, h_size, n_actions, model_critic, model_actor, learning_rate, weight_mse, weight_ce,
+                 shared_observation_model=None, learning_rate_observation_adjust=1, shared_goal_model=None, train_observation=False):
 
         if inspect.isclass(shared_observation_model):
-            self.shared_observation_model = shared_observation_model()
+            self.shared_observation_model = shared_observation_model(learning_rate_observation_adjust)
         else:
             self.shared_observation_model = shared_observation_model
+
+        if inspect.isclass(shared_goal_model):
+            self.shared_goal_model = shared_goal_model(learning_rate_observation_adjust)
+        else:
+            self.shared_goal_model = shared_goal_model
 
         if inspect.isclass(model_critic):
             self.model_critic = model_critic(h_size)
@@ -120,7 +139,7 @@ class A2CEagerSync:
         else:
             self.model_actor = model_actor
 
-        self.model_actor_critic = SiameseActorCriticNetwork(self.model_critic, self.model_actor, self.shared_observation_model)
+        self.model_actor_critic = SiameseActorCriticNetwork(self.model_critic, self.model_actor, self.shared_observation_model, self.shared_goal_model)
 
         self.train_observation = train_observation
         self.weight_mse = weight_mse
@@ -168,7 +187,7 @@ class A2CEagerSync:
             loss_critic = Losses.mse_loss(value_critic, targets)
             loss_value = (weight_mse * loss_critic) + (loss_pg - weight_ce * loss_ce)
 
-        return loss_value, tape.gradient(loss_value, model_actor_critic.trainable_variables)
+        return loss_value, tape.gradient(loss_value, model_actor_critic.trainable_variables), loss_ce
 
     def train(self, s1, s2, y, one_hot_a, advantage, max_grad_norm=5):
 
@@ -180,13 +199,13 @@ class A2CEagerSync:
 
         s2 = tf.convert_to_tensor(s2)
 
-        loss_value, grads = self.grad(self.model_actor_critic, (s1, s2), y, one_hot_a, advantage, self.weight_ce, self.weight_mse)
+        loss_value, grads, loss_ce = self.grad(self.model_actor_critic, (s1, s2), y, one_hot_a, advantage, self.weight_ce, self.weight_mse)
 
         grads, grad_norm = tf.clip_by_global_norm(grads, max_grad_norm)
 
         self.optimizer.apply_gradients(zip(grads, self.model_actor_critic.trainable_variables), self.global_step)
 
-        return [None, None]
+        return [None, None, loss_ce.numpy()]
 
     def save_weights(self):
         self.model_actor_critic.save_weights("/home/lorenzo/Documenti/UPF/DeepRL/TF_models_weights/A2C_weights")

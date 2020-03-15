@@ -6,7 +6,7 @@ import math
 
 _hex_to_int = lambda x:int(x, 16)-128
 
-class Montezuma_Pixel_position_wrapper(gym.Wrapper):
+class Montezuma_Pixel_position_wrapper_only_1key(gym.Wrapper):
 
 
     def __init__(self, env, parameters):
@@ -36,6 +36,8 @@ class Montezuma_Pixel_position_wrapper(gym.Wrapper):
                 break
 
         reward = acc_reward
+        if reward == 100:
+            done = True
         observation, ram = self.observation(observation)
 
         observation["manager"] = self.get_position_montezuma(ram, reward, done)
@@ -82,8 +84,8 @@ class Montezuma_Pixel_position_wrapper(gym.Wrapper):
 
         x, y = self.get_xy(ram)
 
-        s = (x//step_x, y//step_y)
+        x//step_x, y//step_y
 
         #print(x, y, s)
 
-        return (s, self.total_reward, reward, done)
+        return (x//step_x, y//step_y, self.total_reward, reward, done)

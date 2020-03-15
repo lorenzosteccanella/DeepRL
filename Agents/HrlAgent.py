@@ -30,14 +30,18 @@ class HrlAgent(AbstractAgent):
         # variables to keep statistics of the execution
         self.number_of_options_executed = 1
         self.number_of_successfull_option = 0
+        self.count_edges = {}
+        self.entropy_edges = {}
         self.list_percentual_of_successfull_options = []
         self.old_number_of_options = 0
         self.path_2_print = []
         self.distances_2_print = []
         self.total_r_2_print = []
-        self.total_r = 0
+        self.total_r = 0.
 
         self.best_option_action = None
+        self.precomputed_option_action = None
+        self.best_edge = None
         self.current_node = None
         self.exploration_option = exploration_option
         self.options = []
@@ -50,6 +54,7 @@ class HrlAgent(AbstractAgent):
 
         self.pseudo_count_exploration(pseudo_count_exploration)
         self.epsilon_count_exploration(self.LAMBDA)
+        self.reward_manager = 0.
 
 
     def act(self, s):
@@ -57,22 +62,20 @@ class HrlAgent(AbstractAgent):
         self.graph.node_update(node)
         # if structure to reduce computation cost
 
-        # if self.target is not None:
-        #   if self.current_node != node:
-        #       self.graph.print_node_list()
-        #       print(self.current_node.state, "->", self.target.state, " - ", self.best_option_action)
-
         if self.current_node is None:
             self.current_node = self.graph.get_current_node()
             distances = self.graph.find_distances(self.current_node)
             self.distances_2_print.append(distances)
-            self.best_option_action = self.exploration_fn(distances)
+            self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
 
         elif self.current_node != node:
            self.current_node = self.graph.get_current_node()
            distances = self.graph.find_distances(self.current_node)
            self.distances_2_print.append(distances)
-           self.best_option_action = self.exploration_fn(distances)
+           self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
+
+        #for option in self.options:
+        #    print(option, len(option.get_edge_list()))#, option.get_edge_list())
 
         return self.best_option_action.act(s["option"])
 
@@ -98,7 +101,7 @@ class HrlAgent(AbstractAgent):
 
     def save_statistics(self):
 
-        if self.number_of_options_executed % 10000 == 0 and self.old_number_of_options != self.number_of_options_executed:
+        if self.number_of_options_executed % 100 == 0 and self.old_number_of_options != self.number_of_options_executed:
             if self.save_result is not False:
                 message = ""
                 for tot_reward in self.total_r_2_print:
@@ -140,11 +143,11 @@ class HrlAgent(AbstractAgent):
                 self.save_result.save_data(self.FILE_NAME + "Nodes_Edge_discovered", message)
             self.old_number_of_options = self.number_of_options_executed
 
-        #print(r, done, end=" ")
-        #if self.number_of_successfull_option > 0:
-        #    print("percentage of successfull options", self.number_of_successfull_option/self.number_of_options_executed,
-        #          " number of abstract states:", self.graph.get_number_of_nodes())
-        #    self.graph.print_node_list()
+            if self.save_result is not False:
+
+                self.save_result.save_pickle_data(self.FILE_NAME + "edge_option_stats.pkl", self.count_edges)
+                self.save_result.save_pickle_data(self.FILE_NAME + "edge_entropy_stats.pkl", self.entropy_edges)
+
 
 
     def update_option(self, sample):
@@ -155,27 +158,85 @@ class HrlAgent(AbstractAgent):
         done = sample[4]
         info = sample[5]
 
-        if not self.equal(sample[0]["manager"], sample[3]["manager"]):
-            if self.target is not None:
-                if self.equal(sample[3]["manager"], self.target.state):
+        s_m = Node(sample[0]["manager"], 0)
+        s_m_ = Node(sample[3]["manager"], 0)
 
-                    # to keep performance statistics
-                    self.number_of_options_executed += 1
-                    self.number_of_successfull_option += 1
+        if s_m != s_m_:
+            if self.target is not None:
+                if s_m_ == self.target:
 
                     r += self.correct_option_end_reward
                     done = True
 
                 else:
-                    # to keep performance statistics
-                    self.number_of_options_executed += 1
 
                     r += self.wrong_end_option_reward
                     done = True
 
+        self.best_option_action.observe((s, a, r, s_, done, info))
+
+    def update_manager(self, sample):
+
+        self.reward_manager += sample[2]
+
+        s = Node(sample[0]["manager"], 0)
+        a = self.best_edge
+        r = self.reward_manager
+        s_ = Node(sample[3]["manager"], 0)
+        done = sample[4]
+        info = sample[5]
+
+        right_termination_option = False
+
+        if s != s_:
+            if a is not None:
+                if s_ == self.target:
+                    #self.graph.tabularQ((s, a, r, s_, done, info))
+                    #self.graph.WatkinsQ((s, a, r, s_, done, info), self.exploration_fn)
+                    right_termination_option = True
+
+            self.graph.tabularQ((s, a, r, s_, done, right_termination_option))
+
+            self.reward_manager = 0
+
+        if done:
+            self.reward_manager = 0
+
+    def statistics_options(self, sample):
+
+        edge = self.best_edge
+
+        s_m = Node(sample[0]["manager"], 0)
+        s_m_ = Node(sample[3]["manager"], 0)
+
+        if s_m != s_m_:
+            if edge is not None:
+
+                if str(edge) not in self.count_edges:
+                    self.count_edges[str(edge)] = [0, 0]
+
+                if str(edge) not in self.entropy_edges:
+                    self.entropy_edges[str(edge)] = []
+
+                if s_m_ == self.target:
+
+                    # to keep performance statistics
+                    self.number_of_successfull_option += 1
+
+                    self.count_edges[str(edge)][1] += 1
+
+                # to keep performance statistics
+                self.number_of_options_executed += 1
+
+                self.count_edges[str(edge)][0] += 1
+
+                ce_loss = self.best_option_action.get_ce_loss()
+
+                if ce_loss is not None:
+                    self.entropy_edges[str(edge)].append(ce_loss)
+
         self.save_statistics()
 
-        self.best_option_action.observe((s, a, r, s_, done, info))
 
     def observe(self, sample):  # in (s, a, r, s_, done, info) format
 
@@ -193,8 +254,13 @@ class HrlAgent(AbstractAgent):
                 self.reset_exploration()
 
         edges_from_current_node = self.graph.get_edges_of_a_node(self.current_node)
+
         self.create_options(edges_from_current_node)
         self.update_option(sample)
+
+        self.update_manager(sample)
+
+        self.statistics_options(sample)
 
         # slowly decrease Epsilon based on manager experience
         if not self.equal(sample[0]["manager"], sample[3]["manager"]):
@@ -207,6 +273,8 @@ class HrlAgent(AbstractAgent):
 
         if sample[4]:
             self.current_node = None
+            self.best_edge = None
+            self.target = None
 
     def replay(self):
         pass

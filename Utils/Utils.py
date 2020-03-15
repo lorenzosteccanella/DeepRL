@@ -107,7 +107,8 @@ class Preprocessing:
 class ExperienceReplay:
 
     def __init__(self, max_size):
-        self.buffer = deque(maxlen=max_size)
+        self.max_size = max_size
+        self.buffer = deque(maxlen=self.max_size)
         self.max_reward = float('-inf')
 
     def add(self, experience):
@@ -135,7 +136,9 @@ class ExperienceReplay:
         self.buffer.clear()
 
     def reset_size(self, max_size):
-        self.buffer = deque(maxlen=max_size)
+        if self.max_size != max_size:
+            self.max_size = max_size
+            self.buffer = deque(maxlen=self.max_size)
 
     def update(self, idx, error):
         None

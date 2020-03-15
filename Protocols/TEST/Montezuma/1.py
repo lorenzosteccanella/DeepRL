@@ -2,8 +2,8 @@ from Agents import HrlAgent, HrlAgent_nextV_PR, RandomAgentOption, A2COption
 import gym
 import tensorflow as tf
 import os
-from Environment import EnvironmentMontezuma1key
-from Wrappers_Env import Montezuma_Pixel_position_wrapper
+from Environment import Environment
+from Wrappers_Env import Montezuma_Pixel_position_wrapper_only_1key
 from Utils import ToolEpsilonDecayExploration, Preprocessing
 from Models.A2CnetworksEager import *
 from Utils import SaveResult
@@ -35,9 +35,9 @@ class variables():
             "n_zones": 40
         }
 
-        self.wrapper = Montezuma_Pixel_position_wrapper(environment, self.wrapper_params)
+        self.wrapper = Montezuma_Pixel_position_wrapper_only_1key(environment, self.wrapper_params)
 
-        display_env = True
+        display_env = False
 
         if display_env:
             from Utils import ShowRenderHRL
@@ -45,7 +45,7 @@ class variables():
         else:
             rendering = False
 
-        self.env = EnvironmentMontezuma1key(self.wrapper, preprocessing=False, rendering_custom_class=rendering)
+        self.env = Environment(self.wrapper, preprocessing=False, rendering_custom_class=rendering)
 
     def reset(self):
         self.env.close()
@@ -69,17 +69,18 @@ class variables():
             "weight_mse": 0.5,
             "weight_ce_exploration": 0.01,
             "learning_rate": 0.0001,
-            "gamma": 0.99,
+            "learning_rate_reduction_obs": 0.05,  # WARNING
+            "gamma": 0.95,
             "batch_size": 6,
             "preprocessing": preprocessing
         }
 
         self.random_agent = RandomAgentOption(self.ACTION_SPACE)
-        self.LAMBDA = 0.0005
+        self.LAMBDA = 0.005
         self.MIN_EPSILON = 0
         self.PSEUDO_COUNT = None
 
-        self.exploration_fn = get_epsilon_best_action
+        self.exploration_fn = get_epsilon_count_exploration
 
         # to know in how many episodes the epsilon will decay
         ToolEpsilonDecayExploration.epsilon_decay_end_steps(self.MIN_EPSILON, self.LAMBDA)

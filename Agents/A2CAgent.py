@@ -11,6 +11,7 @@ class A2CAgent(AbstractAgent):
         self.action_space = action_space
         self.main_model_nn = main_model_nn
         self.gamma = gamma
+        self.ce_loss = None
 
     def _get_actor_critic_error(self, batch):
 
@@ -38,7 +39,9 @@ class A2CAgent(AbstractAgent):
             a_one_hot[i][a_index] = 1
 
         y_critic, adv_actor = self._returns_advantages(rewards, dones, p, p_)
+
         y_critic = np.expand_dims(y_critic, axis=-1)
+
         return states_t, adv_actor, a_one_hot, y_critic
 
     def _returns_advantages(self, rewards, dones, values, next_value):
@@ -46,7 +49,8 @@ class A2CAgent(AbstractAgent):
         returns = np.append(np.zeros_like(rewards), next_value, axis=-1)
         # returns are calculated as discounted sum of future rewards
         for t in reversed(range(rewards.shape[0])):
-            returns[t] = rewards[t] + self.gamma * returns[t + 1] * (1 - dones[t])   # is it gamma corrected here?
+            returns[t] = rewards[t] + self.gamma * returns[t + 1] * (1 - dones[t])
+
         returns = returns[:-1]
         # advantages are returns - baseline, value estimates in our case
         advantages = returns - values
@@ -74,6 +78,9 @@ class A2CAgent(AbstractAgent):
 
             x, adv_actor, a_one_hot, y_critic = self._get_actor_critic_error(batch)
 
-            self.main_model_nn.train(x, y_critic, a_one_hot, adv_actor)
+            _, __, self.ce_loss = self.main_model_nn.train(x, y_critic, a_one_hot, adv_actor)
 
             self.buffer.reset_buffer()
+
+        else:
+            self.ce_loss = None

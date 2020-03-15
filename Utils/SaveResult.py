@@ -44,8 +44,10 @@ class SaveResult:
                 f.write(message)
         f.close
 
-    def save_pickle_data(self, file_name, data):
+    def get_path(self):
+        return self.dir_path_seed
 
+    def save_pickle_data(self, file_name, data):
         with open(self.dir_path_seed + "/" + file_name, 'wb') as f:
             pickle.dump(data, f)
 

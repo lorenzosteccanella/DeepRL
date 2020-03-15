@@ -85,7 +85,13 @@ class Edge:
         return "Edge ["+str(self.origin) + ", " + str(self.destination) + ", " + str(self.value)+"]"
 
     def __str__(self):
-        return "["+str(self.origin.state) + ", " + str(self.destination.state) + ", " + str(self.value)+"]\n"
+        return "["+str(self.origin.state) + ", " + str(self.destination.state) + "]"
+
+    def __hash__(self):
+        if type(self.origin).__name__ == "ndarray":
+            return hash((self.origin.tostring(), self.destination.tostring()))
+        else:
+            return hash((self.origin, self.destination))
 
     @staticmethod
     def set_pseudo_count(pseudo_count_factor):
@@ -115,6 +121,7 @@ class Node:
     def visited(self):
         self.visit_count += 1
         self.epsilon = 1 * (math.exp(-self.lambda_node * self.visit_count))
+        #print(self.state, self.epsilon, self.visit_count)
 
     def get_n_visits(self):
         return self.visit_count
@@ -155,79 +162,52 @@ class Graph:
         self.new_node_encontered = False
         self.new_edge_encontered = False
         self.index_4_bestpathprint = 0
+        self.Q = {}
+        self.E = {}
         self.distances = {}
         self.total_reward_node = 0
         self.total_reward_edge = 0
         self.node_edges_dictionary = {} # this is the graph representation with nodes as key and eges list as values, this structure is just used to speed up computation
         self.destination_node_edges_dictionary = {}
         self.path = []
-    # def init_distances(self):
-    #     distances = {}
-    #     for node in self.node_list:
-    #         distances[node] = 0 # distances for all node setted to 0
-    #         edges = self.get_edges_of_a_node(node)
-    #         if (len(edges) == 0):
-    #             distances[node] = node.value
-    #     return distances
-    #
-    # def update_distances(self):
-    #     for node in self.node_list:
-    #         if node not in self.distances:
-    #             self.distances[node] = 0
-    #         edges = self.get_edges_of_a_node(node)
-    #         if (len(edges) == 0):
-    #             self.distances[node] = node.value
+        self.i = 0
+        self.batch=[]
 
     def print_networkx_graph(self, root, route, distances):
-        i = 0
-        if self.new_edge_encontered:
-            if i < 1:
-                i +=1
-                from time import sleep
-                import networkx as nx
-                # def plt_show():
-                #     '''Text-blocking version of plt.show()
-                #     Use this instead of plt.show()'''
-                #     #plt.draw()
-                #     #plt.pause(1)
-                #     #plt.clf()
-                #     ##input("Press enter to continue...")
-                #     #plt.close()
-                #     #fig.canvas.draw()
-                #     # Now we can save it to a numpy array.
-                #     #data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
-                #     #data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-                #
-                #     #cv2.imshow("", data)
-                #     #plt.imshow(data)
-                #     #plt.show()
+        self.i +=1
+        if self.i % 100 == 0:
+            self.i = 0
+            from time import sleep
+            import networkx as nx
 
-                G = nx.MultiDiGraph()
-                edge_lab={}
+            def V(node):
+                maxQ = - float("inf")
+                for edge in distances[node]:
+                    if maxQ < (distances[node][edge]):
+                        maxQ = (distances[node][edge])
+                return maxQ
 
-                for node in self.node_list:
-                    G.add_node((node))
+            G = nx.MultiDiGraph()
+            edge_lab={}
 
-                for edge in self.edge_list:
-                    G.add_edge(edge.origin, edge.destination, weight= edge.value)
-                    edge_lab.update({(edge.origin, edge.destination): round(edge.value, 5)})
-                pos = nx.drawing.nx_agraph.graphviz_layout(G)#nx.spring_layout(G, k = 5/math.sqrt(G.order()), iterations = 500, scale = 0.6)
-                nx.draw(G, pos, edge_color='black', width=1, linewidths=1, \
-                        node_size=500, node_color='pink', alpha=0.9, font_size=10, \
-                        labels={node: str(node.state) + " \n " + str(round(distances[node], 5)) for node in G.nodes()})
+            for node in self.node_list:
+                G.add_node((node))
 
-                nx.draw_networkx_nodes(G, pos, nodelist=[(root)], node_color='y', alpha=1)
-                nx.draw_networkx_edge_labels(G, pos, edge_labels = edge_lab, font_color='red')
-                nx.draw_networkx_edges(G, pos, edgelist=route, edge_color='g', width=5)
+            for edge in self.edge_list:
+                G.add_edge(edge.origin, edge.destination, weight= edge.value)
+                edge_lab.update({(edge.origin, edge.destination): str(self.Q[edge.origin][edge])})
+            pos = nx.drawing.nx_agraph.graphviz_layout(G)
+            nx.draw(G, pos, edge_color='black', width=1, linewidths=1, connectionstyle='arc3, rad = 0.1', \
+                    node_size=500, node_color='pink', alpha=0.9, font_size=10, \
+                    labels={node: (str(node.state) + "\n" + str(round(V(node), 5))) for node in G.nodes()})
 
-                #plt.show(block=False)
-                #sleep(4)
-                #plt.close()
-                plt.draw()
-                plt.pause(0.001)
-                plt.clf()
+            nx.draw_networkx_nodes(G, pos, nodelist=[(root)], node_color='y', alpha=1)
+            nx.draw_networkx_edge_labels(G, pos, connectionstyle='arc3, rad = 0.1', edge_labels = edge_lab, font_color='red', label_pos=0.3)
+            nx.draw_networkx_edges(G, pos, connectionstyle='arc3, rad = 0.1', edgelist=route, edge_color='g', width=5)
 
-
+            plt.draw()
+            plt.pause(0.001)
+            plt.clf()
 
     def edge_update(self, old_node, new_node, reward, target):
 
@@ -245,6 +225,10 @@ class Graph:
                 self.edge_list.append(edge)
                 self.node_edges_dictionary[old_node].append(edge)
                 self.destination_node_edges_dictionary[new_node].append(edge)  # this structure is just to speed up at the cost of memory
+                a_q_s = {edge: edge.value}
+                self.Q[old_node].update(a_q_s)
+                a_e_s = {edge: 0}
+                self.E[old_node].update(a_e_s)
 
             edge = self.node_edges_dictionary[old_node][self.node_edges_dictionary[old_node].index(edge)]
             edge.visited()
@@ -254,9 +238,12 @@ class Graph:
                     edge.set_value(0.8 * edge.get_value() + 0.2 * self.total_reward_edge)
 
             self.total_reward_edge = 0
+            self.current_edge = edge
 
         elif target is not None:
             self.total_reward_edge += reward
+
+
 
     def node_update(self, old_node, new_node=False, reward=False, done=False):
 
@@ -268,6 +255,8 @@ class Graph:
             self.new_node_encontered = True
             self.node_edges_dictionary[old_node] = []
             self.destination_node_edges_dictionary[old_node] = [] # this structure is just to speed up at the cost of memory
+            self.Q[old_node] = {}
+            self.E[old_node] = {}
 
         if new_node:
             if new_node not in self.node_list:
@@ -275,26 +264,12 @@ class Graph:
                 self.new_node_encontered = True
                 self.node_edges_dictionary[new_node] = []
                 self.destination_node_edges_dictionary[new_node] = [] # this structure is just to speed up at the cost of memory
+                self.Q[new_node] = {}
+                self.E[new_node] = {}
 
         #setting the value for the specific abstract node
         if new_node: # if we recived the new node together with the old node as parameters
             node = self.node_list[self.node_list.index(new_node)]
-
-            #if( old_node != new_node): # first step in a new abstract state
-                #node_value = self.node_list[self.node_list.index(old_node)]  # we get the old node from the list
-
-                #print(node_value.state, node.state, self.total_reward_node)
-                #node.set_value((node.get_value() * node.get_n_visits) + reward) / (node.get_n_visits + 1)) # iterative average
-                #node.set_value(0.6*node.get_value() + 0.4*reward) # iterative moving average # shouldn't this be node.set_value(0.6*node.get_value() + 0.4*self.total_reward_node)
-                #self.total_reward_node = 0
-                #self.total_reward_node += reward
-
-            #elif( old_node == new_node):
-                #print(old_node.state, new_node.state, self.total_reward_node)
-                #self.total_reward_node += reward
-
-            #if done:
-                #self.total_reward_node = 0
 
         #this is just used to add the first abstract state at the beginning of a epoch
         else: # if we recived just the old node as parameter i.e. new_node = False and reward = False
@@ -362,12 +337,12 @@ class Graph:
         if not edges:
             edges = self.get_edges_of_a_node(root)
         for i, edge in zip(range(len(edges)), edges):
-            if distances[edge.destination] == max_distance:
+            if self.distances[edge.origin][edge] == max_distance:
                 best_edge_index.append(i)
-            elif distances[edge.destination] > max_distance:
+            elif self.distances[edge.origin][edge] > max_distance:
                 best_edge_index.clear()
                 best_edge_index.append(i)
-                max_distance = distances[edge.destination]
+                max_distance = self.distances[edge.origin][edge]
 
         if verbose:
             print("root -> ", root.state)
@@ -391,12 +366,12 @@ class Graph:
 
 
         for i, edge in zip(range(len(edges)), edges):
-            if distances[edge.destination] == max_distance:
+            if self.distances[edge.origin][edge] == max_distance:
                 best_edge_index.append(i)
-            elif distances[edge.destination] > max_distance:
+            elif self.distances[edge.origin][edge] > max_distance:
                 best_edge_index.clear()
                 best_edge_index.append(i)
-                max_distance = distances[edge.destination]
+                max_distance = self.distances[edge.origin][edge]
 
         for i in best_edge_index:
             self.path.append((edges[i].origin, edges[i].destination))
@@ -414,124 +389,139 @@ class Graph:
         if(len(edges)==0):
             return False
         for edge in edges:
-            if distances[edge.destination] == max_distance:
+            if self.distances[edge.origin][edge] == max_distance:
                 best_edge_array.append(edge)
-            elif distances[edge.destination] > max_distance:
+            elif self.distances[edge.origin][edge] > max_distance:
                 best_edge_array.clear()
                 best_edge_array.append(edge)
-                max_distance = distances[edge.destination]
+                max_distance = self.distances[edge.origin][edge]
 
         best_edge = random.choice(best_edge_array)
         print(best_edge.destination.state)
         return self.print_best_path(best_edge.destination, distances)
 
-    # def value_iteration(self, theta, discount_factor=0.95):
-    #     distances = {}
-    #     for node in self.node_list:
-    #         distances[node] = 0 # distances for all node setted to 0
-    #         edges = self.get_edges_of_a_node(node)
-    #         if (len(edges) == 0):
-    #             distances[node] = node.value
-    #
-    #     #self.update_distances()
-    #
-    #     while True:
-    #         # Stopping condition
-    #         delta = 0
-    #         for node in self.node_list:
-    #             edges = self.get_edges_of_a_node(node)
-    #             values = []
-    #             if (len(edges) > 0):
-    #                 for edge in edges:
-    #                     origin = edge.get_origin()
-    #                     destination = edge.get_destination()
-    #                     # if((distances[node] + edge.get_value())<distances[node]):
-    #                     V = edge.value + node.value + discount_factor * distances[destination]
-    #                     values.append(V)
-    #
-    #                 delta = max(delta, np.abs(max(values) - distances[node]))
-    #                 distances[node] = max(values)
-    #         # Check if we can stop
-    #         if delta < theta:
-    #             break
-    #
-    #     return distances
+    def tabularMC(self, sample):
 
-    def value_iteration(self, theta, discount_factor=0.95):
-        distances = {}
-        for node in self.node_list:
-            distances[node] = 0 # distances for all node setted to 0
-            edges = self.get_edges_of_a_node(node)
-            if (len(edges) == 0):
-                t_s = []
-                if len(self.destination_node_edges_dictionary[node]) == 0:
-                    print()
-                    print("ERROR NOT SURE WHAT IS HAPPENING HERE")
-                    print(node)
-                    print("*"*30)
-                    #print(self.destination_node_edges_dictionary[node])
-                    self.print_edge_list()
+        learning_rate = 0.9
+        gamma = 0.95
+
+        done = sample[4]
+
+        self.batch.append(sample)
+
+        if done:
+            rewards = np.array([o[2] for o in self.batch])
+            if (rewards >= 0).all():
+                discounted_r = np.zeros_like(rewards)
+                running_add = 0
+                for t in reversed(range(rewards.shape[0])):
+                    running_add = running_add * gamma + rewards[t]
+                    discounted_r[t] = running_add
+
+                for i, sample in zip(range(len(self.batch)), self.batch):
+                    s = sample[0]
+                    a = sample[1]
+                    correct_termination = sample[5]
+                    if correct_termination:
+                        td_error = (discounted_r[i] - self.Q[s][a])
+                        self.Q[s][a] = self.Q[s][a] + learning_rate * td_error
+
+
+                        #print(actions, right_termination)
+            self.batch.clear()
+
+
+
+    def tabularQ(self, sample):
+
+        learning_rate = 0.9
+        gamma = 0.95
+        N = 6
+
+        done = sample[4]
+
+        self.batch.append(sample)
+
+        if done or len(self.batch)==N:
+            rewards = np.array([o[2] for o in self.batch])
+            if( rewards >= 0 ).all():
+                dones = np.array([o[4] for o in self.batch])
+                s1_t_N = self.batch[-1][3]
+                if len(self.Q[s1_t_N]) > 0:
+                    maxQs1_t_N = - float("inf")
+                    for edge in self.Q[s1_t_N]:
+                        if maxQs1_t_N < (self.Q[s1_t_N][edge]):
+                            maxQs1_t_N = (self.Q[s1_t_N][edge])
                 else:
-                    for edge in self.destination_node_edges_dictionary[node]:
-                        t_s.append(edge.value)
-                    distances[node] = max(t_s)
+                    maxQs1_t_N = 0
 
-                #self.update_distances()
+                returns = np.append(np.zeros_like(rewards), [maxQs1_t_N], axis=-1)
+                for t in reversed(range(rewards.shape[0])):
+                    returns[t] = rewards[t] + gamma * returns[t + 1] * (1 - dones[t])
 
-        while True:
-            # Stopping condition
-            delta = 0
-            for node in self.node_list:
-                t_s = []
-                edges = self.destination_node_edges_dictionary[node]
-                if len(edges)>0:
-                    for edge in self.destination_node_edges_dictionary[node]:
-                        t_s.append(edge.value)
-                    r = max(t_s)
+                returns = returns[:-1]
+
+                for i, sample in zip(range(len(self.batch)), self.batch):
+                    s = sample[0]
+                    a = sample[1]
+                    correct_termination = sample[5]
+                    if correct_termination:
+                        td_error = (returns[i] - self.Q[s][a])
+                        self.Q[s][a] = self.Q[s][a] + learning_rate * td_error
+                        self.Q[s][a] = round(self.Q[s][a], 7)
+
+            self.batch.clear()
+
+
+    def WatkinsQ(self, sample, exploration_fn):
+
+        learning_rate = 0.9
+        gamma = 0.99
+        lamb = 0.8
+
+        s = sample[0]
+        a = sample[1]
+        r = sample[2]
+        s_ = sample[3]
+        done = sample[4]
+
+        if len(self.Q[s_])>0:
+            o_, edge_ = exploration_fn(s_, self.Q, True)
+            if edge_ is not None:
+                QS1 = self.Q[s_][edge_]
+            else:
+                QS1 = 0
+        else:
+            QS1 = 0
+
+        if len(self.Q[s_])>0:
+            maxQS1 = - float("inf")
+            for edge in self.Q[s_]:
+                if maxQS1 < (self.Q[s_][edge]):
+                    maxQS1 = (self.Q[s_][edge])
+        else:
+            maxQS1 = 0
+
+        td_error = r + gamma * maxQS1 - self.Q[s][a]
+
+        # Check wether the action choosen was exploratory or not
+        if len(self.Q[s_]) > 0:
+            exploratory_action = 0 if maxQS1 == QS1 else 1
+        else:
+            exploratory_action = 1
+
+        self.E[s][a] += 1  # Update trace for the current state
+
+        for s_i in self.node_list:
+            edges = self.get_edges_of_a_node(s_i)
+            for a_i in edges:
+                self.Q[s_i][a_i] += learning_rate * td_error * self.E[s_i][a_i]
+
+                # Update traces
+                if exploratory_action:
+                    self.E[s_i][a_i] = 0
                 else:
-                    r = 0
-                edges = self.get_edges_of_a_node(node)
-                values = []
-                if (len(edges) > 0):
-                    for edge in edges:
-                        origin = edge.get_origin()
-                        destination = edge.get_destination()
-                        # if((distances[node] + edge.get_value())<distances[node]):
-                        V = r + (discount_factor * distances[destination])
-                        values.append(V)
-
-                    delta = max(delta, np.abs(max(values) - distances[node]))
-                    distances[node] = max(values)
-            # Check if we can stop
-            if delta < theta:
-                break
-
-        return distances
-
-    def bellman_ford(self, root):
-        distances = {}
-        predecessors = {}
-        for node in self.node_list:
-            distances[node] = float("inf")  # distances for all node setted to inf
-            predecessors[node] = None
-        distances[root] = 0. # the source distance is set to 0
-
-        for i in range(len(self.node_list) - 1):
-            #print("LOOP ", i)
-            for edge in self.edge_list:
-                origin = edge.origin
-                destination = edge.destination
-                if distances[origin] != float("inf") and distances[origin] + edge.value < distances[destination]:
-                    distances[destination] = distances[origin] + edge.value
-                    predecessors[destination] = origin
-
-        for edge in self.edge_list:
-            origin = edge.origin
-            destination = edge.destination
-            if distances[origin] != float("inf") and distances[origin] + edge.value  < distances[destination]:
-                print("Graph contains negative weights cycles")
-
-        return distances
+                    self.E[s_i][a_i] *= gamma * lamb
 
 
     def find_distances(self, root):
@@ -545,30 +535,15 @@ class Graph:
             #if len(self.distances) < len(self.node_list):
 
             #root_origin=self.node_list[0]
-            if self.new_edge_encontered:
+            #if self.new_edge_encontered:
 
-                self.distances= self.value_iteration(0.0001) #distances= self.value_iteration(0.0001) #
+                #self.distances= self.value_iteration(0.0001) #distances= self.value_iteration(0.0001) #
 
-            self.path.clear()
+            self.distances = self.Q
+
+            self.path.clear() # used by best_path function
             path = self.best_path(root, self.distances)
-
             self.print_networkx_graph(root, path, self.distances)
-
-            #for edge in self.edge_list:
-            #     print(edge.origin, edge.destination, edge.value)
-
-            # print("DISTANCES")
-            # print("\nroot", root.state)
-            # for node in self.node_list:
-            #  print(node.state, " = ", distances[node])
-            # print()
-            #self.print_best_path(root, distances)
-
-            #for node in self.node_list:
-            #    print(node)
-            #print()
-
-
 
             return self.distances
 
@@ -576,12 +551,6 @@ class Graph:
             return None
 
     def get_edges_of_a_node(self, node):
-        #edge_node = []
-        #for edge in self.edge_list:
-        #    if edge.origin == node:
-        #        edge_node.append(edge)
-
-        #return edge_node
 
         return self.node_edges_dictionary[node]
 

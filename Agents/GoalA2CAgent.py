@@ -11,6 +11,7 @@ class GoalA2CAgent(AbstractAgent):
         self.action_space = action_space
         self.main_model_nn = main_model_nn
         self.gamma = gamma
+        self.ce_loss = None
 
     def _get_actor_critic_error(self, batch):
 
@@ -76,6 +77,10 @@ class GoalA2CAgent(AbstractAgent):
 
             x, g, adv_actor, a_one_hot, y_critic = self._get_actor_critic_error(batch)
 
-            self.main_model_nn.train(x, g, y_critic, a_one_hot, adv_actor)
+            _, __, self.ce_loss = self.self.main_model_nn.train(x, g, y_critic, a_one_hot, adv_actor)
 
             self.buffer.reset_buffer()
+
+        else:
+
+            self.ce_loss = None

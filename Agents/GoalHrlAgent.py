@@ -11,21 +11,17 @@ class GoalHrlAgent(HrlAgent):
         self.graph.node_update(node)
         # if structure to reduce computation cost
 
-        # if self.target is not None:
-        #   if self.current_node != node:
-        #       self.graph.print_node_list()
-        #       print(self.current_node.state, "->", self.target.state, " - ", self.best_option_action)
-
         if self.current_node is None:
             self.current_node = self.graph.get_current_node()
             distances = self.graph.find_distances(self.current_node)
             self.distances_2_print.append(distances)
-            self.best_option_action = self.exploration_fn(distances)
+            self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
+
         elif self.current_node != node:
-            self.current_node = self.graph.get_current_node()
-            distances = self.graph.find_distances(self.current_node)
-            self.distances_2_print.append(distances)
-            self.best_option_action = self.exploration_fn(distances)
+           self.current_node = self.graph.get_current_node()
+           distances = self.graph.find_distances(self.current_node)
+           self.distances_2_print.append(distances)
+           self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
 
         if self.target is not None:
             goal = self.target.state
@@ -47,22 +43,20 @@ class GoalHrlAgent(HrlAgent):
         else:
             goal = None
 
-        if not self.equal(sample[0]["manager"], sample[3]["manager"]):
-            if self.target is not None:
-                if self.equal(sample[3]["manager"], self.target.state):
+        s_m = Node(sample[0]["manager"], 0)
+        s_m_ = Node(sample[3]["manager"], 0)
 
-                    # to keep performance statistics
-                    self.number_of_options_executed += 1
-                    self.number_of_successfull_option += 1
+        if s_m != s_m_:
+            if self.target is not None:
+                if s_m_ == self.target:
+
+                    r += self.correct_option_end_reward
+                    done = True                           # single network now, so maybe done = false here
 
                 else:
-                    # to keep performance statistics
-                    self.number_of_options_executed += 1
 
                     r += self.wrong_end_option_reward
-                    done = True
-
-        self.save_statistics()
+                    done = True                           # single network now, so maybe done = false here
 
         self.best_option_action.observe((s, a, r, s_, done, info, goal))
 

@@ -13,7 +13,7 @@ class A2COption(AbstractOption):
 
         self.a2cDNN = A2CEagerSync(parameters["h_size"], len(parameters["action_space"]), parameters["critic_network"],
                                    parameters["actor_network"], parameters["learning_rate"], parameters["weight_mse"],
-                                   parameters["weight_ce_exploration"], parameters["shared_representation"])
+                                   parameters["weight_ce_exploration"], parameters["shared_representation"], parameters["learning_rate_reduction_obs"])
 
         self.agent = A2CAgent(parameters["action_space"], self.a2cDNN, parameters["gamma"], parameters["batch_size"])
 
@@ -38,7 +38,6 @@ class A2COption(AbstractOption):
             s = sample[0]
             s_ = sample[3]
         sample = (s, sample[1], sample[2], s_, sample[4], sample[5])
-        #print(sample[2])
         self.agent.observe(sample)
         self.agent.replay()
         if self.preprocessing:
@@ -52,3 +51,6 @@ class A2COption(AbstractOption):
 
     def get_state_value(self, s):
         return self.a2cDNN.prediction_critic([s])[0][0]
+
+    def get_ce_loss(self):
+        return self.agent.ce_loss

@@ -10,9 +10,10 @@ class GoalA2COption(AbstractOption):
 
         self.id = self.getID()
 
-        self.a2cDNN = A2CEagerSync(parameters["h_size"], len(parameters["action_space"]), parameters["critic_network"],
+        self.a2cDNN = GoalA2CEagerSync(parameters["h_size"], len(parameters["action_space"]), parameters["critic_network"],
                                    parameters["actor_network"], parameters["learning_rate"], parameters["weight_mse"],
-                                   parameters["weight_ce_exploration"], parameters["shared_representation"])
+                                   parameters["weight_ce_exploration"], parameters["shared_representation"],
+                                   parameters["learning_rate_reduction_obs"], parameters["shared_goal_representation"])
 
         self.agent = GoalA2CAgent(parameters["action_space"], self.a2cDNN, parameters["gamma"], parameters["batch_size"])
 
@@ -27,6 +28,9 @@ class GoalA2COption(AbstractOption):
         if self.preprocessing:
             s = self.preprocessing.preprocess_image(state)
             g = self.preprocessing.preprocess_image(goal)
+        else:
+            s = state
+            g = goal
 
         return self.agent.act(s, g)
 
@@ -52,3 +56,6 @@ class GoalA2COption(AbstractOption):
 
     def get_state_value(self, s):
         pass
+
+    def get_ce_loss(self):
+        return self.agent.ce_loss

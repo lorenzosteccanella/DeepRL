@@ -1,11 +1,11 @@
-from Agents import HrlAgent, HrlAgent_heuristic_count_PR, HrlAgent_nextV_PR, RandomAgentOption, A2COption, WayPointsAgent_nextV_PR
+from Agents import GoalHrlAgent, RandomAgentOption, GoalA2COption, WayPointsAgent_nextV_PR
 import gym
 import tensorflow as tf
 import os
 from Environment import Environment
-from Wrappers_Env import Tot_reward_positionGridenv_GE_MazeKeyDoor_v0
+from Wrappers_Env import Montezuma_Pixel_position_wrapper_only_1key
 from Utils import ToolEpsilonDecayExploration, Preprocessing
-from Models.A2CnetworksEager import *
+from Models.GoalA2CnetworksEager import *
 from Utils import SaveResult
 from Utils.HrlExplorationStrategies import get_best_action, get_epsilon_best_action, get_epsilon_exploration, get_epsilon_count_exploration
 import gridenvs.examples
@@ -17,27 +17,25 @@ class variables():
         tf.enable_eager_execution()
 
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
-        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+        os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4"
 
         self.seeds = range(1)
-        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  TEST_HRL_E_GREEDY_1/')
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  Montezuma_position_abstraction_2/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
-        self.FILE_NAME = 'Key_Door_HRL_E_GREEDY'
-        self.NUMBER_OF_EPOCHS = 4000
+        self.FILE_NAME = 'Montezuma_position_abstraction'
+        self.NUMBER_OF_EPOCHS = 1000
 
-        self.PROBLEM = 'GE_MazeKeyDoor-v10'
+        self.PROBLEM = 'MontezumaRevenge-ram-v0'
         environment = gym.make(self.PROBLEM)
 
-        self.ACTION_SPACE = [0, 1, 2, 3, 4]
+        self.ACTION_SPACE = list(range(0, environment.action_space.n))
 
         self.wrapper_params = {
-            "stack_images_length": 1,
-            "width": 10,
-            "height": 10,
-            "n_zones": 2
+            "stack_images_length": 4,
+            "n_zones": 40
         }
 
-        self.wrapper = Tot_reward_positionGridenv_GE_MazeKeyDoor_v0(environment, self.wrapper_params)
+        self.wrapper = Montezuma_Pixel_position_wrapper_only_1key(environment, self.wrapper_params)
 
         display_env = False
 
@@ -56,6 +54,7 @@ class variables():
         tf.reset_default_graph()
 
         self.shared_conv_layers = SharedConvLayers(0.05)
+        self.goal_net = SharedGoalModel(30)
         self.critic = CriticNetwork(30)
         self.actor = ActorNetwork(30, len(self.ACTION_SPACE))
 
@@ -64,12 +63,13 @@ class variables():
         preprocessing = None #Preprocessing(84, 84, 3, self.number_of_stacked_frames, False)
 
         self.option_params = {
-            "option": A2COption,
+            "option": GoalA2COption,
             "h_size": 30,
             "action_space": self.ACTION_SPACE,
             "critic_network": CriticNetwork,
             "actor_network": ActorNetwork,
             "shared_representation": self.shared_conv_layers,
+            "shared_goal_representation": self.goal_net,
             "weight_mse": 0.5,
             "weight_ce_exploration": 0.01,
             "learning_rate": 0.0001,
@@ -89,7 +89,7 @@ class variables():
         # to know in how many episodes the epsilon will decay
         ToolEpsilonDecayExploration.epsilon_decay_end_steps(self.MIN_EPSILON, self.LAMBDA)
 
-        self.agent = HrlAgent_heuristic_count_PR(self.option_params, self.random_agent, self.exploration_fn, self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1, self.SAVE_RESULT)
+        self.agent = GoalHrlAgent(self.option_params, self.random_agent, self.exploration_fn, self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1, self.SAVE_RESULT)
 
 
 

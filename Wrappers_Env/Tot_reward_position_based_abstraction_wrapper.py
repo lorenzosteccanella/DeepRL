@@ -79,4 +79,4 @@ class Tot_reward_positionGridenv_GE_MazeKeyDoor_v0(gym.Wrapper):
 
         s = (x//step_x, y//step_y)
 
-        return (s, self.total_reward, reward)
+        return (x//step_x, y//step_y, self.total_reward, reward)
