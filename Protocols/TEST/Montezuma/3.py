@@ -20,7 +20,7 @@ class variables():
         os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4"
 
         self.seeds = range(1)
-        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  Montezuma_position_abstraction_3/')
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  heuristic_count_Montezuma_position_abstraction/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Montezuma_position_abstraction'
         self.NUMBER_OF_EPOCHS = 1000
@@ -61,7 +61,7 @@ class variables():
 
         self.option_params = {
             "option": A2COption,
-            "h_size": 30,
+            "h_size": 128,
             "action_space": self.ACTION_SPACE,
             "critic_network": CriticNetwork,
             "actor_network": ActorNetwork,

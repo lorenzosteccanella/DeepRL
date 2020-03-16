@@ -50,6 +50,9 @@ class A2COption(AbstractOption):
         return "option " + str(self.id)
 
     def get_state_value(self, s):
+        if self.preprocessing:
+            s = self.preprocessing.preprocess_image(s)
+
         return self.a2cDNN.prediction_critic([s])[0][0]
 
     def get_ce_loss(self):

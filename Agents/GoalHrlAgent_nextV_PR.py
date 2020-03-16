@@ -4,7 +4,7 @@ from Utils import Edge, Node, Graph
 from collections import deque
 import math
 
-class HrlAgent_nextV_PR(GoalHrlAgent):
+class GoalHrlAgent_nextV_PR(GoalHrlAgent):
 
     intra_reward_dictionary = {}
 
@@ -21,6 +21,11 @@ class HrlAgent_nextV_PR(GoalHrlAgent):
 
         s_m = Node(sample[0]["manager"], 0)
         s_m_ = Node(sample[3]["manager"], 0)
+
+        if self.target is not None:
+            start = s_m.state
+        else:
+            start = None
 
         if self.target is not None:
             goal = self.target.state
@@ -41,8 +46,8 @@ class HrlAgent_nextV_PR(GoalHrlAgent):
                     if len(edges_from_current_node)>0:
 
                         values = []
-                        for i, edge in range(len(edges_from_current_node), edges_from_current_node):
-                            values.append(self.options[i].get_state_value(s_, edge.destination))      # changed here to take in account all the next edges with respective targets
+                        for i, edge in zip(range(len(edges_from_current_node)), edges_from_current_node):
+                            values.append(self.options[i].get_state_value([s_, edge.origin.state, edge.destination.state]))      # changed here to take in account all the next edges with respective targets
 
                         max_value = max(values)
 
@@ -74,6 +79,6 @@ class HrlAgent_nextV_PR(GoalHrlAgent):
                     r += self.wrong_end_option_reward
                     done = True
 
-        self.best_option_action.observe((s, a, r, s_, done, info))
+        self.best_option_action.observe((s, a, r, s_, done, info, start, goal))
 
 

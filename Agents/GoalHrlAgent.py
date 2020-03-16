@@ -24,11 +24,16 @@ class GoalHrlAgent(HrlAgent):
            self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
 
         if self.target is not None:
+            start = self.current_node.state
+        else:
+            start = None
+
+        if self.target is not None:
             goal = self.target.state
         else:
             goal = None
 
-        return self.best_option_action.act([s["option"], goal])
+        return self.best_option_action.act([s["option"], start, goal])
 
     def update_option(self, sample):
         s = sample[0]["option"]
@@ -38,13 +43,18 @@ class GoalHrlAgent(HrlAgent):
         done = sample[4]
         info = sample[5]
 
+        s_m = Node(sample[0]["manager"], 0)
+        s_m_ = Node(sample[3]["manager"], 0)
+
+        if self.target is not None:
+            start = s_m.state
+        else:
+            start = None
+
         if self.target is not None:
             goal = self.target.state
         else:
             goal = None
-
-        s_m = Node(sample[0]["manager"], 0)
-        s_m_ = Node(sample[3]["manager"], 0)
 
         if s_m != s_m_:
             if self.target is not None:
@@ -58,7 +68,7 @@ class GoalHrlAgent(HrlAgent):
                     r += self.wrong_end_option_reward
                     done = True                           # single network now, so maybe done = false here
 
-        self.best_option_action.observe((s, a, r, s_, done, info, goal))
+        self.best_option_action.observe((s, a, r, s_, done, info, start, goal))
 
 
 

@@ -53,11 +53,13 @@ class SharedGoalModel(keras.Model):
     def __init__(self, h_size=256, learning_rate_observation_adjust=1):
         super(SharedGoalModel, self).__init__(name="SharedGoalModel")
         self.dense1 = keras.layers.Dense(h_size, activation='elu', kernel_initializer='he_normal')
+        self.normalization_layer = keras.layers.LayerNormalization()
         self.learning_rate_adjust = learning_rate_observation_adjust
 
     def call(self, x):
         x = self.dense1(x)
-        x = self.learning_rate_adjust * x + (1 - self.learning_rate_adjust) * tf.stop_gradient(x)  # U have to test this!!!
+        denseOut = self.normalization_layer(x)
+        x = self.learning_rate_adjust * denseOut + (1-self.learning_rate_adjust) * tf.stop_gradient(denseOut)  # U have to test this!!!
 
         return [x, x]
 
@@ -100,12 +102,13 @@ class SiameseActorCriticNetwork(keras.Model):
         self.critic_model = critic_model
         self.actor_model = actor_model
 
-    def call(self, x1, x2):
+    def call(self, x1, x2, x3):
 
         obs1 = self.shared_observation_model(x1)[0] # Just the dense output
         obs2 = self.shared_goal_model(x2)[0] # Just the dense output
+        obs3 = self.shared_goal_model(x3)[0]
 
-        obs = keras.layers.concatenate([obs1, obs2], axis=-1)
+        obs = keras.layers.concatenate([obs1, obs2, obs3], axis=-1)
 
         actor = self.actor_model(obs)
 
@@ -154,7 +157,7 @@ class GoalA2CEagerSync:
             self.optimizer_observation = tf.train.RMSPropOptimizer(learning_rate=1e-3)
         self.global_step = tf.Variable(0)
 
-    def prediction_actor(self, s1, s2):
+    def prediction_actor(self, s1, s2, s3):
 
         s1 = np.array(s1, dtype=np.float32)
 
@@ -164,9 +167,13 @@ class GoalA2CEagerSync:
 
         s2 = tf.convert_to_tensor(s2)
 
-        return self.model_actor_critic(s1, s2)[0].numpy()
+        s3 = np.array(s3, dtype=np.float32)
 
-    def prediction_critic(self, s1, s2):
+        s3 = tf.convert_to_tensor(s3)
+
+        return self.model_actor_critic(s1, s2, s3)[0].numpy()
+
+    def prediction_critic(self, s1, s2, s3):
 
         s1 = np.array(s1, dtype=np.float32)
 
@@ -176,12 +183,16 @@ class GoalA2CEagerSync:
 
         s2 = tf.convert_to_tensor(s2)
 
-        return self.model_actor_critic(s1, s2)[1].numpy()
+        s3 = np.array(s3, dtype=np.float32)
+
+        s3 = tf.convert_to_tensor(s3)
+
+        return self.model_actor_critic(s1, s2, s3)[1].numpy()
 
     def grad(self, model_actor_critic, inputs, targets, one_hot_a, advantage, weight_ce, weight_mse = 0.5):
 
         with tf.GradientTape() as tape:
-            softmax_logits, value_critic = model_actor_critic(inputs[0], inputs[1])
+            softmax_logits, value_critic = model_actor_critic(inputs[0], inputs[1], inputs[2])
             loss_pg = Losses.reinforce_loss(softmax_logits, one_hot_a, advantage)
             loss_ce = Losses.entropy_exploration_loss(softmax_logits)
             loss_critic = Losses.mse_loss(value_critic, targets)
@@ -189,7 +200,7 @@ class GoalA2CEagerSync:
 
         return loss_value, tape.gradient(loss_value, model_actor_critic.trainable_variables), loss_ce
 
-    def train(self, s1, s2, y, one_hot_a, advantage, max_grad_norm=5):
+    def train(self, s1, s2, s3, y, one_hot_a, advantage, max_grad_norm=5):
 
         s1 = np.array(s1, dtype=np.float32)
 
@@ -199,7 +210,11 @@ class GoalA2CEagerSync:
 
         s2 = tf.convert_to_tensor(s2)
 
-        loss_value, grads, loss_ce = self.grad(self.model_actor_critic, (s1, s2), y, one_hot_a, advantage, self.weight_ce, self.weight_mse)
+        s3 = np.array(s3, dtype=np.float32)
+
+        s3 = tf.convert_to_tensor(s3)
+
+        loss_value, grads, loss_ce = self.grad(self.model_actor_critic, (s1, s2, s3), y, one_hot_a, advantage, self.weight_ce, self.weight_mse)
 
         grads, grad_norm = tf.clip_by_global_norm(grads, max_grad_norm)
 

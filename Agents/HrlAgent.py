@@ -17,9 +17,9 @@ class HrlAgent(AbstractAgent):
 
         self.action_space = option_params["action_space"]
 
-        self.graph = Graph()
-
         self.save_result = SaveResult
+
+        self.graph = Graph(self.save_result)
 
         #exploration variables
         self.MIN_EPSILON = MIN_EPSILON

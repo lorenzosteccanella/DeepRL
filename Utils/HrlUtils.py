@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import warnings
 warnings.filterwarnings("ignore")
 plt.rcParams["figure.figsize"] = (20, 20)
-plt.ion() # enable interactivity
-plt.show()
+#plt.ion() # enable interactivity
+#plt.show()
 #fig = plt.figure() # make a figure
 
 class Distances:
@@ -154,7 +154,7 @@ class Node:
 
 class Graph:
 
-    def __init__(self):
+    def __init__(self, save_results = False):
         self.edge_list = []
         self.node_list = []
         self.current_node = None
@@ -172,10 +172,11 @@ class Graph:
         self.path = []
         self.i = 0
         self.batch=[]
+        self.save_results = save_results
 
     def print_networkx_graph(self, root, route, distances):
         self.i +=1
-        if self.i % 100 == 0:
+        if self.i % 1000 == 0:
             self.i = 0
             from time import sleep
             import networkx as nx
@@ -206,7 +207,7 @@ class Graph:
             nx.draw_networkx_edges(G, pos, connectionstyle='arc3, rad = 0.1', edgelist=route, edge_color='g', width=5)
 
             plt.draw()
-            plt.pause(0.001)
+            plt.savefig(self.save_results.get_path() + "/Graph.png", format="PNG")
             plt.clf()
 
     def edge_update(self, old_node, new_node, reward, target):
@@ -541,9 +542,9 @@ class Graph:
 
             self.distances = self.Q
 
-            #self.path.clear() # used by best_path function
-            #path = self.best_path(root, self.distances)
-            #self.print_networkx_graph(root, path, self.distances)
+            self.path.clear() # used by best_path function
+            path = self.best_path(root, self.distances)
+            self.print_networkx_graph(root, path, self.distances)
 
             return self.distances
 
