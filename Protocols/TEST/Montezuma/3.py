@@ -20,7 +20,7 @@ class variables():
         os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4"
 
         self.seeds = range(1)
-        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  Montezuma_position_abstraction_1/')
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  Montezuma_position_abstraction_3/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Montezuma_position_abstraction'
         self.NUMBER_OF_EPOCHS = 1000

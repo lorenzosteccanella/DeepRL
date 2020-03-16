@@ -88,4 +88,4 @@ class Montezuma_Pixel_position_wrapper_only_1key(gym.Wrapper):
 
         #print(x, y, s)
 
-        return (x//step_x, y//step_y, self.total_reward, reward, done)
+        return (x//step_x, y//step_y, self.total_reward, reward)

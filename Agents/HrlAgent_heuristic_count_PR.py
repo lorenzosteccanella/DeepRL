@@ -13,7 +13,7 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
 
     def update_option(self, sample):
 
-        max_d = 4
+        max_d = 10
         weight_heuristic_reward = 0.2
 
         s = sample[0]["option"]
