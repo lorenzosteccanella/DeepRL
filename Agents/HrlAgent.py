@@ -101,7 +101,7 @@ class HrlAgent(AbstractAgent):
 
     def save_statistics(self):
 
-        if self.number_of_options_executed % 100 == 0 and self.old_number_of_options != self.number_of_options_executed:
+        if self.number_of_options_executed % 1000 == 0 and self.old_number_of_options != self.number_of_options_executed:
             if self.save_result is not False:
                 message = ""
                 for tot_reward in self.total_r_2_print:
