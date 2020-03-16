@@ -1,4 +1,4 @@
-from Agents import GoalHrlAgent, RandomAgentOption, GoalA2COption, WayPointsAgent_nextV_PR
+from Agents import GoalHrlAgent_heuristic_count_PR, GoalHrlAgent_nextV_PR, RandomAgentOption, GoalA2COption
 import gym
 import tensorflow as tf
 import os
@@ -56,9 +56,9 @@ class variables():
         tf.reset_default_graph()
 
         self.shared_conv_layers = SharedConvLayers(0.05)
-        self.goal_net = SharedGoalModel(256)
-        self.critic = CriticNetwork(30)
-        self.actor = ActorNetwork(30, len(self.ACTION_SPACE))
+        self.goal_net = SharedGoalModel(32)
+        self.critic = CriticNetwork(128)
+        self.actor = ActorNetwork(128, len(self.ACTION_SPACE))
 
         self.number_of_stacked_frames = 1
 
@@ -66,10 +66,10 @@ class variables():
 
         self.option_params = {
             "option": GoalA2COption,
-            "h_size": 30,
+            "h_size": 128,
             "action_space": self.ACTION_SPACE,
-            "critic_network": CriticNetwork,
-            "actor_network": ActorNetwork,
+            "critic_network": self.critic,
+            "actor_network": self.actor,
             "shared_representation": self.shared_conv_layers,
             "shared_goal_representation": self.goal_net,
             "weight_mse": 0.5,
@@ -91,7 +91,7 @@ class variables():
         # to know in how many episodes the epsilon will decay
         ToolEpsilonDecayExploration.epsilon_decay_end_steps(self.MIN_EPSILON, self.LAMBDA)
 
-        self.agent = GoalHrlAgent(self.option_params, self.random_agent, self.exploration_fn, self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1, self.SAVE_RESULT)
+        self.agent = GoalHrlAgent_heuristic_count_PR(self.option_params, self.random_agent, self.exploration_fn, self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1, self.SAVE_RESULT)
 
 
 

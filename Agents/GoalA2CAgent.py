@@ -15,34 +15,36 @@ class GoalA2CAgent(AbstractAgent):
 
     def _get_actor_critic_error(self, batch):
 
-        goals =  np.array([o[1][6] for o in batch])
+        goals =  np.array([o[1][7] for o in batch])
+        starts = np.array([o[1][6] for o in batch])
         states_t = np.array([o[1][0] for o in batch])
-        p = self.main_model_nn.prediction_critic(states_t, goals)[:, 0]
+        p = self.main_model_nn.prediction_critic(states_t, starts, goals)[:, 0]
         a_one_hot = np.zeros((len(batch), len(self.action_space)))
         dones = np.zeros((len(batch)))
         rewards = np.zeros((len(batch)))
 
-        for i in range(len(batch)):
-            o = batch[i][1]
+        for k in range(len(batch)):
+            o = batch[k][1]
             a = o[1]
             r = o[2]
             s_ = o[3]
             done = o[4]
-            g = o[6]
+            i = o[6]
+            g = o[7]
 
             a_index = self.action_space.index(a)
 
             if done:
-                dones[i] = 1
+                dones[k] = 1
                 p_ = [0]
-            elif i == len(batch)-1:
-                p_ = self.main_model_nn.prediction_critic([s_], [g])[0]
-            rewards[i] = r
-            a_one_hot[i][a_index] = 1
+            elif k == len(batch)-1:
+                p_ = self.main_model_nn.prediction_critic([s_], [i], [g])[0]
+            rewards[k] = r
+            a_one_hot[k][a_index] = 1
 
         y_critic, adv_actor = self._returns_advantages(rewards, dones, p, p_)
         y_critic = np.expand_dims(y_critic, axis=-1)
-        return states_t, goals, adv_actor, a_one_hot, y_critic
+        return states_t, starts, goals, adv_actor, a_one_hot, y_critic
 
     def _returns_advantages(self, rewards, dones, values, next_value):
         # next_value is the bootstrap value estimate of a future state (the critic)
@@ -55,9 +57,9 @@ class GoalA2CAgent(AbstractAgent):
         advantages = returns - values
         return returns, advantages
 
-    def act(self, s, goal):
+    def act(self, s, start, goal):
 
-        predict = self.main_model_nn.prediction_actor([s], [goal])[0]
+        predict = self.main_model_nn.prediction_actor([s], [start], [goal])[0]
 
         return np.random.choice(self.action_space, p=predict)
 
@@ -75,9 +77,9 @@ class GoalA2CAgent(AbstractAgent):
 
             batch, imp_w = self.buffer.sample(self.batch_size, False)
 
-            x, g, adv_actor, a_one_hot, y_critic = self._get_actor_critic_error(batch)
+            x, i, g, adv_actor, a_one_hot, y_critic = self._get_actor_critic_error(batch)
 
-            _, __, self.ce_loss = self.main_model_nn.train(x, g, y_critic, a_one_hot, adv_actor)
+            _, __, self.ce_loss = self.main_model_nn.train(x, i, g, y_critic, a_one_hot, adv_actor)
 
             self.buffer.reset_buffer()
 

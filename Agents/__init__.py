@@ -16,5 +16,7 @@ from .ExplorationEffortRepresentativeStates import ExplorationEffortRepresentati
 from .GoalA2CAgent import GoalA2CAgent
 from .GoalA2COption import GoalA2COption
 from .GoalHrlAgent import GoalHrlAgent
+from .GoalHrlAgent_nextV_PR import GoalHrlAgent_nextV_PR
+from .GoalHrlAgent_heuristic_count_PR import GoalHrlAgent_heuristic_count_PR
 from .WayPointsAgent_nextV_PR import WayPointsAgent_nextV_PR
 from .HrlAgent_heuristic_count_PR import HrlAgent_heuristic_count_PR
