@@ -77,7 +77,7 @@ class GoalA2CAgent(AbstractAgent):
 
             x, g, adv_actor, a_one_hot, y_critic = self._get_actor_critic_error(batch)
 
-            _, __, self.ce_loss = self.self.main_model_nn.train(x, g, y_critic, a_one_hot, adv_actor)
+            _, __, self.ce_loss = self.main_model_nn.train(x, g, y_critic, a_one_hot, adv_actor)
 
             self.buffer.reset_buffer()
 

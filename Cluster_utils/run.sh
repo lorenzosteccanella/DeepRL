@@ -1,4 +1,4 @@
-E_PATH='/homedtic/lsteccanella/DeepRL/Protocols/Test_Cluster/DownSamplingMontezuma/'
+E_PATH='/homedtic/lsteccanella/DeepRL/Protocols/TEST/Montezuma/'
 prefix='/homedtic/lsteccanella/DeepRL/Protocols/'
 suffix=
 for i in $(find $E_PATH -name '*.py' -type f);
