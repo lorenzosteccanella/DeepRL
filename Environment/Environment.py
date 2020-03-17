@@ -50,11 +50,11 @@ class Environment:
             #Stocastich_reward = np.random.normal(1.0, 1.0)
             r_a = np.clip(r, -1, 1)
 
-            agent.observe((s, a, r_a, s_, done, info))   # qui stai passando la reward clipped!!!
+            self.n_step, self.n_episodes = agent.observe((s, a, r_a, s_, done, info))   # qui stai passando la reward clipped!!!
             agent.replay()
 
             self.total_r_episode += r
-            self.n_step += 1
+            #self.n_step += 1
 
             s = s_
 
@@ -63,7 +63,7 @@ class Environment:
                     self.preprocessing.reset(done)
                 break
 
-        self.n_episodes += 1
+        #self.n_episodes += 1
 
         #agent.nn.save_weights()
 
