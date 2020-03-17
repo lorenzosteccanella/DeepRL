@@ -55,8 +55,8 @@ class variables():
 
         self.shared_conv_layers = SharedConvLayers(0.05)
         self.goal_net = SharedGoalModel(32, 0.05)
-        self.critic = CriticNetwork(128)
-        self.actor = ActorNetwork(128, len(self.ACTION_SPACE))
+        self.critic = CriticNetwork(32)
+        self.actor = ActorNetwork(32, len(self.ACTION_SPACE))
 
         self.number_of_stacked_frames = 1
 
@@ -64,7 +64,7 @@ class variables():
 
         self.option_params = {
             "option": GoalA2COption,
-            "h_size": 128,
+            "h_size": 32,
             "action_space": self.ACTION_SPACE,
             "critic_network": self.critic,
             "actor_network": self.actor,

@@ -4,6 +4,7 @@ from Utils import Edge, Node, Graph
 import time
 import math
 import numpy as np
+import dill
 
 class HrlAgent(AbstractAgent):
 
@@ -31,6 +32,7 @@ class HrlAgent(AbstractAgent):
         self.number_of_options_executed = 1
         self.number_of_successfull_option = 0
         self.count_edges = {}
+        self.count_couple_edges = {}
         self.entropy_edges = {}
         self.list_percentual_of_successfull_options = []
         self.old_number_of_options = 0
@@ -38,6 +40,9 @@ class HrlAgent(AbstractAgent):
         self.distances_2_print = []
         self.total_r_2_print = []
         self.total_r = 0.
+        self.old_edge = None
+        self.n_steps = 0
+        self.n_episodes = 0
 
         self.best_option_action = None
         self.precomputed_option_action = None
@@ -147,6 +152,14 @@ class HrlAgent(AbstractAgent):
 
                 self.save_result.save_pickle_data(self.FILE_NAME + "edge_option_stats.pkl", self.count_edges)
                 self.save_result.save_pickle_data(self.FILE_NAME + "edge_entropy_stats.pkl", self.entropy_edges)
+                self.save_result.save_pickle_data(self.FILE_NAME + "edgeXedge_option_stats.pkl", self.count_couple_edges)
+
+            if self.save_result is not False:
+
+                path = self.save_result.get_path()
+                filename = self.FILE_NAME + "full_model.pkl"
+
+                self.save(path+"/"+filename)
 
 
 
@@ -218,11 +231,23 @@ class HrlAgent(AbstractAgent):
                 if str(edge) not in self.entropy_edges:
                     self.entropy_edges[str(edge)] = []
 
+                if self.old_edge is not None:
+                    if edge != self.old_edge:
+                        if (str(self.old_edge) + str(edge)) not in self.count_couple_edges:
+                            self.count_couple_edges[(str(self.old_edge) + str(edge))] = [0, 0]
+
+                        self.count_couple_edges[(str(self.old_edge) + str(edge))][0] += 1
+
+                        if s_m_ == self.target:
+                            self.count_couple_edges[(str(self.old_edge) + str(edge))][1] += 1
+                            self.old_edge = edge
+                        else:
+                            self.old_edge = None
+
                 if s_m_ == self.target:
 
                     # to keep performance statistics
                     self.number_of_successfull_option += 1
-
                     self.count_edges[str(edge)][1] += 1
 
                 # to keep performance statistics
@@ -240,6 +265,7 @@ class HrlAgent(AbstractAgent):
 
     def observe(self, sample):  # in (s, a, r, s_, done, info) format
 
+        self.n_steps += 1
         self.total_r += sample[2]
 
         if sample[4]:
@@ -275,6 +301,9 @@ class HrlAgent(AbstractAgent):
             self.current_node = None
             self.best_edge = None
             self.target = None
+            self.n_episodes += 1
+
+        return self.n_steps, self.n_episodes
 
     def replay(self):
         pass
@@ -311,4 +340,16 @@ class HrlAgent(AbstractAgent):
 
         self.best_option_action = None
         self.current_node = None
+
+    def load(self, filename):
+        f = open(filename, 'rb')
+        tmp_dict = dill.load(f)
+        f.close()
+
+        self.__dict__.update(tmp_dict)
+
+    def save(self, filename):
+        f = open(filename, 'wb')
+        dill.dump(self.__dict__, f, 2)
+        f.close()
 
