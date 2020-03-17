@@ -542,9 +542,9 @@ class Graph:
 
             self.distances = self.Q
 
-            #self.path.clear() # used by best_path function
-            #path = self.best_path(root, self.distances)
-            #self.print_networkx_graph(root, path, self.distances)
+            self.path.clear() # used by best_path function
+            path = self.best_path(root, self.distances)
+            self.print_networkx_graph(root, path, self.distances)
 
             return self.distances
 
