@@ -81,7 +81,7 @@ class variables():
 
         self.random_agent = RandomAgentOption(self.ACTION_SPACE)
         self.LAMBDA = 0.005
-        self.MIN_EPSILON = 0
+        self.MIN_EPSILON = 0.1
         self.PSEUDO_COUNT = 1000
 
         self.exploration_fn = get_epsilon_count_exploration

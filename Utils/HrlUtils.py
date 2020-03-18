@@ -176,7 +176,7 @@ class Graph:
 
     def print_networkx_graph(self, root, route, distances):
         self.i +=1
-        if self.i % 1000 == 0:
+        if self.i % 100 == 0:
             self.i = 0
             from time import sleep
             import networkx as nx
@@ -412,7 +412,7 @@ class Graph:
 
         if done:
             rewards = np.array([o[2] for o in self.batch])
-            if (rewards >= 0).all():
+            if sum(rewards) >= 0:
                 discounted_r = np.zeros_like(rewards)
                 running_add = 0
                 for t in reversed(range(rewards.shape[0])):
@@ -426,7 +426,6 @@ class Graph:
                     if correct_termination:
                         td_error = (discounted_r[i] - self.Q[s][a])
                         self.Q[s][a] = self.Q[s][a] + learning_rate * td_error
-
 
                         #print(actions, right_termination)
             self.batch.clear()
@@ -445,23 +444,22 @@ class Graph:
 
         if done or len(self.batch)==N:
             rewards = np.array([o[2] for o in self.batch])
-            if( rewards >= 0 ).all():
-                dones = np.array([o[4] for o in self.batch])
-                s1_t_N = self.batch[-1][3]
-                if len(self.Q[s1_t_N]) > 0:
-                    maxQs1_t_N = - float("inf")
-                    for edge in self.Q[s1_t_N]:
-                        if maxQs1_t_N < (self.Q[s1_t_N][edge]):
-                            maxQs1_t_N = (self.Q[s1_t_N][edge])
-                else:
-                    maxQs1_t_N = 0
+            dones = np.array([o[4] for o in self.batch])
+            s1_t_N = self.batch[-1][3]
+            if len(self.Q[s1_t_N]) > 0:
+                maxQs1_t_N = - float("inf")
+                for edge in self.Q[s1_t_N]:
+                    if maxQs1_t_N < (self.Q[s1_t_N][edge]):
+                        maxQs1_t_N = (self.Q[s1_t_N][edge])
+            else:
+                maxQs1_t_N = 0
 
-                returns = np.append(np.zeros_like(rewards), [maxQs1_t_N], axis=-1)
-                for t in reversed(range(rewards.shape[0])):
-                    returns[t] = rewards[t] + gamma * returns[t + 1] * (1 - dones[t])
+            returns = np.append(np.zeros_like(rewards), [maxQs1_t_N], axis=-1)
+            for t in reversed(range(rewards.shape[0])):
+                returns[t] = rewards[t] + gamma * returns[t + 1] * (1 - dones[t])
 
-                returns = returns[:-1]
-
+            returns = returns[:-1]
+            if sum(returns)>0.:
                 for i, sample in zip(range(len(self.batch)), self.batch):
                     s = sample[0]
                     a = sample[1]
@@ -542,9 +540,9 @@ class Graph:
 
             self.distances = self.Q
 
-            #self.path.clear() # used by best_path function
-            #path = self.best_path(root, self.distances)
-            #self.print_networkx_graph(root, path, self.distances)
+            self.path.clear() # used by best_path function
+            path = self.best_path(root, self.distances)
+            self.print_networkx_graph(root, path, self.distances)
 
             return self.distances
 
