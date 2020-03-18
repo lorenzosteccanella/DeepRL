@@ -157,7 +157,18 @@ def get_epsilon_count_exploration(self, current_node, distances, store_action_ch
         if len(edges_from_current_node) > 0:
             #print(self.current_node.epsilon)
             if random.random() < self.current_node.epsilon:
-                option = self.exploration_option
+                random_edge_index = random.choice(range(len(edges_from_current_node) + 1))
+                if random_edge_index >= len(edges_from_current_node):
+                    # here it means we choose the exploration option
+                    self.target = None
+                    self.path_2_print.append("exploration " + str(current_node.state) + " - " + str(self.target))
+                    option = self.exploration_option
+
+                else:
+                    self.target = edges_from_current_node[random_edge_index].get_destination()
+                    self.path_2_print.append(self.target)
+                    option = self.options[random_edge_index]
+                    edge = edges_from_current_node[random_edge_index]
 
             else:
                 best_edge_index = random.choice(
