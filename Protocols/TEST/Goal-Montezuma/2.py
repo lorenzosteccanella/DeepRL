@@ -31,7 +31,7 @@ class variables():
         self.ACTION_SPACE = list(range(0, environment.action_space.n))
 
         self.wrapper_params = {
-            "stack_images_length": 4,
+            "stack_images_length": 1,
             "n_zones": 40
         }
 
