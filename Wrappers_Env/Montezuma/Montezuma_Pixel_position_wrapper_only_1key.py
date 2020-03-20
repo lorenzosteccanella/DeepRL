@@ -38,9 +38,11 @@ class Montezuma_Pixel_position_wrapper_only_1key(gym.Wrapper):
         reward = acc_reward
         if reward == 100:
             done = True
+
         observation, ram = self.observation(observation)
 
         observation["manager"] = self.get_position_montezuma(ram, reward, done)
+
         return observation, reward, done, info
 
     def observation(self, observation):
@@ -88,4 +90,4 @@ class Montezuma_Pixel_position_wrapper_only_1key(gym.Wrapper):
 
         #print(x, y, s)
 
-        return (x//step_x, y//step_y, self.total_reward, reward)
+        return (x//step_x, y//step_y, self.total_reward, reward, done)

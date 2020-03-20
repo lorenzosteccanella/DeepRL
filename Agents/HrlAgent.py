@@ -208,7 +208,7 @@ class HrlAgent(AbstractAgent):
                     #self.graph.WatkinsQ((s, a, r, s_, done, info), self.exploration_fn)
                     right_termination_option = True
 
-            self.graph.tabularMC((s, a, r, s_, done, right_termination_option))
+                self.graph.tabularMC((s, a, r, s_, done, right_termination_option))
 
             self.reward_manager = 0
 
@@ -345,6 +345,13 @@ class HrlAgent(AbstractAgent):
         f = open(filename, 'rb')
         tmp_dict = dill.load(f)
         f.close()
+
+        tmp_dict["save_result"] = self.save_result
+        tmp_dict["graph"].save_results = self.save_result
+
+        #for key in tmp_dict["graph"].Q.keys():
+        #    for key2 in tmp_dict["graph"].Q[key].keys():
+        #        tmp_dict["graph"].Q[key][key2] = 0
 
         self.__dict__.update(tmp_dict)
 

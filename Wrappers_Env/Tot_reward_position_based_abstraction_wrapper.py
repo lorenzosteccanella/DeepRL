@@ -25,7 +25,7 @@ class Tot_reward_positionGridenv_GE_MazeKeyDoor_v0(gym.Wrapper):
         observation = self.env.reset(**kwargs)
         observation = self.observation(observation)
 
-        observation["manager"] = self.get_position_abstract_state_gridenv_GE_MazeKeyDoor_v0(None, 0.)
+        observation["manager"] = self.get_position_abstract_state_gridenv_GE_MazeKeyDoor_v0(None, 0., done)
 
         return observation
 
@@ -34,7 +34,7 @@ class Tot_reward_positionGridenv_GE_MazeKeyDoor_v0(gym.Wrapper):
 
         observation = self.observation(observation)
 
-        observation["manager"] = self.get_position_abstract_state_gridenv_GE_MazeKeyDoor_v0(info["position"], reward)
+        observation["manager"] = self.get_position_abstract_state_gridenv_GE_MazeKeyDoor_v0(info["position"], reward, done)
 
         return observation, reward, done, info
 
@@ -62,7 +62,7 @@ class Tot_reward_positionGridenv_GE_MazeKeyDoor_v0(gym.Wrapper):
 
         return img_option_stacked
 
-    def get_position_abstract_state_gridenv_GE_MazeKeyDoor_v0(self, position, reward):
+    def get_position_abstract_state_gridenv_GE_MazeKeyDoor_v0(self, position, reward, done):
 
         self.total_reward += reward
 
@@ -79,4 +79,4 @@ class Tot_reward_positionGridenv_GE_MazeKeyDoor_v0(gym.Wrapper):
 
         s = (x//step_x, y//step_y)
 
-        return (x//step_x, y//step_y, self.total_reward, reward)
+        return (x//step_x, y//step_y, self.total_reward, reward, done)

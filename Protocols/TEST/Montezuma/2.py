@@ -20,10 +20,10 @@ class variables():
         os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4"
 
         self.seeds = range(1)
-        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  nextV_PR_Montezuma_position_abstraction/')
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  nextV_PR_Montezuma_position_abstraction_1/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
-        self.FILE_NAME = 'Montezuma_position_abstraction'
-        self.NUMBER_OF_EPOCHS = 1000
+        self.FILE_NAME = 'Montezuma_position_abstraction_1'
+        self.NUMBER_OF_EPOCHS = 2000
 
         self.PROBLEM = 'MontezumaRevenge-ram-v0'
         environment = gym.make(self.PROBLEM)
@@ -37,7 +37,7 @@ class variables():
 
         self.wrapper = Montezuma_Pixel_position_wrapper_only_1key(environment, self.wrapper_params)
 
-        display_env = False
+        display_env = True
 
         if display_env:
             from Utils import ShowRenderHRL
@@ -86,6 +86,7 @@ class variables():
         ToolEpsilonDecayExploration.epsilon_decay_end_steps(self.MIN_EPSILON, self.LAMBDA)
 
         self.agent = HrlAgent_nextV_PR(self.option_params, self.random_agent, self.exploration_fn, self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1, self.SAVE_RESULT)
+        self.agent.load("/home/lorenzo/Documenti/UPF/DeepRL/Best_run/nextV_PR_MC")
 
 
 
