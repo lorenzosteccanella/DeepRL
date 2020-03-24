@@ -13,9 +13,12 @@ args = sys.argv
 import time
 import random
 import numpy as np
+import multiprocessing as mp
+num_workers = mp.cpu_count()
+environments = []
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
 import importlib.util
+
 import tensorflow as tf
 
 from Agents import HrlAgent
@@ -31,37 +34,57 @@ def has_method(o, name):
     return callable(getattr(o, name, None))
 
 def run(variables):
+
+    def epoch_run_loop(environment, agent, n_epochs):
+
+        epochs = []
+        rewards = []
+        n_steps = []
+        epoch = 0
+
+        while epoch < n_epochs:
+
+            epoch, nstep, reward = environment.run(agent)
+            print(epoch, nstep, reward)
+            epochs.append(epoch)
+            rewards.append(reward)
+            n_steps.append(nstep)
+
+        return epochs, rewards, n_steps
+
+
     print(variables.FILE_NAME)
 
     start = time.time()
 
-    epochs = []
-    rewards = []
-    n_steps = []
-    epoch = 0
-
-    # if variables.BufferFillAgent is not None:total_r
-    #    print("RANDOM EXPLORATION TO FILL EXPERIENCE REPLAY BUFFER")
-    #    while variables.randomAgent.exp < variables.RANDOM_EXPLORATION:
-    #        epoch, nstep, reward = variables.env.run(variables.randomAgent)
-    #        epochs.append(epoch)
-    #        rewards.append(reward)
-
-    #    variables.agent.buffer = variables.randomAgent.buffer
-
-    #    variables.randomAgent = None
-
     print("START TO LEARN")
-    while epoch < variables.NUMBER_OF_EPOCHS:
-        epoch, nstep, reward = variables.env.run(variables.agent)
-        print(epoch, nstep, reward, (sum(rewards[-10:]) / 10))
-        epochs.append(epoch)
-        rewards.append(reward)
-        n_steps.append(nstep)
+
+    if variables.multi_process is True:
+
+        processes = [mp.Process(target=epoch_run_loop, args=(env, variables.agent(*variables.agent_args), variables.NUMBER_OF_EPOCHS)) for env in environments]
+
+        # Run processes
+        for p in processes:
+            p.start()
+
+        # Exit the completed processes
+        for p in processes:
+            p.join()
+
+        #output = [p.get() for p in results]
+
+        print(output)
+        #results = pool.apply_async(environments[i].run(variables.agent))
+
+    else:
+        epochs, rewards, n_steps = epoch_run_loop(variables.env, variables.agent(*variables.agent_args), variables.NUMBER_OF_EPOCHS)
 
     end = time.time()
+    if variables.multi_process is True:
+        pool.close()
+        pool.join()
 
-    return epochs, rewards, n_steps
+    return None, None, None #epochs, rewards, n_steps
 
 
 
@@ -81,6 +104,13 @@ for experiment in args[1::]:
         random.seed(seed)
         np.random.seed(seed)
         variables.env.env.seed(seed)   # Should I set the seed of the environment as well?
+
+        #multi processor copy of the environment:
+        environments.append(variables.env)
+        for i in range(num_workers - 1 ):
+            environment = variables.env.copy()
+            environment.env.seed(seed)
+            environments.append(environment)
 
         epochs, rewards, n_steps = run(variables)
         moving_average_reward = moving_average(rewards, 10)

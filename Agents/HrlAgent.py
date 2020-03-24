@@ -12,7 +12,7 @@ class HrlAgent(AbstractAgent):
 
     epsilon = 1
 
-    def __init__(self, option_params, exploration_option, exploration_fn, pseudo_count_exploration = 1000, LAMBDA=1000, MIN_EPSILON=0, correct_option_end_reward=1.1, wrong_option_end_reward=-1.1, SaveResult = False):
+    def __init__(self, graph, option_params, exploration_option, exploration_fn, pseudo_count_exploration = 1000, LAMBDA=1000, MIN_EPSILON=0, correct_option_end_reward=1.1, wrong_option_end_reward=-1.1, SaveResult = False):
 
         self.option_params = option_params
 
@@ -20,7 +20,7 @@ class HrlAgent(AbstractAgent):
 
         self.save_result = SaveResult
 
-        self.graph = Graph(self.save_result)
+        self.graph = graph
 
         #exploration variables
         self.MIN_EPSILON = MIN_EPSILON
