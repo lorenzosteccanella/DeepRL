@@ -2,13 +2,15 @@ from Agents import HrlAgent, RandomAgentOption, A2COption
 import gym
 import tensorflow as tf
 import os
-from Environment import Environment, ParallelEnvironment
+from Environment import ParallelEnvironment
 from Wrappers_Env import Tot_reward_positionGridenv_GE_MazeKeyDoor_v0
 from Utils import ToolEpsilonDecayExploration, Preprocessing
 from Models.A2CnetworksEager import *
 from Utils import SaveResult, Graph
 from Utils.HrlExplorationStrategies import get_best_action, get_epsilon_best_action, get_epsilon_exploration, get_epsilon_count_exploration
 import gridenvs.examples
+
+import multiprocessing as mp
 
 class variables():
 
@@ -24,11 +26,10 @@ class variables():
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Key_Door_HRL_E_GREEDY'
         self.NUMBER_OF_EPOCHS = 1000
-
-        self.multi_processing = False
+        self.multi_processing = True
+        self.num_workers = mp.cpu_count()
 
         self.PROBLEM = 'GE_MazeKeyDoor-v10'
-        environment = gym.make(self.PROBLEM)
 
         self.ACTION_SPACE = [0, 1, 2, 3, 4]
 
@@ -39,7 +40,7 @@ class variables():
             "n_zones": 2
         }
 
-        self.wrapper = Tot_reward_positionGridenv_GE_MazeKeyDoor_v0(environment, self.wrapper_params)
+        self.wrapper = Tot_reward_positionGridenv_GE_MazeKeyDoor_v0
 
         display_env = False
 
@@ -49,7 +50,7 @@ class variables():
         else:
             rendering = False
 
-        self.env = Environment(self.wrapper, preprocessing=False, rendering_custom_class=rendering)
+        self.env = ParallelEnvironment(preprocessing=False, rendering_custom_class=rendering)
 
     def reset(self):
         self.env.close()
@@ -91,9 +92,21 @@ class variables():
         # to know in how many episodes the epsilon will decay
         ToolEpsilonDecayExploration.epsilon_decay_end_steps(self.MIN_EPSILON, self.LAMBDA)
 
-        self.agent = HrlAgent(self.option_params, self.random_agent, self.exploration_fn, False, False, self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1, self.SAVE_RESULT)
-        #self.agent.load("/home/lorenzo/Documenti/UPF/DeepRL/results/TEST  -  TEST_HRL_E_GREEDY_1/Tue_Mar_17_15:34:02_2020/seed_0/full_model.pkl")
+        self.graph = Graph(self.SAVE_RESULT)
 
+        self.option_list = list()
+
+        self.agent = []
+        for i in range(self.num_workers):
+            if i == 0:
+                self.agent.append(
+                    HrlAgent(self.option_params, self.random_agent, self.exploration_fn, self.graph, self.option_list,
+                             self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1, self.SAVE_RESULT))
+            else:
+                self.agent.append(
+                    HrlAgent(self.option_params, self.random_agent, self.exploration_fn, self.graph, self.option_list,
+                             self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1, False))
+            #self.agent.load("/home/lorenzo/Documenti/UPF/DeepRL/results/TEST  -  TEST_HRL_E_GREEDY_1/Tue_Mar_17_15:34:02_2020/seed_0/full_model.pkl")
 
 
 

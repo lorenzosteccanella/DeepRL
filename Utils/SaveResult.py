@@ -16,7 +16,8 @@ class SaveResult:
     def set_seed(self, seed):
         self.dir_path_seed = self.dir_path + "/seed_" + str(seed)
         self.all_seed_paths.append(self.dir_path_seed)
-        os.mkdir(self.dir_path_seed)
+        if not os.path.exists(self.dir_path_seed):
+            os.mkdir(self.dir_path_seed)
 
     @staticmethod
     def make_dir_path(dir_name):
@@ -27,8 +28,8 @@ class SaveResult:
             os.mkdir(dir_name)
 
         dir_name += time.asctime(time.localtime(time.time())).replace(" ", "_")
-        if not os.path.exists(dir_name):
-            os.mkdir(dir_name)
+        #if not os.path.exists(dir_name):
+        os.mkdir(dir_name)
 
         return dir_name
 

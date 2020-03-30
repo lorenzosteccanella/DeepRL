@@ -6,33 +6,22 @@ import pickle
 
 class Environment:
 
-    id = 0
-
-    def __init__(self, problem, wrapper=None, wrapper_params=None, preprocessing=False, rendering_custom_class=False):
-
-
-        self.problem = problem
-        self.wrapper = wrapper
-        self.wrapper_params = wrapper_params
-        self.rendering_custom_class = rendering_custom_class
-        self.env = gym.make(self.problem)
-        if wrapper is not None:
-            self.env = self.wrapper(self.env, self.wrapper_params )
+    def __init__(self, env, preprocessing=False, rendering_custom_class=False):
+        self.env = env  # the environment
         self.n_step = 0
         self.n_episodes = 0
         self.total_r_episode = 0
         self.trajectory = []
         self.number_of_trajectory_saved = 0
 
-        if not self.rendering_custom_class:
+        if not rendering_custom_class:
             self.rendering = self.env
         else:
-            self.rendering = self.rendering_custom_class()
+            self.rendering = rendering_custom_class()
 
         self.preprocessing = preprocessing
 
-        print("Environment - " + str(Environment.id) + " -- action space of the environment: " + str(self.env.action_space))
-        Environment.id += 1
+        print("action space of the environment: " + str(self.env.action_space))
 
     def run(self, agent):
 
@@ -49,6 +38,7 @@ class Environment:
 
             a = agent.act(s)
             img, r, done, info = self.env.step(a)
+
             if False: #and r > 0:  # just to check the correct episodes
                 self.rendering.render(img)
 
@@ -101,12 +91,4 @@ class Environment:
 
         if(self.number_of_trajectory_saved>=1000):
             raise NameError('Finished to Collect data')
-
-    def copy(self):
-
-        copy_of_env_obj = Environment(self.problem, self.wrapper, self.wrapper_params, self.preprocessing, self.rendering_custom_class)
-
-        return copy_of_env_obj
-
-
 

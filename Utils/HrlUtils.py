@@ -175,40 +175,41 @@ class Graph:
         self.save_results = save_results
 
     def print_networkx_graph(self, root, route, distances):
-        self.i +=1
-        if self.i % 1000 == 0:
-            self.i = 0
-            from time import sleep
-            import networkx as nx
+        if self.save_results is not False:
+            self.i +=1
+            if self.i % 1000 == 0:
+                self.i = 0
+                from time import sleep
+                import networkx as nx
 
-            def V(node):
-                maxQ = - float("inf")
-                for edge in distances[node]:
-                    if maxQ < (distances[node][edge]):
-                        maxQ = (distances[node][edge])
-                return maxQ
+                def V(node):
+                    maxQ = - float("inf")
+                    for edge in distances[node]:
+                        if maxQ < (distances[node][edge]):
+                            maxQ = (distances[node][edge])
+                    return maxQ
 
-            G = nx.MultiDiGraph()
-            edge_lab={}
+                G = nx.MultiDiGraph()
+                edge_lab={}
 
-            for node in self.node_list:
-                G.add_node((node))
+                for node in self.node_list:
+                    G.add_node((node))
 
-            for edge in self.edge_list:
-                G.add_edge(edge.origin, edge.destination, weight= edge.value)
-                edge_lab.update({(edge.origin, edge.destination): str(self.Q[edge.origin][edge])})
-            pos = nx.drawing.nx_agraph.graphviz_layout(G)
-            nx.draw(G, pos, edge_color='black', width=1, linewidths=1, connectionstyle='arc3, rad = 0.1', \
-                    node_size=500, node_color='pink', alpha=0.9, font_size=10, \
-                    labels={node: (str(node.state) + "\n" + str(round(V(node), 5))) for node in G.nodes()})
+                for edge in self.edge_list:
+                    G.add_edge(edge.origin, edge.destination, weight= edge.value)
+                    edge_lab.update({(edge.origin, edge.destination): str(self.Q[edge.origin][edge])})
+                pos = nx.drawing.nx_agraph.graphviz_layout(G)
+                nx.draw(G, pos, edge_color='black', width=1, linewidths=1, connectionstyle='arc3, rad = 0.1', \
+                        node_size=500, node_color='pink', alpha=0.9, font_size=10, \
+                        labels={node: (str(node.state) + "\n" + str(round(V(node), 5))) for node in G.nodes()})
 
-            nx.draw_networkx_nodes(G, pos, nodelist=[(root)], node_color='y', alpha=1)
-            nx.draw_networkx_edge_labels(G, pos, connectionstyle='arc3, rad = 0.1', edge_labels = edge_lab, font_color='red', label_pos=0.3)
-            nx.draw_networkx_edges(G, pos, connectionstyle='arc3, rad = 0.1', edgelist=route, edge_color='g', width=5)
+                nx.draw_networkx_nodes(G, pos, nodelist=[(root)], node_color='y', alpha=1)
+                nx.draw_networkx_edge_labels(G, pos, connectionstyle='arc3, rad = 0.1', edge_labels = edge_lab, font_color='red', label_pos=0.3)
+                nx.draw_networkx_edges(G, pos, connectionstyle='arc3, rad = 0.1', edgelist=route, edge_color='g', width=5)
 
-            plt.draw()
-            plt.savefig(self.save_results.get_path() + "/Graph.png", format="PNG")
-            plt.clf()
+                plt.draw()
+                plt.savefig(self.save_results.get_path() + "/Graph.png", format="PNG")
+                plt.clf()
 
     def edge_update(self, old_node, new_node, reward, target):
 
