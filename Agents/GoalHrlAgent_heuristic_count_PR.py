@@ -37,10 +37,9 @@ class GoalHrlAgent_heuristic_count_PR(GoalHrlAgent):
             goal = None
 
         if s_m != s_m_:
-            self.counter_as += 1
             if self.target is not None:
                 if s_m_ == self.target:
-
+                    self.counter_as += 1  # are we sure we should count here?
                     r += self.correct_option_end_reward
                     done = True
 
