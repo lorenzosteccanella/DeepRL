@@ -25,7 +25,7 @@ class Tot_reward_positionGridenv_GE_MazeKeyDoor_v0(gym.Wrapper):
         observation = self.env.reset(**kwargs)
         observation = self.observation(observation)
 
-        observation["manager"] = self.get_position_abstract_state_gridenv_GE_MazeKeyDoor_v0(None, 0., done)
+        observation["manager"] = self.get_position_abstract_state_gridenv_GE_MazeKeyDoor_v0(None, 0., False)
 
         return observation
 

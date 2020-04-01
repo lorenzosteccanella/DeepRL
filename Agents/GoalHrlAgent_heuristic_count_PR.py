@@ -53,20 +53,40 @@ class GoalHrlAgent_heuristic_count_PR(GoalHrlAgent):
         self.samples.append((s, a, r, s_, done, info, start, goal))
         self.options_executed_episode.append(self.best_option_action)
 
-        if sample[4]:
+        if self.counter_as >= max_d:
 
+            rewards_h = [(min(element, max_d) / max_d) for element in self.heuristic_reward[::-1]]
+
+            for i, p_sample, option in zip(range(len(self.samples)), self.samples, self.options_executed_episode):
+                if rewards_h[i] == 1:
+                    s = p_sample[0]
+                    a = p_sample[1]
+                    r = p_sample[2] + weight_heuristic_reward * rewards_h[i] if p_sample[2] > 0 and p_sample[4] else p_sample[2]
+                    s_ = p_sample[3]
+                    done = p_sample[4]
+                    info = p_sample[5]
+                    start = p_sample[6]
+                    goal = p_sample[7]
+
+                    option.observe((s, a, r, s_, done, info, start, goal))
+
+                    del self.samples[i]
+                    del self.options_executed_episode[i]
+                    del self.heuristic_reward[-(i+1)]
+
+        if sample[4]:
 
             rewards_h = [ (min(element, max_d) / max_d) for element in self.heuristic_reward[::-1] ]
 
-            for i, sample, option in zip(range(len(self.samples)), self.samples, self.options_executed_episode):
-                s = sample[0]
-                a = sample[1]
-                r = sample[2] + weight_heuristic_reward * rewards_h[i] if sample[2]>0 and sample[4]  else sample[2]
-                s_ = sample[3]
-                done = sample[4]
-                info = sample[5]
-                start = sample[6]
-                goal = sample[7]
+            for i, p_sample, option in zip(range(len(self.samples)), self.samples, self.options_executed_episode):
+                s = p_sample[0]
+                a = p_sample[1]
+                r = p_sample[2] + weight_heuristic_reward * rewards_h[i] if p_sample[2]>0 and p_sample[4] else p_sample[2]
+                s_ = p_sample[3]
+                done = p_sample[4]
+                info = p_sample[5]
+                start = p_sample[6]
+                goal = p_sample[7]
 
                 option.observe((s, a, r, s_, done, info, start, goal))
 

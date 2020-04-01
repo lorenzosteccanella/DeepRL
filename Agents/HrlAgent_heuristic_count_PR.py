@@ -27,10 +27,9 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
         s_m_ = Node(sample[3]["manager"], 0)
 
         if s_m != s_m_:
-            self.counter_as += 1
             if self.target is not None:
                 if s_m_ == self.target:
-
+                    self.counter_as += 1  # are we sure we should count here?
                     r += self.correct_option_end_reward
                     done = True
 
@@ -43,18 +42,40 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
         self.samples.append((s, a, r, s_, done, info))
         self.options_executed_episode.append(self.best_option_action)
 
+        if self.counter_as >= max_d:
+
+            rewards_h = [(min(element, max_d) / max_d) for element in self.heuristic_reward[::-1]]
+
+            for i, p_sample, option in zip(range(len(self.samples)), self.samples, self.options_executed_episode):
+                if rewards_h[i] == 1:
+                    s = p_sample[0]
+                    a = p_sample[1]
+                    r = p_sample[2] + weight_heuristic_reward * rewards_h[i] if p_sample[2]>0 and p_sample[4]  else p_sample[2]
+                    s_ = p_sample[3]
+                    done = p_sample[4]
+                    info = p_sample[5]
+
+                    option.observe((s, a, r, s_, done, info))
+
+                    del self.samples[i]
+                    del self.options_executed_episode[i]
+                    del self.heuristic_reward[-(i+1)]
+
+                else:
+
+                    break
+
         if sample[4]:
 
+            rewards_h = [(min(element, max_d) / max_d) for element in self.heuristic_reward[::-1]]
 
-            rewards_h = [ (min(element, max_d) / max_d) for element in self.heuristic_reward[::-1] ]
-
-            for i, sample, option in zip(range(len(self.samples)), self.samples, self.options_executed_episode):
-                s = sample[0]
-                a = sample[1]
-                r = sample[2] + weight_heuristic_reward * rewards_h[i] if sample[2]>0 and sample[4]  else sample[2]
-                s_ = sample[3]
-                done = sample[4]
-                info = sample[5]
+            for i, p_sample, option in zip(range(len(self.samples)), self.samples, self.options_executed_episode):
+                s = p_sample[0]
+                a = p_sample[1]
+                r = p_sample[2] + weight_heuristic_reward * rewards_h[i] if p_sample[2]>0 and p_sample[4]  else p_sample[2]
+                s_ = p_sample[3]
+                done = p_sample[4]
+                info = p_sample[5]
 
                 option.observe((s, a, r, s_, done, info))
 
