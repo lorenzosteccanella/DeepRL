@@ -27,9 +27,6 @@ class Distances:
             if (len(edges) == 0):
                 self.distances[node] = node.value
 
-
-
-
 class Edge:
 
     pseudo_count_factor = 1000
@@ -459,7 +456,8 @@ class Graph:
                 returns[t] = rewards[t] + gamma * returns[t + 1] * (1 - dones[t])
 
             returns = returns[:-1]
-            if sum(returns)>=0.:    #Warning Warning Warning Warning
+
+            if sum(returns)>=0.:    # WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
                 for i, sample in zip(range(len(self.batch)), self.batch):
                     s = sample[0]
                     a = sample[1]
@@ -540,9 +538,9 @@ class Graph:
 
             self.distances = self.Q
 
-            self.path.clear() # used by best_path function
-            path = self.best_path(root, self.distances)
-            self.print_networkx_graph(root, path, self.distances)
+            #self.path.clear() # used by best_path function
+            #path = self.best_path(root, self.distances)
+            #self.print_networkx_graph(root, path, self.distances)
 
             return self.distances
 

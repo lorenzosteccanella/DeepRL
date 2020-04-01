@@ -61,7 +61,7 @@ class variables():
 
         self.option_params = {
             "option": A2COption,
-            "h_size": 32,
+            "h_size": 128,
             "action_space": self.ACTION_SPACE,
             "critic_network": CriticNetwork,
             "actor_network": ActorNetwork,
