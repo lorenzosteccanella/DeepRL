@@ -208,7 +208,7 @@ class HrlAgent(AbstractAgent):
                     #self.graph.WatkinsQ((s, a, r, s_, done, info), self.exploration_fn)
                     right_termination_option = True
 
-            self.graph.tabularMC((s, a, r, s_, done, right_termination_option))
+                self.graph.tabularMC((s, a, r, s_, done, right_termination_option))
 
             self.reward_manager = 0
 

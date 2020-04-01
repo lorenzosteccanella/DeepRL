@@ -27,9 +27,6 @@ class Distances:
             if (len(edges) == 0):
                 self.distances[node] = node.value
 
-
-
-
 class Edge:
 
     pseudo_count_factor = 1000
@@ -412,22 +409,22 @@ class Graph:
 
         if done:
             rewards = np.array([o[2] for o in self.batch])
-            if sum(rewards) >= 0:
-                discounted_r = np.zeros_like(rewards)
-                running_add = 0
-                for t in reversed(range(rewards.shape[0])):
-                    running_add = running_add * gamma + rewards[t]
-                    discounted_r[t] = running_add
+            #if sum(rewards) >= 0:
+            discounted_r = np.zeros_like(rewards)
+            running_add = 0
+            for t in reversed(range(rewards.shape[0])):
+                running_add = running_add * gamma + rewards[t]
+                discounted_r[t] = running_add
 
-                for i, sample in zip(range(len(self.batch)), self.batch):
-                    s = sample[0]
-                    a = sample[1]
-                    correct_termination = sample[5]
-                    if correct_termination:
-                        td_error = (discounted_r[i] - self.Q[s][a])
-                        self.Q[s][a] = self.Q[s][a] + learning_rate * td_error
+            for i, sample in zip(range(len(self.batch)), self.batch):
+                s = sample[0]
+                a = sample[1]
+                correct_termination = sample[5]
+                if correct_termination:
+                    td_error = (discounted_r[i] - self.Q[s][a])
+                    self.Q[s][a] = self.Q[s][a] + learning_rate * td_error
 
-                        #print(actions, right_termination)
+                    #print(actions, right_termination)
             self.batch.clear()
 
 
@@ -459,7 +456,7 @@ class Graph:
                 returns[t] = rewards[t] + gamma * returns[t + 1] * (1 - dones[t])
 
             returns = returns[:-1]
-            if sum(returns)>0.:
+            if sum(returns)>=0.:    # WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
                 for i, sample in zip(range(len(self.batch)), self.batch):
                     s = sample[0]
                     a = sample[1]
@@ -540,9 +537,9 @@ class Graph:
 
             self.distances = self.Q
 
-            self.path.clear() # used by best_path function
-            path = self.best_path(root, self.distances)
-            self.print_networkx_graph(root, path, self.distances)
+            #self.path.clear() # used by best_path function
+            #path = self.best_path(root, self.distances)
+            #self.print_networkx_graph(root, path, self.distances)
 
             return self.distances
 
