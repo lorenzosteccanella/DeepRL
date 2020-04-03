@@ -23,7 +23,7 @@ class variables():
         self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  TEST_HRL_E_GREEDY_1/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Key_Door_HRL_E_GREEDY'
-        self.NUMBER_OF_EPOCHS = 1000
+        self.NUMBER_OF_EPOCHS = 2000
 
         self.PROBLEM = 'GE_MazeKeyDoor-v10'
         environment = gym.make(self.PROBLEM)
@@ -56,8 +56,8 @@ class variables():
         tf.reset_default_graph()
 
         self.shared_conv_layers = SharedConvLayers(0.05)
-        self.critic = CriticNetwork(30)
-        self.actor = ActorNetwork(30, len(self.ACTION_SPACE))
+        self.critic = CriticNetwork(32)
+        self.actor = ActorNetwork(32, len(self.ACTION_SPACE))
 
         self.number_of_stacked_frames = 1
 

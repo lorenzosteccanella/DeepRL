@@ -4,6 +4,8 @@ import numpy as np
 from Losses.Losses import Losses
 #import tensorflow.contrib.slim as slim
 import inspect
+import copy
+
 
 # self.conv1 = keras.layers.Conv2D(32, 8, (4, 4), padding='VALID', activation='elu', kernel_initializer='he_normal', )
 # self.conv2 = keras.layers.Conv2D(64, 4, (2, 2), padding='VALID', activation='elu', kernel_initializer='he_normal')
@@ -224,3 +226,19 @@ class A2CEagerSync:
 
     def load_weights(self):
         self.model_actor_critic.load_weights("/home/lorenzo/Documenti/UPF/DeepRL/TF_models_weights/A2C_weights")
+
+    def get_head_weights(self):
+
+        return copy.deepcopy(self.model_actor.get_weights()), copy.deepcopy(self.model_critic.get_weights())
+
+    def set_actor_weights(self,actor_w):
+        self.model_actor.set_weights(actor_w)
+
+    def set_critic_weights(self, critic_w):
+
+        self.model_critic.set_weights(critic_w)
+
+    def set_head_weights(self, actor_w, critic_w):
+
+        self.model_actor.set_weights(actor_w)
+        self.model_critic.set_weights(critic_w)

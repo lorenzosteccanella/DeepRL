@@ -5,6 +5,7 @@ import time
 import math
 import numpy as np
 import dill
+from collections import OrderedDict
 
 class HrlAgent(AbstractAgent):
 
@@ -49,8 +50,12 @@ class HrlAgent(AbstractAgent):
         self.best_edge = None
         self.current_node = None
         self.exploration_option = exploration_option
-        self.options = []
+        #self.options = []
+        #self.option = self.option_params["option"](self.option_params)
+        #self.weight_of_options = {}
+        self.options = OrderedDict()
         self.target = None
+        self.dummy_input = None
 
         self.correct_option_end_reward = correct_option_end_reward
         self.wrong_end_option_reward = wrong_option_end_reward
@@ -63,6 +68,10 @@ class HrlAgent(AbstractAgent):
 
 
     def act(self, s):
+
+        if self.dummy_input is None:
+            self.dummy_input = np.zeros_like(s["option"])
+
         node = Node(s["manager"], 0)
         self.graph.node_update(node)
         # if structure to reduce computation cost
@@ -103,6 +112,31 @@ class HrlAgent(AbstractAgent):
             option = self.option_params["option"]
             option = option(self.option_params)
             self.options.append(option)
+
+    def old_get_option(self, edge):
+        if edge not in self.weight_of_options:
+            print(self.option.a2cDNN.get_head_weights())
+            self.weight_of_options[edge] = self.option.a2cDNN.get_head_weights()
+
+        #self.option.a2cDNN.set_head_weights(self.weight_of_options[edge][0], self.weight_of_options[edge][1])
+
+        return self.option
+
+    def get_option(self, edge):
+        if edge not in self.options:
+            self.options[edge] = self.option_params["option"](self.option_params)
+            self.options[edge].act(self.dummy_input)
+            list_of_keys = list(self.options)
+            if(len(list_of_keys) > 1):
+
+                prev_option = self.options[list_of_keys[(list_of_keys.index(edge) - 1)]]
+                prev_option_weights = prev_option.a2cDNN.get_head_weights()
+                #self.options[edge].a2cDNN.set_actor_weights(prev_option_weights[0])
+                self.options[edge].a2cDNN.set_critic_weights(prev_option_weights[1])
+
+        return self.options[edge]
+
+
 
     def save_statistics(self):
 
@@ -281,7 +315,7 @@ class HrlAgent(AbstractAgent):
 
         edges_from_current_node = self.graph.get_edges_of_a_node(self.current_node)
 
-        self.create_options(edges_from_current_node)
+        #self.create_options(edges_from_current_node)
         self.update_option(sample)
 
         self.update_manager(sample)
