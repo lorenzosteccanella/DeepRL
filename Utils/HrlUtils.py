@@ -120,6 +120,9 @@ class Node:
         self.epsilon = 1 * (math.exp(-self.lambda_node * self.visit_count))
         #print(self.state, self.epsilon, self.visit_count)
 
+
+        #print(self.state, self.epsilon)
+
     def get_n_visits(self):
         return self.visit_count
 
@@ -273,7 +276,13 @@ class Graph:
         else: # if we recived just the old node as parameter i.e. new_node = False and reward = False
             node = self.node_list[self.node_list.index(old_node)]
 
-        node.visited() # to augment the visit counter
+        if new_node:
+            if old_node != new_node:
+                node.visited() # to augment the visit counter
+
+        #else:
+        #    node.visited()
+
 
         self.current_node = node
 
@@ -400,7 +409,7 @@ class Graph:
 
     def tabularMC(self, sample):
 
-        learning_rate = 0.9
+        learning_rate = 0.6
         gamma = 0.95
 
         done = sample[4]
@@ -423,7 +432,8 @@ class Graph:
                 if correct_termination:
                     td_error = (discounted_r[i] - self.Q[s][a])
                     self.Q[s][a] = self.Q[s][a] + learning_rate * td_error
-
+                    if 1e-4 > self.Q[s][a] > - 1e-4:
+                        self.Q[s][a] = 0.  # round(self.Q[s][a], 7)
                     #print(actions, right_termination)
             self.batch.clear()
 
@@ -465,7 +475,8 @@ class Graph:
                     if correct_termination:
                         td_error = (returns[i] - self.Q[s][a])
                         self.Q[s][a] = self.Q[s][a] + learning_rate * td_error
-                        self.Q[s][a] = round(self.Q[s][a], 7)
+                        if 1e-4 > self.Q[s][a] > - 1e-4:
+                            self.Q[s][a] = 0. #round(self.Q[s][a], 7)
 
             self.batch.clear()
 
@@ -538,9 +549,9 @@ class Graph:
 
             self.distances = self.Q
 
-            #self.path.clear() # used by best_path function
-            #path = self.best_path(root, self.distances)
-            #self.print_networkx_graph(root, path, self.distances)
+            # self.path.clear() # used by best_path function
+            # path = self.best_path(root, self.distances)
+            # self.print_networkx_graph(root, path, self.distances)
 
             return self.distances
 

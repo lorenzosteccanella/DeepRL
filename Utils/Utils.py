@@ -291,6 +291,7 @@ class SoftUpdateWeightsEager:
     def update(self):
         weights_main_network = np.array(self.weights.model.get_weights())
         weights_target_network = np.array(self.model.model.get_weights())
+
         self.model.model.set_weights(self.tau * weights_main_network +
                                      (1 - self.tau) * weights_target_network)
 

@@ -91,10 +91,10 @@ class ActorCriticNetwork(keras.Model):
 
 class A2CSILEagerSync:
 
-    def __init__(self, h_size, n_actions, model_critic, model_actor, learning_rate_online, weight_mse, weight_sil_mse, weight_ce, shared_observation_model=None, train_observation=False):
+    def __init__(self, h_size, n_actions, model_critic, model_actor, learning_rate_online, weight_mse, weight_sil_mse, weight_ce, shared_observation_model=None, learning_rate_observation_adjust=1, train_observation=False):
 
         if inspect.isclass(shared_observation_model):
-            self.shared_observation_model = shared_observation_model()
+            self.shared_observation_model = shared_observation_model(learning_rate_observation_adjust)
         else:
             self.shared_observation_model = shared_observation_model
 
@@ -160,7 +160,7 @@ class A2CSILEagerSync:
             loss_critic = Losses.mse_loss(value_critic, targets)
             loss_value = (weight_mse * loss_critic) + (loss_pg - weight_ce * loss_ce)
 
-        return loss_value, tape.gradient(loss_value, model_actor_critic.trainable_variables)
+        return loss_value, tape.gradient(loss_value, model_actor_critic.trainable_variables), loss_ce
 
     def grad_imitation(self, model_actor_critic, inputs, targets, one_hot_a, advantage, imp_w, weight_mse=0.5, weight_sil_mse=0.01):
 
@@ -186,13 +186,13 @@ class A2CSILEagerSync:
 
         s = tf.convert_to_tensor(s)
 
-        loss_value, grads = self.grad(self.model_actor_critic, s, y, one_hot_a, advantage, self.weight_ce, self.weight_mse)
+        loss_value, grads, loss_ce = self.grad(self.model_actor_critic, s, y, one_hot_a, advantage, self.weight_ce, self.weight_mse)
 
         grads, grad_norm = tf.clip_by_global_norm(grads, max_grad_norm)
 
         self.optimizer.apply_gradients(zip(grads, self.model_actor_critic.trainable_variables), self.global_step)
 
-        return [None, None]
+        return [None, None, loss_ce.numpy()]
 
     def train_imitation(self, s, y, one_hot_a, advantage, imp_w, max_grad_norm=5):
 

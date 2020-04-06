@@ -1,2 +1,3 @@
 from .Environment import Environment
 from .EnvironmentDiffusionTimeReset import EnvironmentDiffusionTimeReset
+from .ParallelEnvironment import ParallelEnvironment

@@ -20,8 +20,32 @@ import tensorflow as tf
 
 from Agents import HrlAgent
 
+from stable_baselines.common.vec_env import SubprocVecEnv, DummyVecEnv
+import gridenvs.examples
 
 
+
+def make_env(env_id, wrapper, wrapper_params, rank, seed=0):
+    """
+    Utility function for multiprocessed env.
+    :param env_id: (str) the environment ID
+    :param num_env: (int) the number of environments you wish to have in subprocesses
+    :param seed: (int) the inital seed for RNG
+    :param rank: (int) index of the subprocess
+    """
+
+    import gym
+
+    def _init():
+        env = gym.make(env_id)
+        if wrapper is not False:
+            env = wrapper(env, wrapper_params)
+        env.seed(seed + rank)  # are u sure about different seeds?
+
+        print("SEED MULTI ENVIRONMENT " + str(rank) + " : " + str(seed + rank))
+        return env
+
+    return _init
 
 def moving_average(interval, window_size):
     window = np.ones(int(window_size))/float(window_size)
@@ -64,73 +88,92 @@ def run(variables):
     return epochs, rewards, n_steps
 
 
+if __name__ == '__main__':
+    for experiment in args[1::]:
+        path_protocol = 'Protocols.' + experiment
+        variables = importlib.import_module(path_protocol).variables()
 
-# try:
+        for seed in variables.seeds:
+            print("\n" * 6)
+            print("SEED : " + str(seed))
+            variables.reset()
+            if variables.SAVE_RESULT is not False:
+                variables.SAVE_RESULT.set_seed(seed)
+                parameters = vars(variables)
+                variables.SAVE_RESULT.save_settings(parameters)
+            tf.set_random_seed(seed)
+            random.seed(seed)
+            np.random.seed(seed)
 
-for experiment in args[1::]:
-    path_protocol = 'Protocols.' + experiment
-    variables = importlib.import_module(path_protocol).variables()
+            if variables.multi_processing is False:
+                variables.env.env.seed(seed)   # Should I set the seed of the environment as well?
+            else:
+                environment = SubprocVecEnv(
+                    [make_env(variables.PROBLEM, variables.wrapper, variables.wrapper_params, i) for i in
+                     range(variables.num_workers)])
+                variables.env.set_env(environment)
 
-    for seed in variables.seeds:
-        print("\n" * 6)
-        variables.reset()
-        variables.SAVE_RESULT.set_seed(seed)
-        parameters = vars(variables)
-        variables.SAVE_RESULT.save_settings(parameters)
-        tf.set_random_seed(seed)
-        random.seed(seed)
-        np.random.seed(seed)
-        variables.env.env.seed(seed)   # Should I set the seed of the environment as well?
+            epochs, rewards, n_steps = run(variables)
+            moving_average_reward = moving_average(rewards, 10)
 
-        epochs, rewards, n_steps = run(variables)
-        moving_average_reward = moving_average(rewards, 10)
-
-        message = [str(e) + " " + str(nstep) + " " + str(r) + "\n" for e, r, nstep in zip(epochs, moving_average_reward, n_steps)]
-        variables.SAVE_RESULT.save_data(variables.FILE_NAME, message)
-        variables.SAVE_RESULT.plot_results(variables.FILE_NAME, "reward-over-episodes", "episodes", "reward")
-        if isinstance(variables.agent, HrlAgent):
-            variables.SAVE_RESULT.plot_success_rate_transitions(variables.agent.FILE_NAME + "Transitions_performance")
-
-        if(has_method(variables, 'transfer_learning_test')):
-            for _ in range(len(variables.TEST_TRANSFER_PROBLEM)):
-                tf.set_random_seed(seed)
-                random.seed(seed)
-                np.random.seed(seed)
-                variables.env.env.seed(seed)  # Should I set the seed of the environment as well?
-                print("\n"*6)
-                variables.transfer_learning_test()
-                epochs, rewards, n_steps = run(variables)
-                moving_average_reward = moving_average(rewards, 10)
+            if variables.SAVE_RESULT is not False:
                 message = [str(e) + " " + str(nstep) + " " + str(r) + "\n" for e, r, nstep in zip(epochs, moving_average_reward, n_steps)]
-                variables.SAVE_RESULT.save_data(variables.TRANSFER_FILE_NAME, message)
-                variables.SAVE_RESULT.plot_results(variables.TRANSFER_FILE_NAME, "reward-over-episodes", "episodes", "reward")
+                variables.SAVE_RESULT.save_data(variables.FILE_NAME, message)
+                variables.SAVE_RESULT.plot_results(variables.FILE_NAME, "reward-over-episodes", "episodes", "reward")
                 if isinstance(variables.agent, HrlAgent):
-                    variables.SAVE_RESULT.plot_success_rate_transitions(variables.agent.FILE_NAME + "Transitions_performance")
+                    if isinstance(variables.agent, list):
+                        variables.SAVE_RESULT.plot_success_rate_transitions(variables.agent[0].FILE_NAME + "Transitions_performance")
+                    else:
+                        variables.SAVE_RESULT.plot_success_rate_transitions(variables.agent.FILE_NAME + "Transitions_performance")
+
+            if(has_method(variables, 'transfer_learning_test')):
+                for _ in range(len(variables.TEST_TRANSFER_PROBLEM)):
+                    tf.set_random_seed(seed)
+                    random.seed(seed)
+                    np.random.seed(seed)
+                    if variables.multi_processing is False:
+                        variables.env.env.seed(seed)  # Should I set the seed of the environment as well?
+                    else:
+                        if __name__ == '__main__':
+                            environment = SubprocVecEnv(
+                                [make_env(variables.PROBLEM, variables.wrapper, variables.wrapper_params, i) for i in
+                                 range(variables.num_workers)])
+                            variables.env.set_env(environment)
+                        else:
+                            print("ERROR")
+                    print("\n"*6)
+                    variables.transfer_learning_test()
+                    epochs, rewards, n_steps = run(variables)
+                    moving_average_reward = moving_average(rewards, 10)
+                    message = [str(e) + " " + str(nstep) + " " + str(r) + "\n" for e, r, nstep in zip(epochs, moving_average_reward, n_steps)]
+                    if variables.SAVE_RESULT is not False:
+                        variables.SAVE_RESULT.save_data(variables.TRANSFER_FILE_NAME, message)
+                        variables.SAVE_RESULT.plot_results(variables.TRANSFER_FILE_NAME, "reward-over-episodes", "episodes", "reward")
+                        if isinstance(variables.agent, HrlAgent):
+                            if isinstance(variables.agent, list):
+                                variables.SAVE_RESULT.plot_success_rate_transitions(variables.agent[0].FILE_NAME + "Transitions_performance")
+                            else:
+                                variables.SAVE_RESULT.plot_success_rate_transitions(variables.agent.FILE_NAME + "Transitions_performance")
 
 
-    variables.SAVE_RESULT.plot_multiple_seeds(variables.FILE_NAME, "reward-over-episodes", "episodes", "reward")
-    #variables.SAVE_RESULT.plot_multiple_seeds("Transitions_performance", "success rate of options' transitions",
-    #                                          "number of options executed", "% of successful option executions")
-    if (has_method(variables, 'transfer_learning_test')):
-        for file_name_transfer in variables.TEST_TRANSFER_PROBLEM:
-            variables.SAVE_RESULT.plot_multiple_seeds(variables.FILE_NAME+" - "+ file_name_transfer, "reward-over-episodes", "episodes", "reward")
+        variables.SAVE_RESULT.plot_multiple_seeds(variables.FILE_NAME, "reward-over-episodes", "episodes", "reward")
+        variables.SAVE_RESULT.plot_multiple_seeds("Transitions_performance", "success rate of options' transitions",
+                                                  "number of options executed", "% of successful option executions")
+        if (has_method(variables, 'transfer_learning_test')):
+            for file_name_transfer in variables.TEST_TRANSFER_PROBLEM:
+                variables.SAVE_RESULT.plot_multiple_seeds(variables.FILE_NAME+" - "+ file_name_transfer, "reward-over-episodes", "episodes", "reward")
 
 
 
-    del variables
-    print("FINISHED")
+        del variables
+        print("FINISHED")
 
-    # finally:
-    #    AnaliseResults.save_data(variables.RESULTS_FOLDER, variables.FILE_NAME, [epochs, rewards])
-    #    AnaliseResults.reward_over_episodes(epochs, rewards)
-    #    variables.analyze_memory.plot_memory_distribution()
+        # finally:
+        #    AnaliseResults.save_data(variables.RESULTS_FOLDER, variables.FILE_NAME, [epochs, rewards])
+        #    AnaliseResults.reward_over_episodes(epochs, rewards)
+        #    variables.analyze_memory.plot_memory_distribution()
+        #
+        #    if variables.sess is not None:
+        #        variables.sess.close()
+        #    # agent.brain.model.save("Boh.h5")
     #
-    #    if variables.sess is not None:
-    #        variables.sess.close()
-    #    # agent.brain.model.save("Boh.h5")
-    #
-
-
-
-
-

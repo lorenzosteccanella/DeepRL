@@ -15,6 +15,7 @@ class A2CSILAgent(AbstractAgent):
         self.gamma = gamma
         self.imitation_learning_steps = imitation_learnig_steps
         self.sil_batch_size = sil_batch_size
+        self.ce_loss = None
 
     def _get_actor_critic_error(self, batch):
 
@@ -133,7 +134,7 @@ class A2CSILAgent(AbstractAgent):
             batch, imp_w = self.buffer_online.sample(self.batch_size, False)
             x, adv_actor, a_one_hot, y_critic = self._get_actor_critic_error(batch)
 
-            self.main_model_nn.train(x, y_critic, a_one_hot, adv_actor)
+            _, __, self.ce_loss = self.main_model_nn.train(x, y_critic, a_one_hot, adv_actor)
 
             self.buffer_online.reset_buffer()
 

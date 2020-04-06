@@ -1,4 +1,5 @@
 from .DQNAgent import DQNAgent
+from .DoubleDQNAgent import DoubleDQNAgent
 from .A2CAgent import A2CAgent
 from .RandomAgent import RandomAgent
 from .HrlAgent import HrlAgent
@@ -8,6 +9,7 @@ from .A2COption import A2COption
 from .RandomAgentOption import RandomAgentOption
 from .A2CSILAgent import A2CSILAgent
 from .A2CSILOption import A2CSILOption
+from .DoubleDQNOption import DoubleDQNOption
 from .RandomAgentWithNeuralNetwork import RandomAgentWithNeuralNetwork
 from .DiffusionTimeAgent import DiffusionTimeAgent
 from .ExplorationEffortAgent_nn import ExplorationEffortAgent_nn

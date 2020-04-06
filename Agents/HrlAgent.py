@@ -193,9 +193,9 @@ class HrlAgent(AbstractAgent):
         self.reward_manager += sample[2]
 
         s = Node(sample[0]["manager"], 0)
-        a = self.best_edge
         r = self.reward_manager
         s_ = Node(sample[3]["manager"], 0)
+        a = Edge(s, s_) #self.best_edge
         done = sample[4]
         info = sample[5]
 
@@ -203,17 +203,20 @@ class HrlAgent(AbstractAgent):
 
         if s != s_:
             if a is not None:
-                if s_ == self.target:
+                #if s_ == self.target:
                     #self.graph.tabularQ((s, a, r, s_, done, info))
                     #self.graph.WatkinsQ((s, a, r, s_, done, info), self.exploration_fn)
-                    right_termination_option = True
+                right_termination_option = True
 
-                self.graph.tabularQ((s, a, r, s_, done, right_termination_option))
+                self.graph.tabularMC((s, a, r, s_, done, right_termination_option))
 
             self.reward_manager = 0
 
         if done:
             self.reward_manager = 0
+
+    def has_method(self, o, name):
+        return callable(getattr(o, name, None))
 
     def statistics_options(self, sample):
 
@@ -255,10 +258,12 @@ class HrlAgent(AbstractAgent):
 
                 self.count_edges[str(edge)][0] += 1
 
-                ce_loss = self.best_option_action.get_ce_loss()
+                if (self.has_method(self.best_option_action, 'get_ce_loss')):
 
-                if ce_loss is not None:
-                    self.entropy_edges[str(edge)].append(ce_loss)
+                    ce_loss = self.best_option_action.get_ce_loss()
+
+                    if ce_loss is not None:
+                        self.entropy_edges[str(edge)].append(ce_loss)
 
         self.save_statistics()
 
