@@ -20,7 +20,6 @@ import tensorflow as tf
 
 from Agents import HrlAgent
 
-from stable_baselines.common.vec_env import SubprocVecEnv, DummyVecEnv
 import gridenvs.examples
 
 
@@ -83,6 +82,12 @@ def run(variables):
         rewards.append(reward)
         n_steps.append(nstep)
 
+        if variables.SAVE_RESULT is not False:
+            message = str(epoch) + " " + str(nstep) + " " + str(reward) + " " + str((sum(rewards[-10:]) / 10)) + "\n"
+            variables.SAVE_RESULT.save_data("on_going_results", message)
+
+
+
     end = time.time()
 
     return epochs, rewards, n_steps
@@ -108,6 +113,7 @@ if __name__ == '__main__':
             if variables.multi_processing is False:
                 variables.env.env.seed(seed)   # Should I set the seed of the environment as well?
             else:
+                from stable_baselines.common.vec_env import SubprocVecEnv, DummyVecEnv
                 environment = SubprocVecEnv(
                     [make_env(variables.PROBLEM, variables.wrapper, variables.wrapper_params, i) for i in
                      range(variables.num_workers)])
@@ -134,13 +140,11 @@ if __name__ == '__main__':
                     if variables.multi_processing is False:
                         variables.env.env.seed(seed)  # Should I set the seed of the environment as well?
                     else:
-                        if __name__ == '__main__':
-                            environment = SubprocVecEnv(
-                                [make_env(variables.PROBLEM, variables.wrapper, variables.wrapper_params, i) for i in
-                                 range(variables.num_workers)])
-                            variables.env.set_env(environment)
-                        else:
-                            print("ERROR")
+                        from stable_baselines.common.vec_env import SubprocVecEnv, DummyVecEnv
+                        environment = SubprocVecEnv(
+                            [make_env(variables.PROBLEM, variables.wrapper, variables.wrapper_params, i) for i in
+                             range(variables.num_workers)])
+                        variables.env.set_env(environment)
                     print("\n"*6)
                     variables.transfer_learning_test()
                     epochs, rewards, n_steps = run(variables)

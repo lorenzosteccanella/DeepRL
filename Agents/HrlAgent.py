@@ -12,7 +12,7 @@ class HrlAgent(AbstractAgent):
 
     epsilon = 1
 
-    def __init__(self, option_params, exploration_option, exploration_fn, pseudo_count_exploration = 1000, LAMBDA=1000, MIN_EPSILON=0, correct_option_end_reward=1.1, wrong_option_end_reward=-1.1, SaveResult = False):
+    def __init__(self, option_params, exploration_option, exploration_fn, pseudo_count_exploration = 1000, LAMBDA=1000, MIN_EPSILON=0, correct_option_end_reward=1.1, wrong_option_end_reward=-1.1, SaveResult = False, graph=False, options_list=False):
 
         self.option_params = option_params
 
@@ -20,7 +20,10 @@ class HrlAgent(AbstractAgent):
 
         self.save_result = SaveResult
 
-        self.graph = Graph(self.save_result)
+        if graph is False:
+            self.graph = Graph(self.save_result)
+        else:
+            self.graph = graph
 
         #exploration variables
         self.MIN_EPSILON = MIN_EPSILON
@@ -49,7 +52,10 @@ class HrlAgent(AbstractAgent):
         self.best_edge = None
         self.current_node = None
         self.exploration_option = exploration_option
-        self.options = []
+        if options_list is False:
+            self.options = []
+        else:
+            self.options = options_list
         self.target = None
 
         self.correct_option_end_reward = correct_option_end_reward
@@ -195,7 +201,7 @@ class HrlAgent(AbstractAgent):
         s = Node(sample[0]["manager"], 0)
         r = self.reward_manager
         s_ = Node(sample[3]["manager"], 0)
-        a = Edge(s, s_) #self.best_edge
+        a = Edge(s, s_) #self.best_edge WARNING WARNING WARNING WARNING
         done = sample[4]
         info = sample[5]
 

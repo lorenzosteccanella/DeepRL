@@ -61,7 +61,7 @@ class variables():
         # self.critic = CriticNetwork(30)
         # self.actor = ActorNetwork(30, len(self.ACTION_SPACE))
 
-        self.number_of_stacked_frames = 1
+        #self.number_of_stacked_frames = 1
 
         preprocessing = None #Preprocessing(84, 84, 3, self.number_of_stacked_frames, False)
 

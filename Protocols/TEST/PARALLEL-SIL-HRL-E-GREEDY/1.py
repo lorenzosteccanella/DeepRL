@@ -60,11 +60,11 @@ class variables():
         # Just to be sure that we don't have some others graph loaded
         tf.reset_default_graph()
 
-        #self.shared_conv_layers = SharedConvLayers(0.05)
-        self.critic = CriticNetwork(30)
-        self.actor = ActorNetwork(30, len(self.ACTION_SPACE))
-
-        self.number_of_stacked_frames = 1
+        # #self.shared_conv_layers = SharedConvLayers(0.05)
+        # self.critic = CriticNetwork(30)
+        # self.actor = ActorNetwork(30, len(self.ACTION_SPACE))
+        #
+        # self.number_of_stacked_frames = 1
 
         preprocessing = None #Preprocessing(84, 84, 3, self.number_of_stacked_frames, False)
 
@@ -106,13 +106,13 @@ class variables():
             if i == 0:
                 self.agent.append(HrlAgent_heuristic_count_PR(self.option_params, self.random_agent, self.exploration_fn,
                                                               self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1,
-                                                              -1.1, self.SAVE_RESULT))
+                                                              -1.1, self.SAVE_RESULT, self.graph, self.option_list))
                 #self.agent.load("/home/lorenzo/Documenti/UPF/DeepRL/results/TEST  -  TEST_HRL_E_GREEDY_1/Tue_Mar_17_15:34:02_2020/seed_0/full_model.pkl")
 
             else:
                 self.agent.append(HrlAgent_heuristic_count_PR(self.option_params, self.random_agent, self.exploration_fn,
                                                               self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1,
-                                                              -1.1, False))
+                                                              -1.1, False, self.graph, self.option_list))
 
 
 

@@ -1,4 +1,4 @@
-from Agents import HrlAgent, HrlAgent_heuristic_count_PR, HrlAgent_nextV_PR, RandomAgentOption, A2CSILOption, WayPointsAgent_nextV_PR
+from Agents import HrlAgent, HrlAgent_heuristic_count_PR, HrlAgent_nextV_PR, RandomAgentOption, A2COption, WayPointsAgent_nextV_PR
 import gym
 import tensorflow as tf
 import os
@@ -20,9 +20,9 @@ class variables():
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
         self.seeds = range(1)
-        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  heuristic_count_TEST_SIL_HRL_E_GREEDY_4/')
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  heuristic_count_TEST_A2C_HRL_E_GREEDY_1/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
-        self.FILE_NAME = 'Key_Door_SIL_HRL_E_GREEDY'
+        self.FILE_NAME = 'Key_Door_A2C_HRL_E_GREEDY'
         self.NUMBER_OF_EPOCHS = 1000
 
         self.multi_processing = False
@@ -33,7 +33,7 @@ class variables():
         self.ACTION_SPACE = [0, 1, 2, 3, 4]
 
         self.wrapper_params = {
-            "stack_images_length": 4,
+            "stack_images_length": 1,
             "width": 10,
             "height": 10,
             "n_zones": 2
@@ -57,31 +57,27 @@ class variables():
         # Just to be sure that we don't have some others graph loaded
         tf.reset_default_graph()
 
-        # self.shared_conv_layers = SharedConvLayers(0.05)
-        # self.critic = CriticNetwork(30)
-        # self.actor = ActorNetwork(30, len(self.ACTION_SPACE))
+        #self.shared_conv_layers = SharedConvLayers(0.05)
+        #self.critic = CriticNetwork(30)
+        #self.actor = ActorNetwork(30, len(self.ACTION_SPACE))
 
         #self.number_of_stacked_frames = 1
 
         preprocessing = None #Preprocessing(84, 84, 3, self.number_of_stacked_frames, False)
 
         self.option_params = {
-            "option": A2CSILOption,
-            "h_size": 128,
+            "option": A2COption,
+            "h_size": 32,
             "action_space": self.ACTION_SPACE,
             "critic_network": CriticNetwork,
             "actor_network": ActorNetwork,
-            "shared_representation": SharedConvLayers, #self.shared_conv_layers,
+            "shared_representation": SharedConvLayers,
             "weight_mse": 0.5,
-            "sil_weight_mse": 0.05, #0.01,
             "weight_ce_exploration": 0.01,
             "learning_rate": 0.0001,
             "learning_rate_reduction_obs": 0.05,  # WARNING
             "gamma": 0.99,
             "batch_size": 6,
-            "sil_batch_size": 64,
-            "imitation_buffer_size": 64*100,
-            "imitation_learning_steps": 4,
             "preprocessing": preprocessing
         }
 
