@@ -424,7 +424,7 @@ class Graph:
             for t in reversed(range(rewards.shape[0])):
                 running_add = running_add * gamma + rewards[t]
                 discounted_r[t] = running_add
-
+            #if sum( discounted_r >= 0.):
             for i, sample in zip(range(len(self.batch)), self.batch):
                 s = sample[0]
                 a = sample[1]
@@ -435,7 +435,7 @@ class Graph:
                     if 1e-4 > self.Q[s][a] > - 1e-4:
                         self.Q[s][a] = 0.  # round(self.Q[s][a], 7)
                     #print(actions, right_termination)
-            self.batch.clear()
+        self.batch.clear()
 
 
 
@@ -467,16 +467,16 @@ class Graph:
 
             returns = returns[:-1]
 
-            if sum(returns)>=0.:    # WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
-                for i, sample in zip(range(len(self.batch)), self.batch):
-                    s = sample[0]
-                    a = sample[1]
-                    correct_termination = sample[5]
-                    if correct_termination:
-                        td_error = (returns[i] - self.Q[s][a])
-                        self.Q[s][a] = self.Q[s][a] + learning_rate * td_error
-                        if 1e-4 > self.Q[s][a] > - 1e-4:
-                            self.Q[s][a] = 0. #round(self.Q[s][a], 7)
+            #if sum(returns)>=0.:    # WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+            for i, sample in zip(range(len(self.batch)), self.batch):
+                s = sample[0]
+                a = sample[1]
+                correct_termination = sample[5]
+                if correct_termination:
+                    td_error = (returns[i] - self.Q[s][a])
+                    self.Q[s][a] = self.Q[s][a] + learning_rate * td_error
+                    if 1e-4 > self.Q[s][a] > - 1e-4:
+                        self.Q[s][a] = 0. #round(self.Q[s][a], 7)
 
             self.batch.clear()
 
@@ -549,9 +549,9 @@ class Graph:
 
             self.distances = self.Q
 
-            # self.path.clear() # used by best_path function
-            # path = self.best_path(root, self.distances)
-            # self.print_networkx_graph(root, path, self.distances)
+            self.path.clear() # used by best_path function
+            path = self.best_path(root, self.distances)
+            self.print_networkx_graph(root, path, self.distances)
 
             return self.distances
 

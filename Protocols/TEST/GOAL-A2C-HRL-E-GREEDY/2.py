@@ -20,10 +20,10 @@ class variables():
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
         self.seeds = range(1)
-        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  heuristic_count_TEST_A2C_HRL_E_GREEDY_1/')
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  heuristic_count_TEST_A2C_HRL_E_GREEDY_2/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Key_Door_A2C_HRL_E_GREEDY'
-        self.NUMBER_OF_EPOCHS = 3000
+        self.NUMBER_OF_EPOCHS = 1000
 
         self.multi_processing = False
 
@@ -33,7 +33,7 @@ class variables():
         self.ACTION_SPACE = [0, 1, 2, 3, 4]
 
         self.wrapper_params = {
-            "stack_images_length": 1,
+            "stack_images_length": 4,
             "width": 10,
             "height": 10,
             "n_zones": 2
@@ -57,7 +57,7 @@ class variables():
         # Just to be sure that we don't have some others graph loaded
         tf.reset_default_graph()
 
-        self.shared_conv_layers = SharedConvLayers(0.05)
+        #self.shared_conv_layers = SharedConvLayers(0.05)
         #self.critic = CriticNetwork(30)
         #self.actor = ActorNetwork(30, len(self.ACTION_SPACE))
 
@@ -71,7 +71,7 @@ class variables():
             "action_space": self.ACTION_SPACE,
             "critic_network": CriticNetwork,
             "actor_network": ActorNetwork,
-            "shared_representation": self.shared_conv_layers,
+            "shared_representation": SharedConvLayers,
             "weight_mse": 0.5,
             "weight_ce_exploration": 0.01,
             "learning_rate": 0.0001,

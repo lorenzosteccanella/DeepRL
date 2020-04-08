@@ -12,7 +12,7 @@ class HrlAgent(AbstractAgent):
 
     epsilon = 1
 
-    def __init__(self, option_params, exploration_option, exploration_fn, pseudo_count_exploration = 1000, LAMBDA=1000, MIN_EPSILON=0, correct_option_end_reward=1.1, wrong_option_end_reward=-1.1, SaveResult = False, graph=False, options_list=False):
+    def __init__(self, option_params, exploration_option, exploration_fn, pseudo_count_exploration = 1000, LAMBDA=1000, MIN_EPSILON=0, correct_option_end_reward=1.1, wrong_option_end_reward=-1.1, SaveResult = False, graph=False, options_list=False, single_option=False):
 
         self.option_params = option_params
 
@@ -56,6 +56,12 @@ class HrlAgent(AbstractAgent):
             self.options = []
         else:
             self.options = options_list
+
+        if single_option is not False:
+            self.single_option = self.option_params["option"](self.option_params)
+        else:
+            self.single_option = single_option
+
         self.target = None
 
         self.correct_option_end_reward = correct_option_end_reward
@@ -106,8 +112,11 @@ class HrlAgent(AbstractAgent):
 
         if len(edges_from_current_node) > len(self.options):
 
-            option = self.option_params["option"]
-            option = option(self.option_params)
+            if self.single_option is not False:
+                option = self.single_option
+            else:
+                option = self.option_params["option"]
+                option = option(self.option_params)
             self.options.append(option)
 
     def save_statistics(self):

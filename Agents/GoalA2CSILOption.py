@@ -1,25 +1,29 @@
 from Agents.AbstractOption import AbstractOption
-from Agents import GoalA2CAgent
-from Models.GoalA2CnetworksEager import *
+from Agents import GoalA2CSILAgent
+from Models.GoalA2CSILnetworksEager import *
+from copy import deepcopy
 
-class GoalA2COption(AbstractOption):
+class GoalA2CSILOption(AbstractOption):
 
     def __init__(self, parameters):
 
-        super(GoalA2COption, self).__init__()
+        super(GoalA2CSILOption, self).__init__()
 
         self.id = self.getID()
 
-        self.a2cDNN = GoalA2CEagerSync(parameters["h_size"], len(parameters["action_space"]), parameters["critic_network"],
-                                   parameters["actor_network"], parameters["learning_rate"], parameters["weight_mse"],
-                                   parameters["weight_ce_exploration"], parameters["shared_representation"],
-                                   parameters["learning_rate_reduction_obs"], parameters["shared_goal_representation"])
+        self.a2cDNN_SIL = GoalA2CSILEagerSync(parameters["h_size"], len(parameters["action_space"]), parameters["critic_network"],
+                                          parameters["actor_network"], parameters["learning_rate"], parameters["weight_mse"],
+                                          parameters["sil_weight_mse"], parameters["weight_ce_exploration"],
+                                          parameters["shared_representation"], parameters["learning_rate_reduction_obs"],
+                                                parameters["shared_goal_representation"])
 
-        self.agent = GoalA2CAgent(parameters["action_space"], self.a2cDNN, parameters["gamma"], parameters["batch_size"])
+        self.agent = GoalA2CSILAgent(parameters["action_space"], self.a2cDNN_SIL, parameters["gamma"], parameters["batch_size"],
+                                 parameters["sil_batch_size"], parameters["imitation_buffer_size"], parameters["imitation_learning_steps"] )
 
-        self.preprocessing = parameters["preprocessing"]
+        self.preprocessing = deepcopy(parameters["preprocessing"]) # remember these are options u need to use deepcopy
 
         self.parameters = parameters
+
 
     def act(self, s):
         state = s[0]
@@ -75,4 +79,3 @@ class GoalA2COption(AbstractOption):
 
     def get_ce_loss(self):
         return self.agent.ce_loss
-

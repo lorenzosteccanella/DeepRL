@@ -5,12 +5,6 @@ from Losses.Losses import Losses
 #import tensorflow.contrib.slim as slim
 import inspect
 
-# self.conv1 = keras.layers.Conv2D(32, 8, (4, 4), padding='VALID', activation='elu', kernel_initializer='he_normal', )
-# self.conv2 = keras.layers.Conv2D(64, 4, (2, 2), padding='VALID', activation='elu', kernel_initializer='he_normal')
-# self.conv3 = keras.layers.Conv2D(64, 3, (1, 1), padding='VALID', activation='elu', kernel_initializer='he_normal')
-# self.flatten = keras.layers.Flatten()
-# self.dense = keras.layers.Dense(256)
-
 class SharedConvLayers(keras.Model):
     def __init__(self, learning_rate_observation_adjust=1):
         super(SharedConvLayers, self).__init__(name="SharedConvLayers")
@@ -30,7 +24,7 @@ class SharedConvLayers(keras.Model):
         x = self.flatten(x)
         denseOut = self.dense(x)
         x = self.learning_rate_adjust * denseOut + (1-self.learning_rate_adjust) * tf.stop_gradient(denseOut)  # U have to test this!!!
-        x = self.normalization_layer(x)
+        #x = self.normalization_layer(x)
         return [x, denseOut]
 
 
@@ -58,8 +52,21 @@ class SharedGoalModel(keras.Model):
     def call(self, x):
         denseOut = self.dense1(x)
         x = self.learning_rate_adjust * denseOut + (1-self.learning_rate_adjust) * tf.stop_gradient(denseOut)  # U have to test this!!!
-        x = self.normalization_layer(x)
+        #x = self.normalization_layer(x)
         return [x, x]
+
+
+class SharedDenseLayers(keras.Model):
+    def __init__(self, h_size):
+        super(SharedDenseLayers, self).__init__(name="SharedDenseLayers")
+        self.dense1 = keras.layers.Dense(h_size, activation='elu', kernel_initializer='he_normal')
+        self.dense2 = keras.layers.Dense(h_size, activation='elu', kernel_initializer='he_normal')
+
+    def call(self, x):
+        x = self.dense1(x)
+        x = self.dense2(x)
+
+        return [x]
 
 
 class CriticNetwork(keras.Model):
@@ -90,7 +97,6 @@ class ActorNetwork(keras.Model):
         x = self.out(x)
         return x
 
-
 class SiameseActorCriticNetwork(keras.Model):
 
     def __init__(self, critic_model, actor_model, shared_observation_model=None, shared_goal_model=None):
@@ -114,11 +120,11 @@ class SiameseActorCriticNetwork(keras.Model):
 
         return actor, critic
 
+class GoalA2CSILEagerSync:
 
-class GoalA2CEagerSync:
-
-    def __init__(self, h_size, n_actions, model_critic, model_actor, learning_rate, weight_mse, weight_ce,
-                 shared_observation_model=None, learning_rate_observation_adjust=1, shared_goal_model=None, train_observation=False):
+    def __init__(self, h_size, n_actions, model_critic, model_actor, learning_rate_online, weight_mse, weight_sil_mse,
+                 weight_ce, shared_observation_model=None, learning_rate_observation_adjust=1, shared_goal_model=None,
+                 train_observation=False):
 
         if inspect.isclass(shared_observation_model):
             self.shared_observation_model = shared_observation_model(learning_rate_observation_adjust)
@@ -144,13 +150,15 @@ class GoalA2CEagerSync:
 
         self.train_observation = train_observation
         self.weight_mse = weight_mse
+        self.weight_sil_mse = weight_sil_mse
         self.weight_ce = weight_ce
 
         #print("\n ACTOR CRITIC MODEL \n")
 
         #slim.model_analyzer.analyze_vars(self.model_actor_critic.trainable_variables, print_info=True)
 
-        self.optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate)
+        self.optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate_online)
+        #self.optimizer_imitation = tf.train.RMSPropOptimizer(learning_rate=learning_rate_imitation)
         if self.train_observation:
             self.optimizer_observation = tf.train.RMSPropOptimizer(learning_rate=1e-3)
         self.global_step = tf.Variable(0)
@@ -198,6 +206,16 @@ class GoalA2CEagerSync:
 
         return loss_value, tape.gradient(loss_value, model_actor_critic.trainable_variables), loss_ce
 
+    def grad_imitation(self, model_actor_critic, inputs, targets, one_hot_a, advantage, imp_w, weight_mse=0.5, weight_sil_mse=0.01):
+
+        with tf.GradientTape() as tape:
+            softmax_logits, value_critic = model_actor_critic(inputs[0], inputs[1], inputs[2])
+            loss_pg_imitation = Losses.reinforce_loss_imp_w(softmax_logits, one_hot_a, advantage, imp_w)
+            loss_critic_imitation = (weight_mse * Losses.mse_loss_self_imitation_learning_imp_w(value_critic, targets, imp_w))
+            loss_value = weight_sil_mse * loss_critic_imitation + loss_pg_imitation
+
+        return loss_value, tape.gradient(loss_value, model_actor_critic.trainable_variables)
+
     def train(self, s1, s2, s3, y, one_hot_a, advantage, max_grad_norm=5):
 
         s1 = np.array(s1, dtype=np.float32)
@@ -220,8 +238,22 @@ class GoalA2CEagerSync:
 
         return [None, None, loss_ce.numpy()]
 
-    def save_weights(self):
-        self.model_actor_critic.save_weights("/home/lorenzo/Documenti/UPF/DeepRL/TF_models_weights/A2C_weights")
+    def train_imitation(self, s1, s2, s3, y, one_hot_a, advantage, imp_w, max_grad_norm=5):
 
-    def load_weights(self):
-        self.model_actor_critic.load_weights("/home/lorenzo/Documenti/UPF/DeepRL/TF_models_weights/A2C_weights")
+        s1 = np.array(s1, dtype=np.float32)
+
+        s1 = tf.convert_to_tensor(s1)
+
+        s2 = np.array(s2, dtype=np.float32)
+
+        s2 = tf.convert_to_tensor(s2)
+
+        s3 = np.array(s3, dtype=np.float32)
+
+        s3 = tf.convert_to_tensor(s3)
+
+        loss_value, grads = self.grad_imitation(self.model_actor_critic, (s1, s2, s3), y, one_hot_a, advantage, imp_w, self.weight_mse, self.weight_sil_mse)
+
+        grads, grad_norm = tf.clip_by_global_norm(grads, max_grad_norm)
+
+        self.optimizer.apply_gradients(zip(grads, self.model_actor_critic.trainable_variables), self.global_step)
