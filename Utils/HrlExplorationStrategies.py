@@ -193,4 +193,5 @@ def get_epsilon_count_exploration(self, current_node, distances, store_action_ch
     if store_action_choice:
         self.precomputed_option_action = (option, edge)
 
+    print(option)
     return option, edge

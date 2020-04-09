@@ -57,10 +57,12 @@ class HrlAgent(AbstractAgent):
         else:
             self.options = options_list
 
-        if single_option is not False:
-            self.single_option = self.option_params["option"](self.option_params)
-        else:
-            self.single_option = single_option
+        self.single_option = single_option
+
+        #if single_option is not False:
+        #    self.single_option = self.option_params["option"](self.option_params)
+        #else:
+        #    self.single_option = single_option
 
         self.target = None
 
@@ -70,7 +72,7 @@ class HrlAgent(AbstractAgent):
         HrlAgent.exploration_fn = exploration_fn
 
         self.pseudo_count_exploration(pseudo_count_exploration)
-        self.epsilon_count_exploration(self.LAMBDA)
+        self.epsilon_count_exploration(self.LAMBDA, self.MIN_EPSILON)
         self.reward_manager = 0.
 
 
@@ -105,8 +107,8 @@ class HrlAgent(AbstractAgent):
     def pseudo_count_exploration(self, pseudo_count_factor):
         Edge.set_pseudo_count(pseudo_count_factor)
 
-    def epsilon_count_exploration(self, LAMBDA):
-        Node.set_lambda_node(LAMBDA)
+    def epsilon_count_exploration(self, LAMBDA, min_epsilon=0):
+        Node.set_lambda_node(LAMBDA, min_epsilon)
 
     def create_options(self, edges_from_current_node):
 

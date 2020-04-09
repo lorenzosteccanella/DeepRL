@@ -55,7 +55,7 @@ class variables():
         # Just to be sure that we don't have some others graph loaded
         tf.reset_default_graph()
 
-        #self.shared_conv_layers = SharedConvLayers(0.05)
+        self.shared_conv_layers = SharedConvLayers(0.05)
         #self.critic = CriticNetwork(30)
         #self.actor = ActorNetwork(30, len(self.ACTION_SPACE))
 
@@ -67,7 +67,7 @@ class variables():
             "action_space": self.ACTION_SPACE,
             "critic_network": CriticNetwork,
             "actor_network": ActorNetwork,
-            "shared_representation": SharedConvLayers, #self.shared_conv_layers,
+            "shared_representation": self.shared_conv_layers,
             "weight_mse": 0.5,
             "sil_weight_mse": 0.05, #0.01,
             "weight_ce_exploration": 0.01,
@@ -76,13 +76,13 @@ class variables():
             "gamma": 0.99,
             "batch_size": 6,
             "sil_batch_size": 64,
-            "imitation_buffer_size":64*100,
+            "imitation_buffer_size": 64*100,
             "imitation_learning_steps": 4,
             "preprocessing": preprocessing
         }
 
         self.random_agent = RandomAgentOption(self.ACTION_SPACE)
-        self.LAMBDA = 0.05
+        self.LAMBDA = 0.005
         self.MIN_EPSILON = 0.1
         self.PSEUDO_COUNT = 1000
         self.exploration_fn = get_epsilon_count_exploration

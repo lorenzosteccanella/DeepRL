@@ -8,7 +8,7 @@ class GoalA2CSILAgent(AbstractAgent):
 
         self.batch_size = batch_size
         self.buffer_online = ExperienceReplay(self.batch_size)
-        self.buffer_imitation = PrioritizedExperienceReplay(imitation_buffer_size)
+        self.buffer_imitation = PrioritizedExperienceReplay(imitation_buffer_size)   # WARNING WARNING WARNING WARNING Experience Replay instead of Prioritized Experience Replay
         self.trajectory = []
         self.action_space = action_space
         self.main_model_nn = main_model_nn

@@ -98,13 +98,15 @@ class Edge:
 class Node:
 
     lambda_node = 1000
+    min_epsilon = 0
 
     def __init__(self, state, value=0):
         self.state = state
         self.visit_count = 1
         self.value = value #+ 1 * (math.exp(-Node.pseudo_count_factor * self.visit_count)) #(Node.pseudo_count_factor * (self.visit_count ** -1))
         self.lambda_node = Node.lambda_node
-        self.epsilon = 1 * (math.exp(-self.lambda_node * self.visit_count))
+        self.min_epsilon = Node.min_epsilon
+        self.epsilon = self.min_epsilon + (1 - self.min_epsilon) * (math.exp(-self.lambda_node * self.visit_count))
 
     def get_value(self):
         return self.value
@@ -117,11 +119,11 @@ class Node:
 
     def visited(self):
         self.visit_count += 1
-        self.epsilon = 1 * (math.exp(-self.lambda_node * self.visit_count))
+        self.epsilon = self.min_epsilon + (1 - self.min_epsilon) * (math.exp(-self.lambda_node * self.visit_count))
         #print(self.state, self.epsilon, self.visit_count)
 
 
-        #print(self.state, self.epsilon)
+        print(self.state, self.epsilon)
 
     def get_n_visits(self):
         return self.visit_count
@@ -148,8 +150,9 @@ class Node:
             return hash(self.state)
 
     @staticmethod
-    def set_lambda_node(lambda_node):
+    def set_lambda_node(lambda_node, min_epsilon=0):
         Node.lambda_node = lambda_node
+        Node.min_epsilon = min_epsilon
 
 
 class Graph:
@@ -171,11 +174,11 @@ class Graph:
         self.destination_node_edges_dictionary = {}
         self.path = []
         self.i = 0
-        self.batch=[]
+        self.batch = []
         self.save_results = save_results
 
     def print_networkx_graph(self, root, route, distances):
-        self.i +=1
+        self.i += 1
         if self.i % 100 == 0:
             self.i = 0
             from time import sleep
@@ -430,12 +433,15 @@ class Graph:
                 a = sample[1]
                 correct_termination = sample[5]
                 if correct_termination:
-                    td_error = (discounted_r[i] - self.Q[s][a])
-                    self.Q[s][a] = self.Q[s][a] + learning_rate * td_error
-                    if 1e-4 > self.Q[s][a] > - 1e-4:
-                        self.Q[s][a] = 0.  # round(self.Q[s][a], 7)
+                    newQ = discounted_r[i]
+                    if newQ > self.Q[s][a]:
+                        self.Q[s][a] = newQ
+                    #td_error = (discounted_r[i] - self.Q[s][a])
+                    #self.Q[s][a] = self.Q[s][a] + learning_rate * td_error
+                    #if 1e-4 > self.Q[s][a] > - 1e-4:
+                    #   self.Q[s][a] = 0.  # round(self.Q[s][a], 7)
                     #print(actions, right_termination)
-        self.batch.clear()
+            self.batch.clear()
 
 
 
@@ -549,9 +555,9 @@ class Graph:
 
             self.distances = self.Q
 
-            # self.path.clear() # used by best_path function
-            # path = self.best_path(root, self.distances)
-            # self.print_networkx_graph(root, path, self.distances)
+            self.path.clear() # used by best_path function
+            path = self.best_path(root, self.distances)
+            self.print_networkx_graph(root, path, self.distances)
 
             return self.distances
 

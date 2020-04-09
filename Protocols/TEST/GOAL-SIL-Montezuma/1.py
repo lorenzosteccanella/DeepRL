@@ -84,17 +84,19 @@ class variables():
         }
 
         self.random_agent = RandomAgentOption(self.ACTION_SPACE)
-        self.LAMBDA = 0.05
-        self.MIN_EPSILON = 0.1
+        self.LAMBDA = 0.005
+        self.MIN_EPSILON = 0.05
         self.PSEUDO_COUNT = 1000
         self.exploration_fn = get_epsilon_count_exploration
 
         # to know in how many episodes the epsilon will decay
         ToolEpsilonDecayExploration.epsilon_decay_end_steps(self.MIN_EPSILON, self.LAMBDA)
 
+        self.single_option = self.option_params["option"](self.option_params)
+
         self.agent = GoalHrlAgent_heuristic_count_PR(self.option_params, self.random_agent, self.exploration_fn,
                                                      self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1,
-                                                     self.SAVE_RESULT, False, False, True)
+                                                     self.SAVE_RESULT, False, False, self.single_option)
         #self.agent.load("/home/lorenzo/Documenti/UPF/DeepRL/results/TEST  -  TEST_HRL_E_GREEDY_1/Tue_Mar_17_15:34:02_2020/seed_0/full_model.pkl")
 
 
