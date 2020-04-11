@@ -46,6 +46,7 @@ class HrlAgent(AbstractAgent):
         self.old_edge = None
         self.n_steps = 0
         self.n_episodes = 0
+        self.samples_imitation = []
 
         self.best_option_action = None
         self.precomputed_option_action = None
@@ -179,6 +180,57 @@ class HrlAgent(AbstractAgent):
                 self.save(path+"/"+filename)
 
 
+    def update_imitation(self, sample):
+        s = sample[0]["option"]
+        a = sample[1]
+        r = sample[2]
+        s_ = sample[3]["option"]
+        done = sample[4]
+        info = sample[5]
+
+        s_m = Node(sample[0]["manager"], 0)
+        s_m_ = Node(sample[3]["manager"], 0)
+
+        if s_m != s_m_:
+            # to stabilize the learning of all the options!!!!
+            for option in self.options:
+                if (self.has_method(option.agent, 'train_imitation')):
+                    option.train_imitation()
+
+
+        # # HER training stile
+        # if s_m != s_m_:
+        #     if self.target is not None:
+        #         if s_m_ != self.target:
+        #
+        #             r += self.correct_option_end_reward
+        #             done = True
+        #     else:
+        #         r += self.correct_option_end_reward
+        #         done = True
+        #
+        # self.samples_imitation.append((s, a, r, s_, done, info))
+        #
+        # if s_m != s_m_:
+        #     manager_edge = Edge(s_m, s_m_)
+        #     if self.target is not None:
+        #         if s_m_ != self.target:
+        #             edges_of_node = self.graph.get_edges_of_a_node(s_m)
+        #             option_imitation = self.options[edges_of_node.index(manager_edge)]
+        #             if (self.has_method(option_imitation.agent, 'add_multy_trajectory_memory')):
+        #                 for sample in self.samples_imitation:
+        #                     option_imitation.agent.add_multy_trajectory_memory(sample)
+        #
+        #     else:
+        #         edges_of_node = self.graph.get_edges_of_a_node(s_m)
+        #         option_imitation = self.options[edges_of_node.index(manager_edge)]
+        #         if (self.has_method(option_imitation.agent, 'add_multy_trajectory_memory')):
+        #             for sample in self.samples_imitation:
+        #                 option_imitation.agent.add_multy_trajectory_memory(sample)
+        #
+        #     self.samples_imitation.clear()
+
+
 
     def update_option(self, sample):
         s = sample[0]["option"]
@@ -305,6 +357,7 @@ class HrlAgent(AbstractAgent):
 
         self.create_options(edges_from_current_node)
         self.update_option(sample)
+        #self.update_imitation(sample)
 
         self.update_manager(sample)
 

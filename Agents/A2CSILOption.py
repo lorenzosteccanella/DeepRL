@@ -25,7 +25,6 @@ class A2CSILOption(AbstractOption):
 
         self.parameters = parameters
 
-
     def act(self, s):
         if self.preprocessing:
             s = self.preprocessing.preprocess_image(s)
@@ -60,3 +59,6 @@ class A2CSILOption(AbstractOption):
 
     def get_ce_loss(self):
         return self.agent.ce_loss
+
+    def train_imitation(self):
+        self.agent.train_imitation()

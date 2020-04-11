@@ -123,7 +123,7 @@ class Node:
         #print(self.state, self.epsilon, self.visit_count)
 
 
-        print(self.state, self.epsilon)
+        #print(self.state, self.epsilon)
 
     def get_n_visits(self):
         return self.visit_count

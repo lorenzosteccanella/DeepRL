@@ -56,7 +56,8 @@ class variables():
         tf.reset_default_graph()
 
         self.shared_conv_layers = SharedConvLayers(1)
-        self.goal_net = SharedGoalModel(32, 1)
+        self.goal_net_start = SharedGoalModel(128, 1)
+        self.goal_net_goal = SharedGoalModel(128, 1)
         self.critic = CriticNetwork(128)
         self.actor = ActorNetwork(128, len(self.ACTION_SPACE))
 
@@ -64,12 +65,13 @@ class variables():
 
         self.option_params = {
             "option": GoalA2CSILOption,
-            "h_size": 32,
+            "h_size": 128,
             "action_space": self.ACTION_SPACE,
             "critic_network": self.critic,
             "actor_network": self.actor,
             "shared_representation": self.shared_conv_layers,
-            "shared_goal_representation": self.goal_net,
+            "shared_goal_representation_start": self.goal_net_start,
+            "shared_goal_representation_goal": self.goal_net_goal,
             "weight_mse": 0.5,
             "sil_weight_mse": 0.05,  # 0.01,
             "weight_ce_exploration": 0.01,

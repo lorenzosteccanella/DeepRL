@@ -13,7 +13,8 @@ class GoalA2COption(AbstractOption):
         self.a2cDNN = GoalA2CEagerSync(parameters["h_size"], len(parameters["action_space"]), parameters["critic_network"],
                                    parameters["actor_network"], parameters["learning_rate"], parameters["weight_mse"],
                                    parameters["weight_ce_exploration"], parameters["shared_representation"],
-                                   parameters["learning_rate_reduction_obs"], parameters["shared_goal_representation"])
+                                   parameters["learning_rate_reduction_obs"], parameters["shared_goal_representation_start"],
+                                   parameters["shared_goal_representation_goal"])
 
         self.agent = GoalA2CAgent(parameters["action_space"], self.a2cDNN, parameters["gamma"], parameters["batch_size"])
 

@@ -57,7 +57,7 @@ class variables():
         # Just to be sure that we don't have some others graph loaded
         tf.reset_default_graph()
 
-        self.shared_conv_layers = SharedConvLayers(1)
+        self.shared_conv_layers = SharedConvLayers(0.05)
         #self.critic = CriticNetwork(30)
         #self.actor = ActorNetwork(30, len(self.ACTION_SPACE))
 

@@ -93,18 +93,19 @@ class ActorNetwork(keras.Model):
 
 class SiameseActorCriticNetwork(keras.Model):
 
-    def __init__(self, critic_model, actor_model, shared_observation_model=None, shared_goal_model=None):
+    def __init__(self, critic_model, actor_model, shared_observation_model=None, shared_goal_model_start=None, shared_goal_model_goal=None):
         super(SiameseActorCriticNetwork, self).__init__(name="SiameseActorCriticNetwork")
         self.shared_observation_model = shared_observation_model
-        self.shared_goal_model = shared_goal_model
+        self.shared_goal_model_start = shared_goal_model_start
+        self.shared_goal_model_goal = shared_goal_model_goal
         self.critic_model = critic_model
         self.actor_model = actor_model
 
     def call(self, x1, x2, x3):
 
         obs1 = self.shared_observation_model(x1)[0] # Just the dense output
-        obs2 = self.shared_goal_model(x2)[0] # Just the dense output
-        obs3 = self.shared_goal_model(x3)[0]
+        obs2 = self.shared_goal_model_start(x2)[0] # Just the dense output
+        obs3 = self.shared_goal_model_goal(x3)[0]
 
         obs = keras.layers.concatenate([obs1, obs2, obs3], axis=-1)
 
@@ -117,18 +118,24 @@ class SiameseActorCriticNetwork(keras.Model):
 
 class GoalA2CEagerSync:
 
-    def __init__(self, h_size, n_actions, model_critic, model_actor, learning_rate, weight_mse, weight_ce,
-                 shared_observation_model=None, learning_rate_observation_adjust=1, shared_goal_model=None, train_observation=False):
+    def __init__(self, h_size, n_actions, model_critic, model_actor, learning_rate_online, weight_mse, weight_sil_mse,
+                 weight_ce, shared_observation_model=None, learning_rate_observation_adjust=1, shared_goal_model_start=None,
+                 shared_goal_model_goal=None, train_observation=False):
 
         if inspect.isclass(shared_observation_model):
             self.shared_observation_model = shared_observation_model(learning_rate_observation_adjust)
         else:
             self.shared_observation_model = shared_observation_model
 
-        if inspect.isclass(shared_goal_model):
-            self.shared_goal_model = shared_goal_model(learning_rate_observation_adjust)
+        if inspect.isclass(shared_goal_model_start):
+            self.shared_goal_model_start = shared_goal_model_start(learning_rate_observation_adjust)
         else:
-            self.shared_goal_model = shared_goal_model
+            self.shared_goal_model_start = shared_goal_model_start
+
+        if inspect.isclass(shared_goal_model_goal):
+            self.shared_goal_model_goal = shared_goal_model_goal(learning_rate_observation_adjust)
+        else:
+            self.shared_goal_model_goal = shared_goal_model_goal
 
         if inspect.isclass(model_critic):
             self.model_critic = model_critic(h_size)
@@ -140,7 +147,9 @@ class GoalA2CEagerSync:
         else:
             self.model_actor = model_actor
 
-        self.model_actor_critic = SiameseActorCriticNetwork(self.model_critic, self.model_actor, self.shared_observation_model, self.shared_goal_model)
+        self.model_actor_critic = SiameseActorCriticNetwork(self.model_critic, self.model_actor,
+                                                            self.shared_observation_model, self.shared_goal_model_start,
+                                                            self.shared_goal_model_goal)
 
         self.train_observation = train_observation
         self.weight_mse = weight_mse

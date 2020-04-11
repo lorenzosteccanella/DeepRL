@@ -128,6 +128,20 @@ class A2CSILAgent(AbstractAgent):
 
             self.trajectory.clear()
 
+    def train_imitation(self):
+        if self.buffer_imitation.buffer_len() >= self.sil_batch_size:
+            for i in range(self.imitation_learning_steps):
+                batch_imitation, imp_w = self.buffer_imitation.sample(self.sil_batch_size)
+                x, adv_actor, a_one_hot, y_critic = self._get_imitation_error(batch_imitation)
+
+                self.main_model_nn.train_imitation(x, y_critic, a_one_hot, adv_actor, imp_w)
+
+                # update errors
+                for k in range(len(batch_imitation)):
+                    idx = batch_imitation[k][0]
+                    self.buffer_imitation.update(idx, adv_actor[k])
+
+
     def replay(self):
         if self.buffer_online.buffer_len() >= self.batch_size:
 
@@ -138,14 +152,5 @@ class A2CSILAgent(AbstractAgent):
 
             self.buffer_online.reset_buffer()
 
-            if self.buffer_imitation.buffer_len() >= self.sil_batch_size:
-                for i in range(self.imitation_learning_steps):
-                    batch_imitation, imp_w = self.buffer_imitation.sample(self.sil_batch_size)
-                    x, adv_actor, a_one_hot, y_critic = self._get_imitation_error(batch_imitation)
+            self.train_imitation()
 
-                    self.main_model_nn.train_imitation(x, y_critic, a_one_hot, adv_actor, imp_w)
-
-                    # update errors
-                    for k in range(len(batch_imitation)):
-                        idx = batch_imitation[k][0]
-                        self.buffer_imitation.update(idx, adv_actor[k])

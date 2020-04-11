@@ -15,7 +15,7 @@ class GoalA2CSILOption(AbstractOption):
                                           parameters["actor_network"], parameters["learning_rate"], parameters["weight_mse"],
                                           parameters["sil_weight_mse"], parameters["weight_ce_exploration"],
                                           parameters["shared_representation"], parameters["learning_rate_reduction_obs"],
-                                                parameters["shared_goal_representation"])
+                                          parameters["shared_goal_representation_start"], parameters["shared_goal_representation_goal"])
 
         self.agent = GoalA2CSILAgent(parameters["action_space"], self.a2cDNN_SIL, parameters["gamma"], parameters["batch_size"],
                                  parameters["sil_batch_size"], parameters["imitation_buffer_size"], parameters["imitation_learning_steps"] )
