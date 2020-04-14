@@ -14,6 +14,8 @@ class variables():
 
     def __init__(self):
 
+        self.multi_processing = False
+
         tf.enable_eager_execution()
 
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152

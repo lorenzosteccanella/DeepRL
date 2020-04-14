@@ -3,6 +3,7 @@ from Agents.GoalHrlAgent import GoalHrlAgent
 from Utils import Edge, Node, Graph
 from collections import deque
 import math
+import copy
 
 class GoalHrlAgent_heuristic_count_PR(GoalHrlAgent):
 
@@ -27,12 +28,12 @@ class GoalHrlAgent_heuristic_count_PR(GoalHrlAgent):
         s_m_ = Node(sample[3]["manager"], 0)
 
         if self.target is not None:
-            start = s_m.state
+            start = self.as_m2s_m[s_m.state][0]
         else:
             start = None
 
         if self.target is not None:
-            goal = self.target.state
+            goal = self.as_m2s_m[self.target.state][0]
         else:
             goal = None
 
@@ -49,7 +50,7 @@ class GoalHrlAgent_heuristic_count_PR(GoalHrlAgent):
                     done = True
 
         self.heuristic_reward.append(self.counter_as)
-        self.samples.append((s, a, r, s_, done, info, start, goal))
+        self.samples.append((s, a, r, s_, done, info, start, goal, s_m, s_m_))
         self.options_executed_episode.append(self.best_option_action)
 
         if self.counter_as >= max_d:
@@ -66,8 +67,13 @@ class GoalHrlAgent_heuristic_count_PR(GoalHrlAgent):
                     info = p_sample[5]
                     start = p_sample[6]
                     goal = p_sample[7]
+                    s_m = p_sample[8]
+                    s_m_ = p_sample[9]
 
                     option.observe((s, a, r, s_, done, info, start, goal))
+                    if done:
+                        if r > self.as_m2s_m[s_m_.state][1]:
+                            self.as_m2s_m[s_m_.state] = (copy.deepcopy(s_), r)
 
                     del self.samples[i]
                     del self.options_executed_episode[i]
@@ -86,8 +92,13 @@ class GoalHrlAgent_heuristic_count_PR(GoalHrlAgent):
                 info = p_sample[5]
                 start = p_sample[6]
                 goal = p_sample[7]
+                s_m = p_sample[8]
+                s_m_ = p_sample[9]
 
                 option.observe((s, a, r, s_, done, info, start, goal))
+                if done:
+                    if r > self.as_m2s_m[s_m_.state][1]:
+                        self.as_m2s_m[s_m_.state] = (copy.deepcopy(s_), r)
 
             self.samples.clear()
             self.options_executed_episode.clear()

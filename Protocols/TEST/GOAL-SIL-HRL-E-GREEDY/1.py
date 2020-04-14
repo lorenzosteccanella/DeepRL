@@ -58,10 +58,10 @@ class variables():
         tf.reset_default_graph()
 
         self.shared_conv_layers = SharedConvLayers(1)
-        self.goal_net_start = SharedGoalModel(128, 1)
-        self.goal_net_goal = SharedGoalModel(128, 1)
-        self.critic = CriticNetwork(128)
-        self.actor = ActorNetwork(128, len(self.ACTION_SPACE))
+        self.goal_net_start = False #SharedGoalModel(32, 1)
+        self.goal_net_goal = self.shared_conv_layers #SharedGoalModel(32, 1)
+        self.critic = CriticNetwork(32)
+        self.actor = ActorNetwork(32, len(self.ACTION_SPACE))
 
         preprocessing = None #Preprocessing(84, 84, 3, self.number_of_stacked_frames, False)
 
@@ -89,7 +89,7 @@ class variables():
 
         self.random_agent = RandomAgentOption(self.ACTION_SPACE)
         self.LAMBDA = 0.05
-        self.MIN_EPSILON = 0.05
+        self.MIN_EPSILON = 0
         self.PSEUDO_COUNT = 1000
         self.exploration_fn = get_epsilon_count_exploration
 

@@ -5,6 +5,7 @@ import time
 import math
 import numpy as np
 import dill
+import matplotlib.pyplot as plt
 
 class HrlAgent(AbstractAgent):
 
@@ -21,7 +22,7 @@ class HrlAgent(AbstractAgent):
         self.save_result = SaveResult
 
         if graph is False:
-            self.graph = Graph(self.save_result)
+            self.graph = Graph(save_results = self.save_result)
         else:
             self.graph = graph
 
@@ -75,6 +76,8 @@ class HrlAgent(AbstractAgent):
         self.pseudo_count_exploration(pseudo_count_exploration)
         self.epsilon_count_exploration(self.LAMBDA, self.MIN_EPSILON)
         self.reward_manager = 0.
+
+        self.as_m2s_m = {}
 
 
     def act(self, s):
@@ -172,12 +175,23 @@ class HrlAgent(AbstractAgent):
                 self.save_result.save_pickle_data(self.FILE_NAME + "edge_entropy_stats.pkl", self.entropy_edges)
                 self.save_result.save_pickle_data(self.FILE_NAME + "edgeXedge_option_stats.pkl", self.count_couple_edges)
 
+            # if self.save_result is not False:
+            #
+            #     path = self.save_result.get_path()
+            #     filename = self.FILE_NAME + "full_model"
+            #
+            #     self.save(path+"/"+filename)
+
             if self.save_result is not False:
+                names = []
+                values = []
+                for k, v in self.count_edges.items():
+                    names.append(str(k))
+                    values.append(float((v[1] / v[0]) * 100))
 
-                path = self.save_result.get_path()
-                filename = self.FILE_NAME + "full_model.pkl"
-
-                self.save(path+"/"+filename)
+                plt.bar(range(len(names)), values)
+                plt.savefig(self.save_result.get_path() + "/edgeXedge_transition_prob", format="PNG")
+                plt.close()
 
 
     def update_imitation(self, sample):
@@ -290,13 +304,11 @@ class HrlAgent(AbstractAgent):
     def statistics_options(self, sample):
 
         edge = self.best_edge
-
         s_m = Node(sample[0]["manager"], 0)
         s_m_ = Node(sample[3]["manager"], 0)
 
         if s_m != s_m_:
             if edge is not None:
-
                 if str(edge) not in self.count_edges:
                     self.count_edges[str(edge)] = [0, 0]
 

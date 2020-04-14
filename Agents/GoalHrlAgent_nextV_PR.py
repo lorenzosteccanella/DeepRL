@@ -3,6 +3,7 @@ from Agents.GoalHrlAgent import GoalHrlAgent
 from Utils import Edge, Node, Graph
 from collections import deque
 import math
+import copy
 
 class GoalHrlAgent_nextV_PR(GoalHrlAgent):
 
@@ -23,12 +24,12 @@ class GoalHrlAgent_nextV_PR(GoalHrlAgent):
         s_m_ = Node(sample[3]["manager"], 0)
 
         if self.target is not None:
-            start = s_m.state
+            start = self.as_m2s_m[s_m.state][0]
         else:
             start = None
 
         if self.target is not None:
-            goal = self.target.state
+            goal = self.as_m2s_m[self.target.state][0]
         else:
             goal = None
 
@@ -73,6 +74,10 @@ class GoalHrlAgent_nextV_PR(GoalHrlAgent):
                     r += (self.correct_option_end_reward + (0.1 * max_value_normalized))
 
                     done = True
+
+                    if r > self.as_m2s_m[s_m_.state][1]:
+
+                        self.as_m2s_m[s_m_.state] = (copy.deepcopy(s_), r)
 
                 else:
 

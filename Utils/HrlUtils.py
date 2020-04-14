@@ -79,14 +79,17 @@ class Edge:
                 return False
 
     def __repr__(self):
-        return "Edge ["+str(self.origin) + ", " + str(self.destination) + ", " + str(self.value)+"]"
+        return "Edge ["+repr(self.origin) + ", " + repr(self.destination) + "]"
 
     def __str__(self):
-        return "["+str(self.origin.state) + ", " + str(self.destination.state) + "]"
+        if type(self.origin.state).__name__ == "ndarray":
+            return "[" + str(hash(self.origin.state.tostring())) + ", " + str(hash(self.destination.state.tostring())) + "]"
+        else:
+            return "["+str(self.origin.state) + ", " + str(self.destination.state) + "]"
 
     def __hash__(self):
-        if type(self.origin).__name__ == "ndarray":
-            return hash((self.origin.tostring(), self.destination.tostring()))
+        if type(self.origin.state).__name__ == "ndarray":
+            return hash((self.origin.state.tostring(), self.destination.state.tostring()))
         else:
             return hash((self.origin, self.destination))
 
@@ -138,10 +141,16 @@ class Node:
             return self.state == other.state
 
     def __repr__(self):
-        return "Node ["+str(self.state)+"]"
+        if type(self.state).__name__ == "ndarray":
+            return "Node ["+str(hash(self.state.tostring()))+"]"
+        else:
+            return "Node ["+str(self.state)+"]"
 
     def __str__(self):
-        return "["+str(self.state) + ", " + str(self.value)+", " + str(self.visit_count) + "]"
+        if type(self.state).__name__ == "ndarray":
+            return "[" + str(hash(self.state.tostring())) + ", " + str(self.value) + ", " + str(self.visit_count) + "]"
+        else:
+            return "["+str(self.state) + ", " + str(self.value)+", " + str(self.visit_count) + "]"
 
     def __hash__(self):
         if type(self.state).__name__ == "ndarray":
@@ -157,61 +166,62 @@ class Node:
 
 class Graph:
 
-    def __init__(self, save_results = False):
-        self.edge_list = []
-        self.node_list = []
+    def __init__(self, edge_list = list(), node_list = list(), Q = {}, E = {}, distances = {}, node_edges_dictionary = {}, destination_node_edges_dictionary = {}, save_results = False):
+        self.edge_list = edge_list
+        self.node_list = node_list
         self.current_node = None
         self.current_edge = None
         self.new_node_encontered = False
         self.new_edge_encontered = False
         self.index_4_bestpathprint = 0
-        self.Q = {}
-        self.E = {}
-        self.distances = {}
+        self.Q = Q
+        self.E = E
+        self.distances = distances
         self.total_reward_node = 0
         self.total_reward_edge = 0
-        self.node_edges_dictionary = {} # this is the graph representation with nodes as key and eges list as values, this structure is just used to speed up computation
-        self.destination_node_edges_dictionary = {}
+        self.node_edges_dictionary = node_edges_dictionary # this is the graph representation with nodes as key and eges list as values, this structure is just used to speed up computation
+        self.destination_node_edges_dictionary = destination_node_edges_dictionary
         self.path = []
         self.i = 0
         self.batch = []
         self.save_results = save_results
 
     def print_networkx_graph(self, root, route, distances):
-        self.i += 1
-        if self.i % 100 == 0:
-            self.i = 0
-            from time import sleep
-            import networkx as nx
+        if self.save_results:
+            self.i += 1
+            if self.i % 1000 == 0:
+                self.i = 0
+                from time import sleep
+                import networkx as nx
 
-            def V(node):
-                maxQ = - float("inf")
-                for edge in distances[node]:
-                    if maxQ < (distances[node][edge]):
-                        maxQ = (distances[node][edge])
-                return maxQ
+                def V(node):
+                    maxQ = - float("inf")
+                    for edge in distances[node]:
+                        if maxQ < (distances[node][edge]):
+                            maxQ = (distances[node][edge])
+                    return maxQ
 
-            G = nx.MultiDiGraph()
-            edge_lab={}
+                G = nx.MultiDiGraph()
+                edge_lab={}
 
-            for node in self.node_list:
-                G.add_node((node))
+                for node in self.node_list:
+                    G.add_node((node))
 
-            for edge in self.edge_list:
-                G.add_edge(edge.origin, edge.destination, weight= edge.value)
-                edge_lab.update({(edge.origin, edge.destination): str(self.Q[edge.origin][edge])})
-            pos = nx.drawing.nx_agraph.graphviz_layout(G)
-            nx.draw(G, pos, edge_color='black', width=1, linewidths=1, connectionstyle='arc3, rad = 0.1', \
-                    node_size=500, node_color='pink', alpha=0.9, font_size=10, \
-                    labels={node: (str(node.state) + "\n" + str(round(V(node), 5))) for node in G.nodes()})
+                for edge in self.edge_list:
+                    G.add_edge(edge.origin, edge.destination, weight= edge.value)
+                    edge_lab.update({(edge.origin, edge.destination): str(self.Q[edge.origin][edge])})
+                pos = nx.drawing.nx_agraph.graphviz_layout(G)
+                nx.draw(G, pos, edge_color='black', width=1, linewidths=1, connectionstyle='arc3, rad = 0.1', \
+                        node_size=500, node_color='pink', alpha=0.9, font_size=10, \
+                        labels={node: (repr(node) + "\n" + str(round(V(node), 5))) for node in G.nodes()})
 
-            nx.draw_networkx_nodes(G, pos, nodelist=[(root)], node_color='y', alpha=1)
-            nx.draw_networkx_edge_labels(G, pos, connectionstyle='arc3, rad = 0.1', edge_labels = edge_lab, font_color='red', label_pos=0.3)
-            nx.draw_networkx_edges(G, pos, connectionstyle='arc3, rad = 0.1', edgelist=route, edge_color='g', width=5)
+                nx.draw_networkx_nodes(G, pos, nodelist=[(root)], node_color='y', alpha=1)
+                nx.draw_networkx_edge_labels(G, pos, connectionstyle='arc3, rad = 0.1', edge_labels = edge_lab, font_color='red', label_pos=0.3)
+                nx.draw_networkx_edges(G, pos, connectionstyle='arc3, rad = 0.1', edgelist=route, edge_color='g', width=5)
 
-            plt.draw()
-            plt.savefig(self.save_results.get_path() + "/Graph.png", format="PNG")
-            plt.clf()
+                plt.draw()
+                plt.savefig(self.save_results.get_path() + "/Graph.png", format="PNG")
+                plt.clf()
 
     def edge_update(self, old_node, new_node, reward, target):
 

@@ -55,9 +55,9 @@ class variables():
         # Just to be sure that we don't have some others graph loaded
         tf.reset_default_graph()
 
-        self.shared_conv_layers = SharedConvLayers(1)
-        self.goal_net_start = SharedGoalModel(32, 1)
-        self.goal_net_goal = SharedGoalModel(32, 1)
+        self.shared_conv_layers = SharedConvLayers(0.05)
+        self.goal_net_start = SharedGoalModel(32, 0.05)
+        self.goal_net_goal = SharedGoalModel(32, 0.05)
         self.critic = CriticNetwork(32)
         self.actor = ActorNetwork(32, len(self.ACTION_SPACE))
 

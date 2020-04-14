@@ -86,4 +86,4 @@ class Montezuma_Pixel_position_wrapper(gym.Wrapper):
 
         #print(x, y, s)
 
-        return (s, self.total_reward, reward, done)
+        return (s, self.total_reward, reward)
