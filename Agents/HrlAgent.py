@@ -13,7 +13,7 @@ class HrlAgent(AbstractAgent):
 
     epsilon = 1
 
-    def __init__(self, option_params, exploration_option, exploration_fn, pseudo_count_exploration = 1000, LAMBDA=1000, MIN_EPSILON=0, correct_option_end_reward=1.1, wrong_option_end_reward=-1.1, SaveResult = False, graph=False, options_list=False, single_option=False):
+    def __init__(self, option_params, exploration_option, exploration_fn, pseudo_count_exploration = 1000, LAMBDA=1000, MIN_EPSILON=0, correct_option_end_reward=1.1, wrong_option_end_reward=-1.1, SaveResult = False, graph=False, options_list=False, single_option=False, as_m2s_m=False):
 
         self.option_params = option_params
 
@@ -76,8 +76,10 @@ class HrlAgent(AbstractAgent):
         self.pseudo_count_exploration(pseudo_count_exploration)
         self.epsilon_count_exploration(self.LAMBDA, self.MIN_EPSILON)
         self.reward_manager = 0.
-
-        self.as_m2s_m = {}
+        if as_m2s_m is False:
+            self.as_m2s_m = {}
+        else:
+            self.as_m2s_m = as_m2s_m
 
 
     def act(self, s):

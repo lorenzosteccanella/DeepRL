@@ -61,8 +61,8 @@ class variables():
         tf.reset_default_graph()
 
         self.shared_conv_layers = SharedConvLayers(1)
-        self.goal_net_start = SharedGoalModel(32, 1)
-        self.goal_net_goal = SharedGoalModel(32, 1)
+        self.goal_net_start = False #SharedGoalModel(32, 1)
+        self.goal_net_goal = self.shared_conv_layers #SharedGoalModel(32, 1)
         self.critic = CriticNetwork(32)
         self.actor = ActorNetwork(32, len(self.ACTION_SPACE))
 
@@ -106,6 +106,7 @@ class variables():
                 graphs.append(Graph(*graphs_param, False))
 
         self.option_list = list()
+        self.as_m2s_m = {}
 
         self.agent = []
         for i in range(self.num_workers):
@@ -113,14 +114,14 @@ class variables():
                 self.agent.append(GoalHrlAgent_heuristic_count_PR(self.option_params, self.random_agent, self.exploration_fn,
                                                               self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1,
                                                               -1.1, self.SAVE_RESULT, graphs[i], self.option_list,
-                                                              self.single_option))
+                                                              self.single_option, self.as_m2s_m))
                 #self.agent.load("/home/lorenzo/Documenti/UPF/DeepRL/results/TEST  -  TEST_HRL_E_GREEDY_1/Tue_Mar_17_15:34:02_2020/seed_0/full_model.pkl")
 
             else:
                 self.agent.append(GoalHrlAgent_heuristic_count_PR(self.option_params, self.random_agent, self.exploration_fn,
                                                               self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1,
                                                               -1.1, False, graphs[i], self.option_list,
-                                                              self.single_option))
+                                                              self.single_option, self.as_m2s_m))
 
 
 

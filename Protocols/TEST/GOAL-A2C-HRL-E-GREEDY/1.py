@@ -57,11 +57,11 @@ class variables():
         # Just to be sure that we don't have some others graph loaded
         tf.reset_default_graph()
 
-        self.shared_conv_layers = SharedConvLayers(0.05)
+        self.shared_conv_layers = SharedConvLayers(1)
         self.goal_net_start = False #SharedGoalModel(32, 1)
         self.goal_net_goal = self.shared_conv_layers #SharedGoalModel(32, 1)
-        self.critic = CriticNetwork(32)
-        self.actor = ActorNetwork(32, len(self.ACTION_SPACE))
+        self.critic = CriticNetwork(128)
+        self.actor = ActorNetwork(128, len(self.ACTION_SPACE))
 
         preprocessing = None #Preprocessing(84, 84, 3, self.number_of_stacked_frames, False)
 

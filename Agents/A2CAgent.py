@@ -4,7 +4,7 @@ from Utils import ExperienceReplay
 
 class A2CAgent(AbstractAgent):
 
-    def __init__(self, action_space, main_model_nn, gamma, batch_size):
+    def __init__(self, action_space, main_model_nn, gamma, batch_size, number_of_step_training=4):
 
         self.batch_size = batch_size
         self.buffer = ExperienceReplay(self.batch_size)
@@ -12,6 +12,7 @@ class A2CAgent(AbstractAgent):
         self.main_model_nn = main_model_nn
         self.gamma = gamma
         self.ce_loss = None
+        self.number_of_step_training = number_of_step_training
 
     def _get_actor_critic_error(self, batch):
 
@@ -74,11 +75,13 @@ class A2CAgent(AbstractAgent):
 
         if self.buffer.buffer_len() >= self.batch_size:
 
-            batch, imp_w = self.buffer.sample(self.batch_size, False)
+            for i in self.number_of_step_training:
 
-            x, adv_actor, a_one_hot, y_critic = self._get_actor_critic_error(batch)
+                batch, imp_w = self.buffer.sample(self.batch_size, False)
 
-            _, __, self.ce_loss = self.main_model_nn.train(x, y_critic, a_one_hot, adv_actor)
+                x, adv_actor, a_one_hot, y_critic = self._get_actor_critic_error(batch)
+
+                _, __, self.ce_loss = self.main_model_nn.train(x, y_critic, a_one_hot, adv_actor)
 
             self.buffer.reset_buffer()
 

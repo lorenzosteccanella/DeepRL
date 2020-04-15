@@ -8,6 +8,7 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
 
     options_executed_episode = []
     heuristic_reward = []
+    as_visited = []
     counter_as = 0
     samples = []
 
@@ -29,7 +30,9 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
         if s_m != s_m_:
             if self.target is not None:
                 if s_m_ == self.target:
-                    self.counter_as += 1  # are we sure we should count here?
+                    self.as_visited.append(s_m_)
+                    self.counter_as = len(set(self.as_visited)) # are we sure we should count here?
+                    #self.counter_as += 1
                     r += self.correct_option_end_reward
                     done = True
 
@@ -81,6 +84,7 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
 
             self.samples.clear()
             self.options_executed_episode.clear()
+            self.as_visited.clear()
             self.counter_as = 0
             self.heuristic_reward.clear()
 

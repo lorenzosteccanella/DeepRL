@@ -74,9 +74,9 @@ class SharedDenseLayers(keras.Model):
 class CriticNetwork(keras.Model):
     def __init__(self, h_size):
         super(CriticNetwork, self).__init__(name="CriticNetwork")
-        self.dense1 = keras.layers.Dense(h_size, activation='elu', kernel_initializer='he_normal')#, kernel_regularizer=tf.keras.regularizers.l1(0.01))
-        self.dense2 = keras.layers.Dense(h_size, activation='elu', kernel_initializer='he_normal')#, kernel_regularizer=tf.keras.regularizers.l1(0.01))
-        self.out = keras.layers.Dense(1, activation='linear')#, kernel_regularizer=tf.keras.regularizers.l1(0.01))
+        self.dense1 = keras.layers.Dense(h_size, activation='elu', kernel_initializer='he_normal')#, kernel_regularizer=tf.keras.regularizers.l2(0.01))
+        self.dense2 = keras.layers.Dense(h_size, activation='elu', kernel_initializer='he_normal')#, kernel_regularizer=tf.keras.regularizers.l2(0.01))
+        self.out = keras.layers.Dense(1, activation='linear')#, kernel_regularizer=tf.keras.regularizers.l2(0.01))
 
     def call(self, x):
 
@@ -89,15 +89,16 @@ class CriticNetwork(keras.Model):
 class ActorNetwork(keras.Model):
     def __init__(self, h_size, n_actions):
         super(ActorNetwork, self).__init__(name="ActorNetwork")
-        self.dense1 = keras.layers.Dense(h_size, activation='elu', kernel_initializer='he_normal')#, kernel_regularizer=tf.keras.regularizers.l1(0.01))
-        self.dense2 = keras.layers.Dense(h_size, activation='elu', kernel_initializer='he_normal')#, kernel_regularizer=tf.keras.regularizers.l1(0.01))
-        self.out = keras.layers.Dense(n_actions, activation=keras.activations.softmax)#, kernel_regularizer=tf.keras.regularizers.l1(0.01))
+        self.dense1 = keras.layers.Dense(h_size, activation='elu', kernel_initializer='he_normal', kernel_regularizer=tf.keras.regularizers.l1(0.01))
+        self.dense2 = keras.layers.Dense(h_size, activation='elu', kernel_initializer='he_normal', kernel_regularizer=tf.keras.regularizers.l1(0.01))
+        self.out = keras.layers.Dense(n_actions, activation=keras.activations.softmax)#, kernel_regularizer=tf.keras.regularizers.l2(0.01))
 
     def call(self, x):
         x = self.dense1(x)
         x = self.dense2(x)
         x = self.out(x)
         return x
+
 
 class SiameseActorCriticNetwork(keras.Model):
 
@@ -110,6 +111,9 @@ class SiameseActorCriticNetwork(keras.Model):
         self.actor_model = actor_model
         self.L1_layer = keras.layers.Lambda(lambda tensors: keras.backend.abs(tensors[0] - tensors[1]))
         self.L2_layer = keras.layers.Lambda(lambda tensors: keras.backend.pow(tensors[0] - tensors[1], 2))
+        self.dense1 = keras.layers.Dense(256, activation='tanh')#, kernel_initializer='he_normal')
+        self.dense2 = keras.layers.Dense(256, activation='tanh')#, kernel_initializer='he_normal')
+        self.Attention = tf.keras.layers.Multiply()#keras.layers.Dot(axes=1, normalize=False)
 
     def call(self, x1, x2, x3):
 
@@ -121,14 +125,20 @@ class SiameseActorCriticNetwork(keras.Model):
         if self.shared_goal_model_start is not False:
             obs = keras.layers.concatenate([obs1, obs2, obs3], axis=-1)
         else:
-            #obs = keras.layers.concatenate([obs1, obs3], axis=-1)
-            obs = self.L2_layer([obs1, obs3])
+            #obs = keras.layers.concatenate([obs1, obs3], axis=-1
+            obs1 = self.dense1(obs1)
+            obs3 = self.dense2(obs3)
+            obs = self.L1_layer([obs1, obs3])
+            #a_w = self.dense1(obs)
+            #obs = self.Attention([obs, a_w])
+
 
         actor = self.actor_model(obs)
 
         critic = self.critic_model(obs)
 
         return actor, critic
+
 
 class GoalA2CSILEagerSync:
 

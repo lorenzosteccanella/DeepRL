@@ -9,6 +9,7 @@ class GoalHrlAgent_heuristic_count_PR(GoalHrlAgent):
 
     options_executed_episode = []
     heuristic_reward = []
+    as_visited = []
     counter_as = 0
     samples = []
 
@@ -40,7 +41,9 @@ class GoalHrlAgent_heuristic_count_PR(GoalHrlAgent):
         if s_m != s_m_:
             if self.target is not None:
                 if s_m_ == self.target:
-                    self.counter_as += 1  # are we sure we should count here?
+                    self.as_visited.append(s_m_)
+                    self.counter_as = len(set(self.as_visited)) # are we sure we should count here?
+                    #self.counter_as += 1
                     r += self.correct_option_end_reward
                     done = True
 
@@ -71,8 +74,8 @@ class GoalHrlAgent_heuristic_count_PR(GoalHrlAgent):
                     s_m_ = p_sample[9]
 
                     option.observe((s, a, r, s_, done, info, start, goal))
-                    if done:
-                        if r > self.as_m2s_m[s_m_.state][1]:
+                    if s_m != s_m_:
+                        if r >= self.as_m2s_m[s_m_.state][1]:
                             self.as_m2s_m[s_m_.state] = (copy.deepcopy(s_), r)
 
                     del self.samples[i]
@@ -96,12 +99,13 @@ class GoalHrlAgent_heuristic_count_PR(GoalHrlAgent):
                 s_m_ = p_sample[9]
 
                 option.observe((s, a, r, s_, done, info, start, goal))
-                if done:
-                    if r > self.as_m2s_m[s_m_.state][1]:
+                if s_m != s_m_:
+                    if r >= self.as_m2s_m[s_m_.state][1]:
                         self.as_m2s_m[s_m_.state] = (copy.deepcopy(s_), r)
 
             self.samples.clear()
             self.options_executed_episode.clear()
+            self.as_visited.clear()
             self.counter_as = 0
             self.heuristic_reward.clear()
 
