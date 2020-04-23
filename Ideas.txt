@@ -1,6 +1,0 @@
-Another idea would be to go off policy.
-
-If u use an off policy agent like a DQN while performing an option and ending in a wrong abstract state u could learn
-to the actual option that u ended badly with a negative reward and to the corrisponding option that actually performs
-from (s_start, s_end) from the same experience with a positive reward. Similar to hindsight experience replay idea.
-

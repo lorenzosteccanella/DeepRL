@@ -169,11 +169,7 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
 
         self.graph.abstract_state_discovery(sample, self.target)
 
-        edges_from_current_node = self.graph.get_edges_of_a_node(self.current_node)
-
-        self.create_options(edges_from_current_node)
         self.update_option(sample)
-        #self.update_imitation(sample)
 
         self.update_manager(sample)
 

@@ -81,9 +81,6 @@ class HrlAgent(AbstractAgent):
         else:
             self.as_m2s_m = as_m2s_m
 
-
-
-        # Dictionary of weights
         self.w_o = {}
         self.old_edge = None
 
@@ -145,28 +142,11 @@ class HrlAgent(AbstractAgent):
 
         return self.best_option_action.act(s["option"])
 
-    def observation_encoding(self, s):
-
-        option = self.options[0]
-
-        return option.get_observation_encoding(s)
-
     def pseudo_count_exploration(self, pseudo_count_factor):
         Edge.set_pseudo_count(pseudo_count_factor)
 
     def epsilon_count_exploration(self, LAMBDA, min_epsilon=0):
         Node.set_lambda_node(LAMBDA, min_epsilon)
-
-    def create_options(self, edges_from_current_node):
-
-        if len(edges_from_current_node) > len(self.options):
-
-            if self.single_option is not False:
-                option = self.single_option
-            else:
-                option = self.option_params["option"]
-                option = option(self.option_params)
-            self.options.append(option)
 
     def get_option(self, edge):
         if edge not in self.w_o:
@@ -224,13 +204,6 @@ class HrlAgent(AbstractAgent):
                 self.save_result.save_pickle_data(self.FILE_NAME + "edge_entropy_stats.pkl", self.entropy_edges)
                 self.save_result.save_pickle_data(self.FILE_NAME + "edgeXedge_option_stats.pkl", self.count_couple_edges)
 
-            # if self.save_result is not False:
-            #
-            #     path = self.save_result.get_path()
-            #     filename = self.FILE_NAME + "full_model"
-            #
-            #     self.save(path+"/"+filename)
-
             if self.save_result is not False:
                 names = []
                 values = []
@@ -241,56 +214,6 @@ class HrlAgent(AbstractAgent):
                 plt.bar(range(len(names)), values)
                 plt.savefig(self.save_result.get_path() + "/edgeXedge_transition_prob", format="PNG")
                 plt.close()
-
-    def update_imitation(self, sample):
-        s = sample[0]["option"]
-        a = sample[1]
-        r = sample[2]
-        s_ = sample[3]["option"]
-        done = sample[4]
-        info = sample[5]
-
-        s_m = Node(sample[0]["manager"], 0)
-        s_m_ = Node(sample[3]["manager"], 0)
-
-        if s_m != s_m_:
-            # to stabilize the learning of all the options!!!!
-            for option in self.options:
-                if (self.has_method(option.agent, 'train_imitation')):
-                    option.train_imitation()
-
-
-        # # HER training stile
-        # if s_m != s_m_:
-        #     if self.target is not None:
-        #         if s_m_ != self.target:
-        #
-        #             r += self.correct_option_end_reward
-        #             done = True
-        #     else:
-        #         r += self.correct_option_end_reward
-        #         done = True
-        #
-        # self.samples_imitation.append((s, a, r, s_, done, info))
-        #
-        # if s_m != s_m_:
-        #     manager_edge = Edge(s_m, s_m_)
-        #     if self.target is not None:
-        #         if s_m_ != self.target:
-        #             edges_of_node = self.graph.get_edges_of_a_node(s_m)
-        #             option_imitation = self.options[edges_of_node.index(manager_edge)]
-        #             if (self.has_method(option_imitation.agent, 'add_multy_trajectory_memory')):
-        #                 for sample in self.samples_imitation:
-        #                     option_imitation.agent.add_multy_trajectory_memory(sample)
-        #
-        #     else:
-        #         edges_of_node = self.graph.get_edges_of_a_node(s_m)
-        #         option_imitation = self.options[edges_of_node.index(manager_edge)]
-        #         if (self.has_method(option_imitation.agent, 'add_multy_trajectory_memory')):
-        #             for sample in self.samples_imitation:
-        #                 option_imitation.agent.add_multy_trajectory_memory(sample)
-        #
-        #     self.samples_imitation.clear()
 
     def update_option(self, sample):
         s = sample[0]["option"]
@@ -325,7 +248,7 @@ class HrlAgent(AbstractAgent):
         s = Node(sample[0]["manager"], 0)
         r = self.reward_manager
         s_ = Node(sample[3]["manager"], 0)
-        a = Edge(s, s_) #self.best_edge WARNING WARNING WARNING WARNING
+        a = Edge(s, s_)
         done = sample[4]
         info = sample[5]
 
@@ -406,11 +329,7 @@ class HrlAgent(AbstractAgent):
 
         self.graph.abstract_state_discovery(sample, self.target)
 
-        edges_from_current_node = self.graph.get_edges_of_a_node(self.current_node)
-
-        #self.create_options(edges_from_current_node)
         self.update_option(sample)
-        #self.update_imitation(sample)
 
         self.update_manager(sample)
 
@@ -420,10 +339,6 @@ class HrlAgent(AbstractAgent):
         if not self.equal(sample[0]["manager"], sample[3]["manager"]):
             self.manager_exp += 1
             self.epsilon = self.MIN_EPSILON + (1 - self.MIN_EPSILON) * math.exp(-self.LAMBDA * self.manager_exp)
-
-        #if sample[4]:
-        #    self.path_2_print.clear()
-        #    self.distances_2_print.clear()
 
         if sample[4]:
             self.current_node = None
@@ -436,55 +351,12 @@ class HrlAgent(AbstractAgent):
     def replay(self):
         pass
 
-    def set_RESET_EXPLORATION_WHEN_NEW_NODE(self,value):
-        self.RESET_EXPLORATION_WHEN_NEW_NODE = value
-
-    def set_name_file_2_save(self, filename):
-        self.FILE_NAME = filename + " - "
-
     def reset_exploration(self):
         self.manager_exp = 0
-
-    def reset_pseudo_count_exploration(self):
-        for node in self.graph.node_list:
-            node.reset_n_visits()
 
     def equal(self, a, b):
         if type(a).__name__ == "ndarray":
             return np.array_equal(a, b)
         else:
             return a == b
-
-    def reset_statistics(self):
-
-        # variables to keep statistics of the execution
-        self.number_of_options_executed = 1
-        self.number_of_successfull_option = 0
-        self.list_percentual_of_successfull_options = []
-        self.old_number_of_options = 0
-        self.path_2_print = []
-        self.distances_2_print = []
-
-
-        self.best_option_action = None
-        self.current_node = None
-
-    def load(self, filename):
-        f = open(filename, 'rb')
-        tmp_dict = dill.load(f)
-        f.close()
-
-        tmp_dict["save_result"] = self.save_result
-        tmp_dict["graph"].save_results = self.save_result
-
-        #for key in tmp_dict["graph"].Q.keys():
-        #    for key2 in tmp_dict["graph"].Q[key].keys():
-        #        tmp_dict["graph"].Q[key][key2] = 0
-
-        self.__dict__.update(tmp_dict)
-
-    def save(self, filename):
-        f = open(filename, 'wb')
-        dill.dump(self.__dict__, f, 2)
-        f.close()
 
