@@ -17,6 +17,12 @@ class AbstractOption(abc.ABC):
     def observe(self, s):
         pass
 
+    def observe_online(self, s):
+        pass
+
+    def observe_imitation(self, s):
+        pass
+
     def getID(self):
         return self.id
 

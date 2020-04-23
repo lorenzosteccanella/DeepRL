@@ -69,6 +69,9 @@ class HrlAgent_nextV_PR(HrlAgent):
                     r += self.wrong_end_option_reward
                     done = True
 
+                    if r < -1 :
+                        r = -1
+
         self.best_option_action.observe((s, a, r, s_, done, info))
 
 

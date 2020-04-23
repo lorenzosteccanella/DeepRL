@@ -295,6 +295,33 @@ class SoftUpdateWeightsEager:
         self.model.model.set_weights(self.tau * weights_main_network +
                                      (1 - self.tau) * weights_target_network)
 
+    def exact_copy(self):
+        weights_main_network = np.array(self.weights.model.get_weights())
+
+        self.model.model.set_weights(weights_main_network)
+
+class SoftUpdateWeightsPPO:
+
+    #θ_target = τ * θ_local + (1 - τ) * θ_target
+
+    def __init__(self, weights, model, tau=1e-3):
+        self.operation = []
+        self.model = model
+        self.weights = weights
+        self.tau = tau
+
+    def update(self):
+        weights_main_network = np.array(self.weights.get_weights())
+        weights_target_network = np.array(self.model.get_weights())
+
+        self.model.set_weights(self.tau * weights_main_network +
+                                     (1 - self.tau) * weights_target_network)
+
+    def exact_copy(self):
+        weights_main_network = np.array(self.weights.get_weights())
+
+        self.model.set_weights(weights_main_network)
+
 
 class UpdateWeightsEager:
 

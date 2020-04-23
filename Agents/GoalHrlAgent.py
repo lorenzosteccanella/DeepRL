@@ -7,24 +7,6 @@ import copy
 
 class GoalHrlAgent(HrlAgent):
 
-    def pixel_manager_obs(self, s = None, sample = None):
-        if s is not None:
-
-            s = copy.deepcopy(s)
-
-            if s["manager"] not in self.as_m2s_m:
-                self.as_m2s_m[s["manager"]] = (copy.deepcopy(s["option"]), 0.)
-
-        if sample is not None:
-
-            sample = copy.deepcopy(sample)
-
-            if sample[0]["manager"] not in self.as_m2s_m:
-                self.as_m2s_m[sample[0]["manager"]] = (copy.deepcopy(sample[0]["option"]), 0.)
-
-            if sample[3]["manager"] not in self.as_m2s_m:
-                self.as_m2s_m[sample[3]["manager"]] = (copy.deepcopy(sample[3]["option"]), 0.)
-
     def act(self, s):
 
         self.pixel_manager_obs(s=s)

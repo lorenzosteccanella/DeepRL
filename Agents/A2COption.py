@@ -28,6 +28,8 @@ class A2COption(AbstractOption):
         if self.preprocessing:
             s = self.preprocessing.preprocess_image(s)
 
+        #print(s, self.id)
+
         return self.agent.act(s)
 
     def observe(self, sample):  # in (s, a, r, s_, done, info) format

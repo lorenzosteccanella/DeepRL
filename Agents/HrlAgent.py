@@ -1,11 +1,12 @@
 import random
 from Agents.AbstractAgent import AbstractAgent
-from Utils import Edge, Node, Graph
+from Utils import Edge, Node, Graph, KeyDict
 import time
 import math
 import numpy as np
 import dill
 import matplotlib.pyplot as plt
+import copy
 
 class HrlAgent(AbstractAgent):
 
@@ -29,7 +30,6 @@ class HrlAgent(AbstractAgent):
         #exploration variables
         self.MIN_EPSILON = MIN_EPSILON
         self.LAMBDA = LAMBDA
-        self.RESET_EXPLORATION_WHEN_NEW_NODE = True
 
 
         # variables to keep statistics of the execution
@@ -82,6 +82,37 @@ class HrlAgent(AbstractAgent):
             self.as_m2s_m = as_m2s_m
 
 
+
+        # Dictionary of weights
+        self.w_o = {}
+        self.old_edge = None
+
+    def pixel_manager_obs(self, s = None, sample = None):
+        if s is not None:
+            s = copy.deepcopy(s)
+            node = Node(s["manager"], 0)
+            key = KeyDict(s["option"])
+
+            if node not in self.as_m2s_m:
+                self.as_m2s_m[node] = {}
+                self.as_m2s_m[node][key] = [copy.deepcopy(s["option"]), 0.]
+
+        if sample is not None:
+
+            sample = copy.deepcopy(sample)
+            node1 = Node(sample[0]["manager"], 0)
+            node2 = Node(sample[3]["manager"], 0)
+            key1 = KeyDict(sample[0]["option"])
+            key2 = KeyDict(sample[3]["option"])
+
+            if node1 not in self.as_m2s_m:
+                self.as_m2s_m[node1] = {}
+                self.as_m2s_m[node1][key1] = [copy.deepcopy(sample[0]["option"]), 0.]
+
+            if node2 not in self.as_m2s_m:
+                self.as_m2s_m[node2] = {}
+                self.as_m2s_m[node2][key2] = [copy.deepcopy(sample[3]["option"]), 0.]
+
     def act(self, s):
         node = Node(s["manager"], 0)
         self.graph.node_update(node)
@@ -93,11 +124,21 @@ class HrlAgent(AbstractAgent):
             self.distances_2_print.append(distances)
             self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
 
+            # print(self.current_node, node)
+            # print(self.best_option_action, self.best_edge)
+            # print()
+            # print()
+
         elif self.current_node != node:
-           self.current_node = self.graph.get_current_node()
-           distances = self.graph.find_distances(self.current_node)
-           self.distances_2_print.append(distances)
-           self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
+            self.current_node = self.graph.get_current_node()
+            distances = self.graph.find_distances(self.current_node)
+            self.distances_2_print.append(distances)
+            self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
+
+            # print(self.current_node, node)
+            # print(self.best_option_action, self.best_edge)
+            # print()
+            # print()
 
         #for option in self.options:
         #    print(option, len(option.get_edge_list()))#, option.get_edge_list())
@@ -126,6 +167,12 @@ class HrlAgent(AbstractAgent):
                 option = self.option_params["option"]
                 option = option(self.option_params)
             self.options.append(option)
+
+    def get_option(self, edge):
+        if edge not in self.w_o:
+            self.w_o[edge] = self.option_params["option"](self.option_params)
+
+        return self.w_o[edge]
 
     def save_statistics(self):
 
@@ -195,7 +242,6 @@ class HrlAgent(AbstractAgent):
                 plt.savefig(self.save_result.get_path() + "/edgeXedge_transition_prob", format="PNG")
                 plt.close()
 
-
     def update_imitation(self, sample):
         s = sample[0]["option"]
         a = sample[1]
@@ -246,8 +292,6 @@ class HrlAgent(AbstractAgent):
         #
         #     self.samples_imitation.clear()
 
-
-
     def update_option(self, sample):
         s = sample[0]["option"]
         a = sample[1]
@@ -267,8 +311,9 @@ class HrlAgent(AbstractAgent):
                     done = True
 
                 else:
-
                     r += self.wrong_end_option_reward
+                    if r < -1:
+                        r = -1
                     done = True
 
         self.best_option_action.observe((s, a, r, s_, done, info))
@@ -350,7 +395,6 @@ class HrlAgent(AbstractAgent):
 
         self.save_statistics()
 
-
     def observe(self, sample):  # in (s, a, r, s_, done, info) format
 
         self.n_steps += 1
@@ -362,14 +406,9 @@ class HrlAgent(AbstractAgent):
 
         self.graph.abstract_state_discovery(sample, self.target)
 
-        if self.RESET_EXPLORATION_WHEN_NEW_NODE:
-            if self.graph.new_node_encontered:
-                print("new node discovered, resetting the exploration!!!")
-                self.reset_exploration()
-
         edges_from_current_node = self.graph.get_edges_of_a_node(self.current_node)
 
-        self.create_options(edges_from_current_node)
+        #self.create_options(edges_from_current_node)
         self.update_option(sample)
         #self.update_imitation(sample)
 

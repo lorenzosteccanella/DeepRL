@@ -24,7 +24,7 @@ class GoalHrlAgent_nextV_PR(GoalHrlAgent):
         s_m_ = Node(sample[3]["manager"], 0)
 
         if self.target is not None:
-            start = self.as_m2s_m[s_m.state][0]
+            start = self.as_m2s_m[s_m.state][0]    # Warning Warning Warning Warning  max(self.as_m2s_m[s_m.state], key=lambda x:x[1])[0]
         else:
             start = None
 

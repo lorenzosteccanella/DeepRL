@@ -6,13 +6,14 @@ import pickle
 
 class Environment:
 
-    def __init__(self, env, preprocessing=False, rendering_custom_class=False):
+    def __init__(self, env, preprocessing=False, rendering_custom_class=False, display_env=False):
         self.env = env  # the environment
         self.n_step = 0
         self.n_episodes = 0
         self.total_r_episode = 0
         self.trajectory = []
         self.number_of_trajectory_saved = 0
+        self.display_env = display_env
 
         if not rendering_custom_class:
             self.rendering = self.env
@@ -38,7 +39,7 @@ class Environment:
 
             a = agent.act(s)
             img, r, done, info = self.env.step(a)
-            if False: #and r > 0:  # just to check the correct episodes
+            if self.display_env: #and r > 0:  # just to check the correct episodes
                 self.rendering.render(img)
 
             if not self.preprocessing:

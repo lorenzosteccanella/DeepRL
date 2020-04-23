@@ -35,10 +35,10 @@ class SharedConvLayers(keras.Model):
 
 
 class SharedDenseLayers(keras.Model):
-    def __init__(self, h_size=256, learning_rate_observation_adjust=1):
+    def __init__(self, learning_rate_observation_adjust=1):
         super(SharedDenseLayers, self).__init__(name="SharedDenseLayers")
-        self.dense1 = keras.layers.Dense(h_size, activation='elu', kernel_initializer='he_normal')#, kernel_regularizer=tf.keras.regularizers.l2(0.01))
-        self.dense2 = keras.layers.Dense(h_size, activation='elu', kernel_initializer='he_normal')#, kernel_regularizer=tf.keras.regularizers.l2(0.01))
+        self.dense1 = keras.layers.Dense(256, activation='elu', kernel_initializer='he_normal')#, kernel_regularizer=tf.keras.regularizers.l2(0.01))
+        self.dense2 = keras.layers.Dense(256, activation='elu', kernel_initializer='he_normal')#, kernel_regularizer=tf.keras.regularizers.l2(0.01))
         self.learning_rate_adjust = learning_rate_observation_adjust
 
     def call(self, x):
@@ -92,6 +92,19 @@ class ActorNetwork(keras.Model):
         x = self.out(x)
         return x
 
+class ActorNetworkGoalPolicy(keras.Model):
+    def __init__(self, h_size, n_actions):
+        super(ActorNetwork, self).__init__(name="ActorNetwork")
+        self.dense1 = keras.layers.Dense(h_size, activation='elu', kernel_initializer='he_normal')#, kernel_regularizer=tf.keras.regularizers.l1(0.01))
+        self.dense2 = keras.layers.Dense(h_size, activation='elu', kernel_initializer='he_normal')#, kernel_regularizer=tf.keras.regularizers.l1(0.01))
+        self.out = keras.layers.Dense(n_actions, activation=keras.activations.softmax)#, kernel_regularizer=tf.keras.regularizers.l2(0.01))
+
+    def call(self, x, goalx):
+        x = self.dense1(x)
+        x = self.dense2(x)
+        x = self.out(x)
+        return x
+
 
 class SiameseActorCriticNetwork(keras.Model):
 
@@ -106,25 +119,29 @@ class SiameseActorCriticNetwork(keras.Model):
         self.L2_layer = keras.layers.Lambda(lambda tensors: keras.backend.pow(tensors[0] - tensors[1], 2))
         self.dense1 = keras.layers.Dense(256, activation='tanh')#, kernel_initializer='he_normal')
         self.dense2 = keras.layers.Dense(256, activation='tanh')#, kernel_initializer='he_normal')
-        self.Attention = tf.keras.layers.Multiply()#keras.layers.Dot(axes=1, normalize=False)
+        self.Attention = keras.layers.Multiply()#keras.layers.Dot(axes=1, normalize=False)
+        self.LinearDense = keras.layers.Dense(32, activation='linear')
 
     def call(self, x1, x2, x3):
 
-        obs1 = self.shared_observation_model(x1)[0] # Just the dense output
-        if self.shared_goal_model_start is not False:
-            obs2 = self.shared_goal_model_start(x2)[0] # Just the dense output
-        obs3 = self.shared_goal_model_goal(x3)[0]
+        print(x1, x2, x3)
 
-        if self.shared_goal_model_start is not False:
-            obs = keras.layers.concatenate([obs1, obs2, obs3], axis=-1)
-        else:
-            #obs = keras.layers.concatenate([obs1, obs3], axis=-1
-            obs1 = self.dense1(obs1)
-            obs3 = self.dense2(obs3)
-            obs = self.L1_layer([obs1, obs3])
+        obs1 = self.shared_observation_model(x1)[0] # Just the dense output
+        #if self.shared_goal_model_start is not False:
+        #    obs2 = self.shared_goal_model_start(x2)[0] # Just the dense output
+        #obs3 = self.shared_goal_model_goal(x3)[0]
+
+        #if self.shared_goal_model_start is not False:
+        #    obs = keras.layers.concatenate([obs1, obs2, obs3], axis=-1)
+        #else:
+            #obs = keras.layers.concatenate([obs1, obs3], axis=-1)
+            #obs1 = self.dense1(obs1)
+            #obs3 = self.dense2(obs3)
+            #obs = self.L1_layer([obs1, obs3])
             #a_w = self.dense1(obs)
             #obs = self.Attention([obs, a_w])
 
+        obs = obs1
 
         actor = self.actor_model(obs)
 

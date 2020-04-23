@@ -122,7 +122,7 @@ def get_epsilon_exploration(self, current_node, distances, store_action_choice=F
                 if best_edge not in self.options[best_edge_index].get_edge_list():
                     self.options[best_edge_index].add_edge(best_edge)
                 option = self.options[best_edge_index]
-                edges = edges_from_current_node[best_edge_index]
+                edge = edges_from_current_node[best_edge_index]
 
         else:
             self.target = None
@@ -151,11 +151,8 @@ def get_epsilon_count_exploration(self, current_node, distances, store_action_ch
         return option, edge
 
     if distances is not None:
-        # print(distances)
         edges_from_current_node = self.graph.get_edges_of_a_node(current_node)
-        # print(self.current_node, edges_from_current_node)
         if len(edges_from_current_node) > 0:
-            #print(self.current_node.epsilon)
             if random.random() < self.current_node.epsilon:
                 random_edge_index = random.choice(range(len(edges_from_current_node) + 1))
                 if random_edge_index >= len(edges_from_current_node):
@@ -167,8 +164,9 @@ def get_epsilon_count_exploration(self, current_node, distances, store_action_ch
                 else:
                     self.target = edges_from_current_node[random_edge_index].get_destination()
                     self.path_2_print.append(self.target)
-                    option = self.options[random_edge_index]
+                    #option = self.options[random_edge_index]
                     edge = edges_from_current_node[random_edge_index]
+                    option = self.get_option(edge)
 
             else:
                 best_edge_index = random.choice(
@@ -177,10 +175,9 @@ def get_epsilon_count_exploration(self, current_node, distances, store_action_ch
                 self.target = best_edge.get_destination()
 
                 self.path_2_print.append("best choice " + str(current_node.state) + " - " + str(self.target.state))
-                if best_edge not in self.options[best_edge_index].get_edge_list():
-                    self.options[best_edge_index].add_edge(best_edge)
-                option = self.options[best_edge_index]
+                #option = self.options[best_edge_index]
                 edge = edges_from_current_node[best_edge_index]
+                option = self.get_option(edge)
         else:
             self.target = None
             self.path_2_print.append("exploration " + str(self.current_node.state) + " - " + str(self.target))

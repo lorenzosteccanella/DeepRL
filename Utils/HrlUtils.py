@@ -9,6 +9,32 @@ plt.rcParams["figure.figsize"] = (20, 20)
 #plt.show()
 #fig = plt.figure() # make a figure
 
+class KeyDict:
+
+    def __init__(self, s):
+        self.s = s
+
+    def __eq__(self, other):
+        if type(self.s).__name__ == "ndarray":
+            if np.array_equal(self.s, other.s):
+                return True
+            else:
+                return False
+        else:
+            if self.s == other.s:
+                return True
+            else:
+                return False
+
+    def __hash__(self):
+        if type(self.s).__name__ == "ndarray":
+            return hash(self.s.tostring())
+        else:
+            return hash(self.s)
+
+
+
+
 class Distances:
 
     def __init__(self, node_list):

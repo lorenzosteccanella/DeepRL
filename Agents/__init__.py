@@ -24,3 +24,5 @@ from .GoalHrlAgent_nextV_PR import GoalHrlAgent_nextV_PR
 from .GoalHrlAgent_heuristic_count_PR import GoalHrlAgent_heuristic_count_PR
 from .WayPointsAgent_nextV_PR import WayPointsAgent_nextV_PR
 from .HrlAgent_heuristic_count_PR import HrlAgent_heuristic_count_PR
+from .PPOAgent import PPOAgent
+from .PPOOption import PPOOption

@@ -8,7 +8,7 @@ class A2CSILAgent(AbstractAgent):
 
         self.batch_size = batch_size
         self.buffer_online = ExperienceReplay(self.batch_size)
-        self.buffer_imitation = PrioritizedExperienceReplay(imitation_buffer_size)
+        self.buffer_imitation = ExperienceReplay(imitation_buffer_size)#PrioritizedExperienceReplay(imitation_buffer_size)
         self.trajectory = []
         self.action_space = action_space
         self.main_model_nn = main_model_nn
@@ -16,6 +16,9 @@ class A2CSILAgent(AbstractAgent):
         self.imitation_learning_steps = imitation_learnig_steps
         self.sil_batch_size = sil_batch_size
         self.ce_loss = None
+
+        self.n_steps = 0
+        self.n_episodes = 0
 
     def _get_actor_critic_error(self, batch):
 
@@ -91,12 +94,38 @@ class A2CSILAgent(AbstractAgent):
     def act(self, s):
 
         predict = self.main_model_nn.prediction_actor([s])[0]
+        a = np.random.choice(self.action_space, p=predict)
 
-        return np.random.choice(self.action_space, p=predict)
+        return a
 
     def observe(self, sample):
+
+        self.n_steps += 1
+
         self.buffer_online.add(sample)
         self.add_multy_trajectory_memory(sample)
+
+        if sample[4]:
+            self.n_episodes += 1
+
+        return self.n_steps, self.n_episodes
+
+    def observe_online(self, sample):
+        self.n_steps += 1
+
+        self.buffer_online.add(sample)
+
+        if sample[4]:
+            self.n_episodes += 1
+
+        return self.n_steps, self.n_episodes
+
+    def observe_imitation(self, sample):
+        self.add_multy_trajectory_memory(sample)
+
+        if sample[4]:
+            for i in range(self.imitation_learning_steps):
+                self.train_single_trajectory_imitation()
 
     def add_multy_trajectory_memory(self, sample):
         self.trajectory.append((sample[0], sample[1], sample[2]))
@@ -113,7 +142,7 @@ class A2CSILAgent(AbstractAgent):
     def add_single_trajectory_memory(self, sample): # in (s, a, r, s_) format
         self.trajectory.append([sample[0], sample[1], sample[2]])
 
-        if sample[3] is None:
+        if sample[4]:
             s = np.array([o[1] for o in self.trajectory])
             a = np.array([o[1] for o in self.trajectory])
             r = np.array([o[2] for o in self.trajectory])
@@ -139,6 +168,19 @@ class A2CSILAgent(AbstractAgent):
             for k in range(len(batch_imitation)):
                 idx = batch_imitation[k][0]
                 self.buffer_imitation.update(idx, adv_actor[k])
+
+    def train_single_trajectory_imitation(self):
+        batch_imitation, imp_w = self.buffer_imitation.sample(self.buffer_imitation.buffer_len(), True)
+        x, adv_actor, a_one_hot, y_critic = self._get_imitation_error(batch_imitation)
+
+        self.main_model_nn.train_imitation(x, y_critic, a_one_hot, adv_actor, imp_w)
+
+        # update errors
+        for k in range(len(batch_imitation)):
+            idx = batch_imitation[k][0]
+            self.buffer_imitation.update(idx, adv_actor[k])
+
+        self.buffer_imitation.reset_buffer()
 
 
     def replay(self):

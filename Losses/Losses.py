@@ -22,7 +22,7 @@ class Losses:
         labels = tf.to_float(y)
         predictions.get_shape().assert_is_compatible_with(labels.get_shape())
         losses = tf.math.squared_difference(predictions, labels)
-        loss = tf.reduce_mean(losses)
+        loss = tf.reduce_sum(losses)
         return loss
 
     @staticmethod
@@ -35,20 +35,40 @@ class Losses:
         return loss
 
     @staticmethod
-    def reinforce_loss(softmax_logits, one_hot_a, advantage):
+    def ppo_loss(logits, old_logits, one_hot_a, advantage, e_clip=0.2):
+        softmax_logits = tf.nn.softmax(logits)
+        old_softmax_logits = tf.nn.softmax(old_logits)
+        log_policy = tf.log(tf.clip_by_value(softmax_logits, 1e-7, 1))
+        old_log_policy = tf.log(tf.clip_by_value(old_softmax_logits, 1e-7, 1))
+        tensor_one_hot = tf.convert_to_tensor(one_hot_a, dtype=tf.float32)
+        tensor_advantage = tf.convert_to_tensor(advantage, dtype=tf.float32)
+        prob_ratio = tf.exp(log_policy - old_log_policy)
+        clip_prob = tf.clip_by_value(prob_ratio, 1. - e_clip, 1. + e_clip)
+        ppo_loss = - tf.reduce_mean(tf.minimum((tf.reduce_sum(prob_ratio * tensor_one_hot, axis=1) * tf.stop_gradient(tensor_advantage)),
+                                               (tf.reduce_sum(clip_prob * tensor_one_hot, axis=1) * tf.stop_gradient(tensor_advantage))))
+        return ppo_loss
 
+    @staticmethod
+    def reinforce_loss(logits, one_hot_a, advantage):
+        softmax_logits = tf.nn.softmax(logits)
         neg_log_policy = - tf.log(tf.clip_by_value(softmax_logits, 1e-7, 1))
-
-        reinforce_loss = tf.reduce_mean(tf.reduce_sum(neg_log_policy * one_hot_a, axis=1) * advantage)
-
+        tensor_one_hot = tf.convert_to_tensor(one_hot_a, dtype=tf.float32)
+        tensor_advantage = tf.convert_to_tensor(advantage, dtype=tf.float32)
+        #reinforce_loss = tf.reduce_mean(tf.reduce_sum(neg_log_policy * tensor_one_hot, axis=1) * tf.stop_gradient(tensor_advantage))
+        reinforce_loss = tf.reduce_sum(tf.reduce_sum(neg_log_policy * tensor_one_hot, axis=1) * tf.stop_gradient(tensor_advantage))
+        #reinforce_loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=tensor_one_hot, logits=logits) * \
+        #                                 tf.stop_gradient(tensor_advantage)
         return reinforce_loss
 
     @staticmethod
-    def reinforce_loss_imp_w(softmax_logits, one_hot_a, advantage, imp_w):
+    def reinforce_loss_imp_w(logits, one_hot_a, advantage, imp_w):
 
+        softmax_logits = tf.nn.softmax(logits)
         neg_log_policy = - tf.log(tf.clip_by_value(softmax_logits, 1e-7, 1))
+        tensor_one_hot = tf.convert_to_tensor(one_hot_a, dtype=tf.float32)
+        tensor_advantage = tf.convert_to_tensor(advantage, dtype=tf.float32)
 
-        reinforce_losses = tf.reduce_sum(neg_log_policy * one_hot_a, axis=1) * advantage
+        reinforce_losses = tf.reduce_sum(neg_log_policy * tensor_one_hot, axis=1) * tf.stop_gradient(tensor_advantage)
 
         imp_w = tf.squeeze(imp_w)
 
@@ -75,10 +95,10 @@ class Losses:
 
     @staticmethod
     def entropy_exploration_loss(x):
-
-        neg_log_policy = - tf.log(tf.clip_by_value(x, 1e-7, 1)) # probability of softmax can't be more then 1
-        loss = tf.reduce_mean(tf.reduce_sum(x * neg_log_policy, axis=1))
-
+        softmax_logits = tf.nn.softmax(x)
+        neg_log_policy = - tf.log(tf.clip_by_value(softmax_logits, 1e-7, 1)) # probability of softmax can't be more then 1
+        loss = tf.reduce_sum(tf.reduce_sum(softmax_logits * neg_log_policy, axis=1))
+        #entropy = tf.nn.softmax_cross_entropy_with_logits_v2(labels=softmax_logits, logits=x)
         return loss
 
     @staticmethod

@@ -3,9 +3,9 @@ from Agents.AbstractAgent import AbstractAgent
 from Utils import ExperienceReplay
 
 class A2CAgent(AbstractAgent):
+    id = 0
 
-    def __init__(self, action_space, main_model_nn, gamma, batch_size, number_of_step_training=4):
-
+    def __init__(self, action_space, main_model_nn, gamma, batch_size, number_of_step_training=1):
         self.batch_size = batch_size
         self.buffer = ExperienceReplay(self.batch_size)
         self.action_space = action_space
@@ -13,6 +13,11 @@ class A2CAgent(AbstractAgent):
         self.gamma = gamma
         self.ce_loss = None
         self.number_of_step_training = number_of_step_training
+        self.id = A2CAgent.id
+        A2CAgent.id += 1
+
+        self.n_steps = 0
+        self.n_episodes = 0
 
     def _get_actor_critic_error(self, batch):
 
@@ -24,6 +29,7 @@ class A2CAgent(AbstractAgent):
 
         for i in range(len(batch)):
             o = batch[i][1]
+
             a = o[1]
             r = o[2]
             s_ = o[3]
@@ -53,6 +59,7 @@ class A2CAgent(AbstractAgent):
             returns[t] = rewards[t] + self.gamma * returns[t + 1] * (1 - dones[t])
 
         returns = returns[:-1]
+
         # advantages are returns - baseline, value estimates in our case
         advantages = returns - values
         return returns, advantages
@@ -60,24 +67,33 @@ class A2CAgent(AbstractAgent):
     def act(self, s):
 
         predict = self.main_model_nn.prediction_actor([s])[0]
+        a = np.random.choice(self.action_space, p=predict)
 
-        return np.random.choice(self.action_space, p=predict)
+        return a
 
     def observe(self, sample): # in (s, a, r, s_, done, info) format
 
+        self.n_steps += 1
+
         self.buffer.add(sample)
 
-    def get_observation_encoding(self,s):
+        if sample[4]:
+            self.n_episodes += 1
+
+        return self.n_steps, self.n_episodes
+
+    def get_observation_encoding(self, s):
         h = self.main_model_nn.prediction_h([s])
         return h
 
     def replay(self):
 
+
         if self.buffer.buffer_len() >= self.batch_size:
 
-            for i in self.number_of_step_training:
+            for i in range(self.number_of_step_training):
 
-                batch, imp_w = self.buffer.sample(self.batch_size, False)
+                batch, imp_w = self.buffer.sample(self.batch_size, False)  # shuffleing or not?
 
                 x, adv_actor, a_one_hot, y_critic = self._get_actor_critic_error(batch)
 
