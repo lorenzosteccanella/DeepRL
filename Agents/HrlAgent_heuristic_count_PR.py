@@ -89,9 +89,6 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
                         r_h_c = -1
 
         # here u should take the old episode reward for that state
-
-        #print(r_h_c)
-
         self.best_option_action.observe((s, a, r_h_c, s_, done, info))
 
         self.heuristic_reward.append(self.counter_as)

@@ -32,11 +32,7 @@ class A2CEagerSync:
         self.weight_mse = weight_mse
         self.weight_ce = weight_ce
 
-        #print("\n ACTOR CRITIC MODEL \n")
-
-        #slim.model_analyzer.analyze_vars(self.model_actor_critic.trainable_variables, print_info=True)
-
-        self.optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate)
+        self.optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
         self.global_step = tf.Variable(0)
 
     def prediction_actor(self, s):

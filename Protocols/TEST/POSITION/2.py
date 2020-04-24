@@ -34,7 +34,7 @@ class variables():
 
         self.wrapper_params = {
             "stack_images_length": 1,
-            "n_zones": 40
+            "n_zones": 20
         }
 
         self.wrapper = Montezuma_position_wrapper_only_1key(environment, self.wrapper_params)
@@ -71,11 +71,11 @@ class variables():
             "actor_network": ActorNetwork,
             "shared_representation": None,
             "weight_mse": 0.5,
-            "weight_ce_exploration": 0.01,#.01,
+            "weight_ce_exploration": 0,#.01,#.01,
             "learning_rate": 0.001,
             "learning_rate_reduction_obs": 1,  # WARNING
             "gamma": 0.95,
-            "batch_size": 64,
+            "batch_size": 6,
             "steps_of_training": 1,
             "preprocessing": preprocessing
         }

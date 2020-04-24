@@ -80,8 +80,8 @@ class CriticNetwork(keras.Model):
 class ActorNetwork(keras.Model):
     def __init__(self, h_size, n_actions):
         super(ActorNetwork, self).__init__(name="ActorNetwork")
-        self.dense1 = keras.layers.Dense(h_size, activation='relu', kernel_initializer='he_uniform')
-        self.dense2 = keras.layers.Dense(h_size, activation='relu', kernel_initializer='he_uniform')
+        self.dense1 = keras.layers.Dense(h_size, activation='relu', kernel_initializer='random_uniform')
+        self.dense2 = keras.layers.Dense(h_size, activation='relu', kernel_initializer='random_uniform')
         self.out = keras.layers.Dense(n_actions, activation=None, kernel_initializer='random_uniform')
         #self.dist = ProbabilityDistribution()
 
