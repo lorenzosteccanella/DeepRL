@@ -1,21 +1,23 @@
 from Agents.AbstractOption import AbstractOption
-from Agents import A2CAgent
-from Models.A2CnetworksEager import *
+from Agents import A2CSILAgent
+from Models.A2CSILnetworksEager import *
 from copy import deepcopy
 
-class A2COption(AbstractOption):
+class A2CSILOption(AbstractOption):
 
     def __init__(self, parameters):
 
-        super(A2COption, self).__init__()
+        super(A2CSILOption, self).__init__()
 
         self.id = self.getID()
 
-        self.a2cDNN = A2CEagerSeparate(parameters["h_size"], len(parameters["action_space"]), parameters["critic_network"],
-                                   parameters["actor_network"], parameters["learning_rate"], parameters["weight_mse"],
-                                   parameters["weight_ce_exploration"], parameters["shared_representation"], parameters["learning_rate_reduction_obs"])
+        self.a2cDNN_SIL = A2CSILEagerSync(parameters["h_size"], len(parameters["action_space"]), parameters["critic_network"],
+                                          parameters["actor_network"], parameters["learning_rate"], parameters["weight_mse"],
+                                          parameters["sil_weight_mse"], parameters["weight_ce_exploration"],
+                                          parameters["shared_representation"], parameters["learning_rate_reduction_obs"])
 
-        self.agent = A2CAgent(parameters["action_space"], self.a2cDNN, parameters["gamma"], parameters["batch_size"])
+        self.agent = A2CSILAgent(parameters["action_space"], self.a2cDNN_SIL, parameters["gamma"], parameters["batch_size"],
+                                 parameters["sil_batch_size"], parameters["imitation_buffer_size"], parameters["imitation_learning_steps"] )
 
         self.preprocessing = deepcopy(parameters["preprocessing"]) # remember these are options u need to use deepcopy
         self.preprocessing1 = deepcopy(parameters["preprocessing"]) # remember these are options u need to use deepcopy
@@ -23,12 +25,9 @@ class A2COption(AbstractOption):
 
         self.parameters = parameters
 
-
     def act(self, s):
         if self.preprocessing:
             s = self.preprocessing.preprocess_image(s)
-
-        #print(s, self.id)
 
         return self.agent.act(s)
 
@@ -55,7 +54,10 @@ class A2COption(AbstractOption):
         if self.preprocessing:
             s = self.preprocessing.preprocess_image(s)
 
-        return self.a2cDNN.prediction_critic([s])[0][0]
+        return self.a2cDNN_SIL.prediction_critic([s])[0][0]
 
     def get_ce_loss(self):
         return self.agent.ce_loss
+
+    def train_imitation(self):
+        self.agent.train_imitation()

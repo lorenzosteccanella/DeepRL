@@ -22,7 +22,7 @@ class Losses:
         labels = tf.to_float(y)
         predictions.get_shape().assert_is_compatible_with(labels.get_shape())
         losses = tf.math.squared_difference(predictions, labels)
-        loss = tf.reduce_sum(losses)
+        loss = tf.reduce_mean(losses)
         return loss
 
     @staticmethod
@@ -78,7 +78,7 @@ class Losses:
 
     @staticmethod
     def reinforce_loss_2(logits, one_hot_a, advantage):
-
+        softmax_logits = tf.nn.softmax(logits)
         softmax_logits = softmax_logits * one_hot_a
 
         action_probs = tf.reduce_max(softmax_logits, axis=1)

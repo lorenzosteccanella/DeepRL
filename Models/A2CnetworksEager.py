@@ -113,8 +113,8 @@ class A2CEagerSeparate:
         self.weight_ce = weight_ce
         self.n_actions = n_actions
 
-        self.optimizer_critic = tf.train.RMSPropOptimizer(learning_rate=learning_rate)
-        self.optimizer_actor = tf.train.RMSPropOptimizer(learning_rate=learning_rate)
+        self.optimizer_critic = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
+        self.optimizer_actor = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
         self.global_step = tf.Variable(0)
 
     def prediction_actor(self, s):

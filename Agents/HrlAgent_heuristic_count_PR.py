@@ -74,7 +74,10 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
                     r += self.correct_option_end_reward
                     done = True
 
-                    r_h_c = max(r, max(self.as_m2s_m[s_m].values(), key=lambda x: x[1])[1])
+                    if KeyDict(s_) not in (self.as_m2s_m[s_m]):
+                        r_h_c = r
+                    else:
+                        r_h_c = self.as_m2s_m[s_m][KeyDict(s_)][1]
 
                 else:
                     r += self.wrong_end_option_reward
@@ -110,7 +113,7 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
                     s_m = p_sample[6]
                     s_m_ = p_sample[7]
 
-                    if done:   # this means that we are at the ending of an option
+                    if done and r >= self.correct_option_end_reward:  # this means that we are at the correct end of an option
                         if KeyDict(s_) not in (self.as_m2s_m[s_m]):
                             self.as_m2s_m[s_m][KeyDict(s_)] = [copy.deepcopy(s_), r]
                         else:
@@ -139,7 +142,7 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
                 s_m = p_sample[6]
                 s_m_ = p_sample[7]
 
-                if done:  # this means that we are at the ending of an option
+                if done and r >= self.correct_option_end_reward:  # this means that we are at the correct end of an option
                     if KeyDict(s_) not in (self.as_m2s_m[s_m]):
                         self.as_m2s_m[s_m][KeyDict(s_)] = [copy.deepcopy(s_), r]
                     else:

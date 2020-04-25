@@ -46,8 +46,8 @@ class SharedConvLayers(keras.Model):
 class SharedDenseLayers(keras.Model):
     def __init__(self, h_size=256, learning_rate_observation_adjust=1):
         super(SharedDenseLayers, self).__init__(name="SharedDenseLayers")
-        self.dense1 = keras.layers.Dense(h_size, activation='relu', kernel_initializer='he_uniform')
-        self.dense2 = keras.layers.Dense(h_size, activation='relu', kernel_initializer='he_uniform')
+        self.dense1 = keras.layers.Dense(h_size, activation='relu', kernel_initializer='glorot_uniform')
+        self.dense2 = keras.layers.Dense(h_size, activation='relu', kernel_initializer='glorot_uniform')
         self.learning_rate_adjust = learning_rate_observation_adjust
 
     def call(self, x):
@@ -61,9 +61,9 @@ class SharedDenseLayers(keras.Model):
 class CriticNetwork(keras.Model):
     def __init__(self, h_size):
         super(CriticNetwork, self).__init__(name="CriticNetwork")
-        self.dense1 = keras.layers.Dense(h_size, activation='relu', kernel_initializer='he_uniform')
-        self.dense2 = keras.layers.Dense(h_size, activation='relu', kernel_initializer='he_uniform')
-        self.out = keras.layers.Dense(1, activation='relu', kernel_initializer='he_uniform')
+        self.dense1 = keras.layers.Dense(h_size, activation='relu', kernel_initializer='glorot_uniform')
+        self.dense2 = keras.layers.Dense(h_size, activation='relu', kernel_initializer='glorot_uniform')
+        self.out = keras.layers.Dense(1, activation='linear', kernel_initializer='glorot_uniform')
 
     def call(self, x):
 

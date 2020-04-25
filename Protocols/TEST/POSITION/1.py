@@ -56,7 +56,7 @@ class variables():
         # Just to be sure that we don't have some others graph loaded
         tf.reset_default_graph()
 
-        # self.shared_conv_layers = SharedDenseLayers(1)
+        # self.shared_conv_layers = SharedDenseLayers(0.05)
         # self.goal_net_start = False #SharedGoalModel(32, 1)
         # self.goal_net_goal = self.shared_conv_layers #SharedGoalModel(32, 1)
         # self.critic = CriticNetwork(32)
@@ -72,7 +72,7 @@ class variables():
             "actor_network": ActorNetwork,
             "shared_representation": None,
             "weight_mse": 0.5,
-            "weight_ce_exploration": 0.01,#.01,
+            "weight_ce_exploration": 0.01,#.01,#.01,
             "learning_rate": 0.001,
             "learning_rate_reduction_obs": 1,  # WARNING
             "gamma": 0.95,

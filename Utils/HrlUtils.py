@@ -64,7 +64,7 @@ class Edge:
         self.visit_count = 1
         self.destination = destination
         self.edge_cost = edge_cost
-        self.value = value + self.edge_cost #+ (Edge.pseudo_count_factor/math.sqrt(self.visit_count)) #+ round(0.5 * (math.exp(-Edge.pseudo_count_factor * self.visit_count)), 3)
+        self.value = value + self.edge_cost
         self.option = None
 
     def get_value(self):
@@ -77,11 +77,11 @@ class Edge:
         return self.destination
 
     def set_value(self, value):
-        self.value = value + self.edge_cost #+ (Edge.pseudo_count_factor/math.sqrt(self.visit_count)) #+ round(0.5 * (math.exp(-Edge.pseudo_count_factor * self.visit_count)), 3)
+        self.value = value + self.edge_cost
 
     def visited(self):
         self.visit_count += 1
-        self.value = self.value #+ (Edge.pseudo_count_factor/math.sqrt(self.visit_count)) #+ self.edge_cost + round(0.5 * (math.exp(-Edge.pseudo_count_factor * self.visit_count)),3)
+        self.value = self.value
 
     def set_option(self, option):
         self.option = option
@@ -132,7 +132,7 @@ class Node:
     def __init__(self, state, value=0):
         self.state = state
         self.visit_count = 1
-        self.value = value #+ 1 * (math.exp(-Node.pseudo_count_factor * self.visit_count)) #(Node.pseudo_count_factor * (self.visit_count ** -1))
+        self.value = value
         self.lambda_node = Node.lambda_node
         self.min_epsilon = Node.min_epsilon
         self.epsilon = self.min_epsilon + (1 - self.min_epsilon) * (math.exp(-self.lambda_node * self.visit_count))
@@ -144,15 +144,11 @@ class Node:
         return self.state
 
     def set_value(self, value):
-        self.value = value #+ 1 * (math.exp(-Node.pseudo_count_factor * self.visit_count)) #(Node.pseudo_count_factor * (self.visit_count ** -1))
+        self.value = value
 
     def visited(self):
         self.visit_count += 1
         self.epsilon = self.min_epsilon + (1 - self.min_epsilon) * (math.exp(-self.lambda_node * self.visit_count))
-        #print(self.state, self.epsilon, self.visit_count)
-
-
-        #print(self.state, self.epsilon)
 
     def get_n_visits(self):
         return self.visit_count
@@ -457,13 +453,11 @@ class Graph:
 
         if done:
             rewards = np.array([o[2] for o in self.batch])
-            #if sum(rewards) >= 0:
             discounted_r = np.zeros_like(rewards)
             running_add = 0
             for t in reversed(range(rewards.shape[0])):
                 running_add = running_add * gamma + rewards[t]
                 discounted_r[t] = running_add
-            #if sum( discounted_r >= 0.):
             for i, sample in zip(range(len(self.batch)), self.batch):
                 s = sample[0]
                 a = sample[1]
