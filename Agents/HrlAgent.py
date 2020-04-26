@@ -92,7 +92,7 @@ class HrlAgent(AbstractAgent):
 
             if node not in self.as_m2s_m:
                 self.as_m2s_m[node] = {}
-                self.as_m2s_m[node][key] = [copy.deepcopy(s["option"]), 0.]
+                #self.as_m2s_m[node][key] = [copy.deepcopy(s["option"]), 0.]
 
         if sample is not None:
 
@@ -104,11 +104,11 @@ class HrlAgent(AbstractAgent):
 
             if node1 not in self.as_m2s_m:
                 self.as_m2s_m[node1] = {}
-                self.as_m2s_m[node1][key1] = [copy.deepcopy(sample[0]["option"]), 0.]
+                #self.as_m2s_m[node1][key1] = [copy.deepcopy(sample[0]["option"]), 0.]
 
             if node2 not in self.as_m2s_m:
                 self.as_m2s_m[node2] = {}
-                self.as_m2s_m[node2][key2] = [copy.deepcopy(sample[3]["option"]), 0.]
+                #self.as_m2s_m[node2][key2] = [copy.deepcopy(sample[3]["option"]), 0.]
 
     def act(self, s):
         node = Node(s["manager"], 0)
@@ -150,7 +150,10 @@ class HrlAgent(AbstractAgent):
 
     def get_option(self, edge):
         if edge not in self.w_o:
-            self.w_o[edge] = self.option_params["option"](self.option_params)
+            if self.single_option is not False:
+                self.w_o[edge] = self.single_option
+            else:
+                self.w_o[edge] = self.option_params["option"](self.option_params)
 
         return self.w_o[edge]
 
