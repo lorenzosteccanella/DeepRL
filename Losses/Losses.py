@@ -31,7 +31,8 @@ class Losses:
         labels = tf.to_float(y)
         predictions.get_shape().assert_is_compatible_with(labels.get_shape())
         losses = tf.math.squared_difference(predictions, labels)
-        loss = tf.losses.compute_weighted_loss(losses, imp_w)
+        losses = tf.losses.compute_weighted_loss(losses, imp_w, reduction=tf.compat.v1.losses.Reduction.NONE)
+        loss = tf.reduce_mean(losses)
         return loss
 
     @staticmethod
@@ -55,7 +56,7 @@ class Losses:
         tensor_one_hot = tf.convert_to_tensor(one_hot_a, dtype=tf.float32)
         tensor_advantage = tf.convert_to_tensor(advantage, dtype=tf.float32)
         #reinforce_loss = tf.reduce_mean(tf.reduce_sum(neg_log_policy * tensor_one_hot, axis=1) * tf.stop_gradient(tensor_advantage))
-        reinforce_loss = tf.reduce_sum(tf.reduce_sum(neg_log_policy * tensor_one_hot, axis=1) * tf.stop_gradient(tensor_advantage))
+        reinforce_loss = tf.reduce_mean(tf.reduce_sum(neg_log_policy * tensor_one_hot, axis=1) * tf.stop_gradient(tensor_advantage))
         #reinforce_loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=tensor_one_hot, logits=logits) * \
         #                                 tf.stop_gradient(tensor_advantage)
         return reinforce_loss
@@ -72,7 +73,9 @@ class Losses:
 
         imp_w = tf.squeeze(imp_w)
 
-        reinforce_loss = tf.losses.compute_weighted_loss(reinforce_losses, imp_w)
+        reinforce_losses = tf.losses.compute_weighted_loss(reinforce_losses, imp_w, reduction=tf.compat.v1.losses.Reduction.NONE)
+
+        reinforce_loss = tf.reduce_mean(reinforce_losses)
 
         return reinforce_loss
 
@@ -97,7 +100,7 @@ class Losses:
     def entropy_exploration_loss(x):
         softmax_logits = tf.nn.softmax(x)
         neg_log_policy = - tf.log(tf.clip_by_value(softmax_logits, 1e-7, 1)) # probability of softmax can't be more then 1
-        loss = tf.reduce_sum(tf.reduce_sum(softmax_logits * neg_log_policy, axis=1))
+        loss = tf.reduce_mean(tf.reduce_sum(softmax_logits * neg_log_policy, axis=1))
         #entropy = tf.nn.softmax_cross_entropy_with_logits_v2(labels=softmax_logits, logits=x)
         return loss
 
@@ -137,5 +140,6 @@ class Losses:
         difference = labels - predictions
         difference = tf.clip_by_value(difference, 0, tf.float32.max)
         losses = difference ** 2
-        loss = tf.losses.compute_weighted_loss(losses, imp_w)
+        losses = tf.losses.compute_weighted_loss(losses, imp_w, reduction=tf.compat.v1.losses.Reduction.NONE)
+        loss = tf.reduce_mean(losses)
         return loss

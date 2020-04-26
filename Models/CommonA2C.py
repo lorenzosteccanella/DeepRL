@@ -66,7 +66,6 @@ class CriticNetwork(keras.Model):
         self.out = keras.layers.Dense(1, activation='linear', kernel_initializer='glorot_uniform')
 
     def call(self, x):
-
         x = self.dense1(x)
         x = self.dense2(x)
         x = self.out(x)

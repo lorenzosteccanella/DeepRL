@@ -1,1 +1,2 @@
-from .A2CnetworksEager import SharedConvLayers, SharedDenseLayers, CriticNetwork, ActorNetwork, ActorCriticNetwork, A2CEagerSync
+from .A2CnetworksEager import SharedConvLayers, SharedDenseLayers, CriticNetwork, ActorNetwork, ActorCriticNetwork, A2CEagerSync, A2CEagerSeparate
+from .A2CSILnetworksEager import SharedConvLayers, SharedDenseLayers, CriticNetwork, ActorNetwork, ActorCriticNetwork, A2CSILEagerSync, A2CSILEagerSeparate

@@ -11,7 +11,7 @@ class A2CSILOption(AbstractOption):
 
         self.id = self.getID()
 
-        self.a2cDNN_SIL = A2CSILEagerSync(parameters["h_size"], len(parameters["action_space"]), parameters["critic_network"],
+        self.a2cDNN_SIL = A2CSILEagerSeparate(parameters["h_size"], len(parameters["action_space"]), parameters["critic_network"],
                                           parameters["actor_network"], parameters["learning_rate"], parameters["weight_mse"],
                                           parameters["sil_weight_mse"], parameters["weight_ce_exploration"],
                                           parameters["shared_representation"], parameters["learning_rate_reduction_obs"])
@@ -40,7 +40,7 @@ class A2CSILOption(AbstractOption):
             s_ = sample[3]
         sample = (s, sample[1], sample[2], s_, sample[4], sample[5])
         self.agent.observe(sample)
-        self.agent.replay()
+        self.agent.replay(sample[4])
         if self.preprocessing:
             if sample[4]:
                 self.preprocessing.reset(sample[4])

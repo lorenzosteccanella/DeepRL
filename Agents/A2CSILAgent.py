@@ -140,11 +140,34 @@ class A2CSILAgent(AbstractAgent):
                 idx = batch_imitation[k][0]
                 self.buffer_imitation.update(idx, adv_actor[k])
 
+        elif self.buffer_imitation.buffer_len() >= 1:
+            batch_imitation, imp_w = self.buffer_imitation.sample(self.buffer_imitation.buffer_len())
+            x, adv_actor, a_one_hot, y_critic = self._get_imitation_error(batch_imitation)
 
-    def replay(self):
+            self.main_model_nn.train_imitation(x, y_critic, a_one_hot, adv_actor, imp_w)
+
+            # update errors
+            for k in range(len(batch_imitation)):
+                idx = batch_imitation[k][0]
+                self.buffer_imitation.update(idx, adv_actor[k])
+
+
+    def replay(self, done=False):
         if self.buffer_online.buffer_len() >= self.batch_size:
 
             batch, imp_w = self.buffer_online.sample(self.batch_size, False)
+            x, adv_actor, a_one_hot, y_critic = self._get_actor_critic_error(batch)
+
+            _, __, self.ce_loss = self.main_model_nn.train(x, y_critic, a_one_hot, adv_actor)
+
+            self.buffer_online.reset_buffer()
+
+            for i in range(self.imitation_learning_steps):
+                self.train_imitation()
+
+        elif done is True:
+
+            batch, imp_w = self.buffer_online.sample(self.buffer_online.buffer_len(), False)
             x, adv_actor, a_one_hot, y_critic = self._get_actor_critic_error(batch)
 
             _, __, self.ce_loss = self.main_model_nn.train(x, y_critic, a_one_hot, adv_actor)

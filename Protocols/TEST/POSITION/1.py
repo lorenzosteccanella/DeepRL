@@ -1,4 +1,4 @@
-from Agents import HrlAgent, HrlAgent_heuristic_count_PR, RandomAgentOption, A2COption
+from Agents import HrlAgent, HrlAgent_heuristic_count_PR, RandomAgentOption, A2COption, A2CSILOption
 import gym
 import tensorflow as tf
 import os
@@ -65,7 +65,7 @@ class variables():
         preprocessing = None #Preprocessing(84, 84, 3, self.number_of_stacked_frames, False)
 
         self.option_params = {
-            "option": A2COption,
+            "option": A2CSILOption,
             "h_size": 64,
             "action_space": self.ACTION_SPACE,
             "critic_network": CriticNetwork,
@@ -78,7 +78,11 @@ class variables():
             "gamma": 0.95,
             "batch_size": 6,
             "steps_of_training": 1,
-            "preprocessing": preprocessing
+            "preprocessing": preprocessing,
+            "sil_weight_mse": 0.01,
+            "sil_batch_size": 64,
+            "imitation_buffer_size": 1000,
+            "imitation_learning_steps": 8
         }
 
         self.random_agent = RandomAgentOption(self.ACTION_SPACE)

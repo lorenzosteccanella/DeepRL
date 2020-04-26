@@ -1,4 +1,4 @@
-from Agents import HrlAgent, HrlAgent_heuristic_count_PR, HrlAgent_nextV_PR, RandomAgentOption, A2COption
+from Agents import HrlAgent, HrlAgent_heuristic_count_PR, HrlAgent_nextV_PR, RandomAgentOption, A2COption, A2CSILOption
 import gym
 import tensorflow as tf
 import os
@@ -34,7 +34,7 @@ class variables():
 
         self.wrapper_params = {
             "stack_images_length": 1,
-            "n_zones": 40
+            "n_zones": 10
         }
 
         self.wrapper = Montezuma_position_wrapper_only_1key(environment, self.wrapper_params)
@@ -71,13 +71,17 @@ class variables():
             "actor_network": ActorNetwork,
             "shared_representation": None,
             "weight_mse": 0.5,
-            "weight_ce_exploration": 0.05,#.01,#.01,
+            "weight_ce_exploration": 0.01,#.01,#.01,
             "learning_rate": 0.001,
             "learning_rate_reduction_obs": 1,  # WARNING
             "gamma": 0.95,
             "batch_size": 6,
             "steps_of_training": 1,
-            "preprocessing": preprocessing
+            "preprocessing": preprocessing,
+            "sil_weight_mse": 0.01,
+            "sil_batch_size": 64,
+            "imitation_buffer_size": 1000,
+            "imitation_learning_steps": 8
         }
 
         self.random_agent = RandomAgentOption(self.ACTION_SPACE)

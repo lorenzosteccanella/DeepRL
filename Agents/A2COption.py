@@ -41,7 +41,7 @@ class A2COption(AbstractOption):
             s_ = sample[3]
         sample = (s, sample[1], sample[2], s_, sample[4], sample[5])
         self.agent.observe(sample)
-        self.agent.replay()
+        self.agent.replay(sample[4])
         if self.preprocessing:
             if sample[4]:
                 self.preprocessing.reset(sample[4])
