@@ -137,7 +137,7 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
                         if KeyDict(s_) not in (self.as_m2s_m[s_m]):
                             self.as_m2s_m[s_m][KeyDict(s_)] = [copy.deepcopy(s_), r]
                         else:
-                            self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.8 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.2 * r
+                            self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.6 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.4 * r
 
                     del self.samples[i]
                     del self.options_executed_episode[i]
@@ -164,7 +164,7 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
                     if KeyDict(s_) not in (self.as_m2s_m[s_m]):
                         self.as_m2s_m[s_m][KeyDict(s_)] = [copy.deepcopy(s_), r]
                     else:
-                        self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.8 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.2 * r
+                        self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.6 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.4 * r
 
             self.samples.clear()
             self.options_executed_episode.clear()

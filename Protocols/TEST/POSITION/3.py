@@ -3,7 +3,7 @@ import gym
 import tensorflow as tf
 import os
 from Environment import Environment
-from Wrappers_Env import Position_observation_wrapper
+from Wrappers_Env import Montezuma_position_wrapper_only_1key
 from Models.A2CnetworksEager import *
 from Utils import SaveResult
 from Utils.HrlExplorationStrategies import get_epsilon_count_exploration
@@ -16,28 +16,27 @@ class variables():
         tf.enable_eager_execution()
 
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
-        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # to train on CPU
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
         self.seeds = range(1)
-        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  heuristic_count_TEST_GOAL_A2C_POSITION_1/')
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  Montezuma_POSITION_1/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
-        self.FILE_NAME = 'Position_GOAL_A2C_HRL_E_GREEDY'
-        self.NUMBER_OF_EPOCHS = 10000
+        self.FILE_NAME = 'Position_Montezuma'
+        self.NUMBER_OF_EPOCHS = 3000
 
         self.multi_processing = False
 
-        self.PROBLEM = 'GE_MazeKeyDoor-v10'
+        self.PROBLEM = 'MontezumaRevenge-ram-v0'
         environment = gym.make(self.PROBLEM)
 
-        self.ACTION_SPACE = [0, 1, 2, 3, 4]
+        self.ACTION_SPACE = list(range(0, environment.action_space.n))
 
         self.wrapper_params = {
-            "width": 10,
-            "height": 10,
-            "n_zones": 2
+            "stack_images_length": 1,
+            "n_zones": 10
         }
 
-        self.wrapper = Position_observation_wrapper(environment, self.wrapper_params)
+        self.wrapper = Montezuma_position_wrapper_only_1key(environment, self.wrapper_params)
 
         display_env = True
 

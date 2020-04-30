@@ -464,16 +464,16 @@ class Graph:
                 returns[t] = rewards[t] + gamma * returns[t + 1] * (1 - dones[t])
 
             returns = returns[:-1]
-
-            for i, sample in zip(range(len(self.batch)), self.batch):
-                s = sample[0]
-                a = sample[1]
-                correct_termination = sample[5]
-                if correct_termination:
-                    td_error = (returns[i] - self.Q[s][a])
-                    self.Q[s][a] = self.Q[s][a] + learning_rate * td_error
-                    if 1e-4 > self.Q[s][a] > - 1e-4:
-                        self.Q[s][a] = 0.
+            if sum(returns) >= 0.:
+                for i, sample in zip(range(len(self.batch)), self.batch):
+                    s = sample[0]
+                    a = sample[1]
+                    correct_termination = sample[5]
+                    if correct_termination:
+                        td_error = (returns[i] - self.Q[s][a])
+                        self.Q[s][a] = self.Q[s][a] + learning_rate * td_error
+                        if 1e-4 > self.Q[s][a] > - 1e-4:
+                            self.Q[s][a] = 0.
 
             self.batch.clear()
 
