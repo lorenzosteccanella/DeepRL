@@ -37,6 +37,10 @@ class KeyDict:
 
 class Edge:
 
+    """
+     A class to represent edges!!
+    """
+
     def __init__(self, origin, destination, value=0):
 
         self.succes_execution_counter = 0
@@ -94,6 +98,11 @@ class Edge:
 
 
 class Node:
+
+    """
+     A class to represent nodes!!
+    """
+
     lambda_node = 1000
     min_epsilon = 0
 
@@ -156,29 +165,61 @@ class Node:
 
 class Graph:
 
-    def __init__(self, edge_list=list(), node_list=list(), Q={}, E={}, distances={}, node_edges_dictionary={},
+    """
+    The main Graph class!
+    """
+
+    def __init__(self, edge_list=list(), node_list=list(), Q={}, distances={}, node_edges_dictionary={},
                  destination_node_edges_dictionary={}, save_results=False):
-        self.edge_list = edge_list
-        self.node_list = node_list
-        self.current_node = None
-        self.current_edge = None
-        self.new_node_encontered = False
-        self.new_edge_encontered = False
+
+        """
+        __init__, all the args are needed mainly for parallel environment agents usage
+
+        Args:
+            edge_list : to keep the list of edges founded
+            node_list : to keep the list of nodes founded
+            Q : a dictionary to create the structure where we can save Q values
+            distances: where we store the utility value for each edge, in case of Q learning just Q values inside here
+            node_edges_dictionary: this is the graph representation with nodes as key and going edges list as values, this structure is just used to speed up computation
+            destination_node_edges_dictionary: this is the graph representation with nodes as key and destination edges list as values, this structure is just used to speed up computation
+            SaveResult: an instance used to save statistics of performance
+        """
+
+        # graph variables
+        self.edge_list = edge_list                                                      # to keep the list of edges founded
+        self.node_list = node_list                                                      # to keep the list of nodes founded
+        self.current_node = None                                                        # the current node we are in
+        self.current_edge = None                                                        # the current edge we are in
+        self.new_node_encontered = False                                                # a flag variable to return if we found a new edge or not to the manager
+        self.new_edge_encontered = False                                                # a flag variable to return if we found a new node or not to the manager
+        self.Q = Q                                                                      # a dictionary to create the structure where we can save Q values
+        self.distances = distances                                                      # the computed utility of each edges, distances is general it contains Q values when Q learning is used
+        self.total_reward_node = 0                                                      # A variable to track and update the value of a node
+        self.total_reward_edge = 0                                                      # A variable to track and update the value of an edge
+
+        # more dictionary structures to speed up at cost of more memory usage
+        self.node_edges_dictionary = node_edges_dictionary                              # this is the graph representation with nodes as key and going edges list as values, this structure is just used to speed up computation
+        self.destination_node_edges_dictionary = destination_node_edges_dictionary      # this is the graph representation with nodes as key and destination edges list as values, this structure is just used to speed up computation
+        self.node_dictionary = {}                                                       # a dictionary of node with node hashed as key, speed up
+
+        # statistic variables
         self.index_4_bestpathprint = 0
-        self.Q = Q
-        self.E = E
-        self.distances = distances
-        self.total_reward_node = 0
-        self.total_reward_edge = 0
-        self.node_edges_dictionary = node_edges_dictionary  # this is the graph representation with nodes as key and eges list as values, this structure is just used to speed up computation
-        self.destination_node_edges_dictionary = destination_node_edges_dictionary
-        self.node_dictionary = {}
         self.path = []
         self.i = 0
-        self.batch = []
         self.save_results = save_results
 
+        # manager learning variables
+        self.batch = []
+
     def print_networkx_graph(self, root, route, distances):
+        """
+        just to plot the Graph
+
+        Args:
+            root: the node we are in
+            route: the best path
+            distances: the utility of each edge
+        """
         if self.save_results:
             self.i += 1
             if self.i % 1000 == 0:
@@ -219,40 +260,47 @@ class Graph:
 
     def edge_update(self, old_node, new_node, reward, target):
 
+        """
+
+        The function that discovers new edges and update the value of the edges
+
+        Args:
+            old_node = the node the agent was in
+            new_node = the node the agent ended up to at t+1
+            reward = the reward I got at this time step
+            target = the destination node the option should end to
+        """
+
         self.new_edge_encontered = False
 
-        if old_node != new_node:
-            edge = Edge(old_node, new_node)
+        if old_node != new_node:                                                         # if we are at the transition from a node to a new different node
+            edge = Edge(old_node, new_node)                                              # the edge between these two nodes
+            self.total_reward_edge += reward                                             # the total reward collected while being in this edge
 
-            self.total_reward_edge += reward
-
-            # if is a new edge I add it
-            if edge not in self.node_edges_dictionary[old_node]:
+            if edge not in self.node_edges_dictionary[old_node]:                         # if is a new edge I add it
                 self.new_edge_encontered = True
-                edge.set_value(self.total_reward_edge)
-                self.edge_list.append(edge)
-                self.node_edges_dictionary[old_node].append(edge)
-                self.destination_node_edges_dictionary[new_node].append(
-                    edge)  # this structure is just to speed up at the cost of memory
+                edge.set_value(self.total_reward_edge)                                   # first value for the edge
+                self.edge_list.append(edge)                                              # the list of edges
+                self.node_edges_dictionary[old_node].append(edge)                        # this structure is just to speed up at the cost of memory
+                self.destination_node_edges_dictionary[new_node].append(edge)            # this structure is just to speed up at the cost of memory
                 a_q_s = {edge: edge.value}
                 self.Q[old_node].update(a_q_s)
                 a_e_s = {edge: 0}
-                self.E[old_node].update(a_e_s)
 
             edge = self.node_edges_dictionary[old_node][self.node_edges_dictionary[old_node].index(edge)]
             edge.visited()
 
-            if target is not None:
-                if new_node == target:
-                    edge.set_value(0.8 * edge.get_value() + 0.2 * self.total_reward_edge)
+            if target is not None:                                                        # if we are not in an exploratory option
+                if new_node == target:                                                    # if the option ended correctly
+                    edge.set_value(0.8 * edge.get_value() + 0.2 * self.total_reward_edge) # we update the value!
 
-            self.total_reward_edge = 0
-            self.current_edge = edge
+            self.total_reward_edge = 0                                                    # let's reset the total reward
+            self.current_edge = edge                                                      # let's update the current edge
 
-        elif target is not None:
-            self.total_reward_edge += reward
+        elif target is not None:                                                          # if we are not in an exploratory option
+            self.total_reward_edge += reward                                              # to accumulate all the reward while being in this edge
 
-    def node_update(self, old_node, new_node=False, reward=False, done=False):
+    def node_update(self, old_node, new_node=False):
 
         self.new_node_encontered = False
 
@@ -265,7 +313,6 @@ class Graph:
             self.destination_node_edges_dictionary[
                 old_node] = []  # this structure is just to speed up at the cost of memory
             self.Q[old_node] = {}
-            self.E[old_node] = {}
 
         if new_node:
             if new_node not in self.node_list:
@@ -276,7 +323,6 @@ class Graph:
                 self.destination_node_edges_dictionary[
                     new_node] = []  # this structure is just to speed up at the cost of memory
                 self.Q[new_node] = {}
-                self.E[new_node] = {}
 
         # setting the value for the specific abstract node
         if new_node:  # if we recived the new node together with the old node as parameters
@@ -303,7 +349,7 @@ class Graph:
 
         r = sample[2]
 
-        old_node_in_list, new_node_in_list = self.node_update(old_node, new_node, r, done)
+        old_node_in_list, new_node_in_list = self.node_update(old_node, new_node)
 
         self.edge_update(old_node_in_list, new_node_in_list, r, target)
 
