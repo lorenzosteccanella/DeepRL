@@ -203,6 +203,7 @@ class Graph:
         self.total_reward_edge = 0
         self.node_edges_dictionary = node_edges_dictionary # this is the graph representation with nodes as key and eges list as values, this structure is just used to speed up computation
         self.destination_node_edges_dictionary = destination_node_edges_dictionary
+        self.node_dictionary = {}
         self.path = []
         self.i = 0
         self.batch = []
@@ -288,6 +289,7 @@ class Graph:
         # if the nodes are new I add them to the list
         if old_node not in self.node_list:
             self.node_list.append(old_node)
+            self.node_dictionary[old_node] = old_node
             self.new_node_encontered = True
             self.node_edges_dictionary[old_node] = []
             self.destination_node_edges_dictionary[old_node] = [] # this structure is just to speed up at the cost of memory
@@ -297,6 +299,7 @@ class Graph:
         if new_node:
             if new_node not in self.node_list:
                 self.node_list.append(new_node)
+                self.node_dictionary[new_node] = new_node
                 self.new_node_encontered = True
                 self.node_edges_dictionary[new_node] = []
                 self.destination_node_edges_dictionary[new_node] = [] # this structure is just to speed up at the cost of memory
@@ -305,11 +308,11 @@ class Graph:
 
         #setting the value for the specific abstract node
         if new_node: # if we recived the new node together with the old node as parameters
-            node = self.node_list[self.node_list.index(new_node)]
+            node = self.node_dictionary[new_node]
 
         #this is just used to add the first abstract state at the beginning of a epoch
         else: # if we recived just the old node as parameter i.e. new_node = False and reward = False
-            node = self.node_list[self.node_list.index(old_node)]
+            node = self.node_dictionary[old_node]
 
         if new_node:
             if old_node != new_node:
@@ -610,7 +613,14 @@ class Graph:
     def add_node(self, node):
         self.node_list.append(node)
         self.node_edges_dictionary[node] = []
+        self.node_dictionary[node] = node
 
     def add_edge(self, edge):
         self.edge_list.append(edge)
         self.node_edges_dictionary[edge.origin].append(edge)
+
+    def get_node(self, state):
+        node_s = Node(state, 0)
+
+        return self.node_dictionary[node_s]
+

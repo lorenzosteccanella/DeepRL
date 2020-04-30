@@ -5,7 +5,7 @@ from collections import deque
 import math
 import copy
 
-class GoalHrlAgent(HrlAgent):
+class GoalHrlAgentSinglePlan(HrlAgent):
 
     def pixel_manager_obs(self, s = None, sample = None):
         if s is not None:
@@ -39,11 +39,22 @@ class GoalHrlAgent(HrlAgent):
             self.distances_2_print.append(distances)
             self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
 
-        elif self.current_node != node:
-           self.current_node = self.graph.get_current_node()
-           distances = self.graph.find_distances(self.current_node)
-           self.distances_2_print.append(distances)
-           self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
+        if type(self.best_option_action) == type(self.exploration_option):
+            if self.current_node != node:
+                self.current_node = self.graph.get_current_node()
+                distances = self.graph.find_distances(self.current_node)
+                self.distances_2_print.append(distances)
+                self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
+
+        else:
+            if self.current_node != node:
+                self.current_node = self.graph.get_current_node()
+
+            if self.target == node:
+                self.current_node = self.graph.get_current_node()
+                distances = self.graph.find_distances(self.current_node)
+                self.distances_2_print.append(distances)
+                self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
 
         if self.target is not None:
             start = self.as_m2s_m[self.current_node.state][0]
@@ -81,21 +92,19 @@ class GoalHrlAgent(HrlAgent):
         if s_m != s_m_:
             if self.target is not None:
                 if s_m_ == self.target:
-
+                    #if self.equal(goal, s_):
                     r += self.correct_option_end_reward
-                    done = True                           # single network now, so maybe done = false here
-
+                    done = True
                     if r > self.as_m2s_m[s_m_.state][1]:
 
                         self.as_m2s_m[s_m_.state] = (copy.deepcopy(s_), r)
 
-                else:
-
-                    r += self.wrong_end_option_reward
-                    done = True                           # single network now, so maybe done = false here
-
-                    if r < -1:
-                        r = -1
+                # else:
+                #
+                #     r += self.wrong_end_option_reward
+                #
+                #     if r < -1:
+                #         r = -1
 
         self.best_option_action.observe((s, a, r, s_, done, info, start, goal))
 

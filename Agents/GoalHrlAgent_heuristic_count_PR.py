@@ -6,7 +6,7 @@ import math
 import copy
 import numpy as np
 
-class HrlAgent_heuristic_count_PR(HrlAgent):
+class GoalHrlAgent_heuristic_count_PR(HrlAgent):
 
     options_executed_episode = []
     heuristic_reward = []
@@ -22,7 +22,7 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
 
             if node not in self.as_m2s_m:
                 self.as_m2s_m[node] = {}
-                #self.as_m2s_m[node][key] = [copy.deepcopy(s["option"]), 0.]
+                self.as_m2s_m[node][key] = [copy.deepcopy(s["option"]), 0.]
 
         if sample is not None:
 
@@ -34,11 +34,22 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
 
             if node1 not in self.as_m2s_m:
                 self.as_m2s_m[node1] = {}
-                #self.as_m2s_m[node1][key1] = [copy.deepcopy(sample[0]["option"]), 0.]
+                self.as_m2s_m[node1][key1] = [copy.deepcopy(sample[0]["option"]), 0.]
 
             if node2 not in self.as_m2s_m:
                 self.as_m2s_m[node2] = {}
-                #self.as_m2s_m[node2][key2] = [copy.deepcopy(sample[3]["option"]), 0.]
+                self.as_m2s_m[node2][key2] = [copy.deepcopy(sample[3]["option"]), 0.]
+
+    def max_values_dictionary(self, sampleDict):
+        # Find item with Max Value in Dictionary
+        itemMaxValue = max(sampleDict.items(), key=lambda x: x[1][1])
+        listOfValues = list()
+        # Iterate over all the items in dictionary to find the values
+        for key, value in sampleDict.items():
+            if value[1] == itemMaxValue[1][1]:
+                listOfValues.append(value[0])
+
+        return listOfValues
 
     def act(self, s):
 
@@ -73,7 +84,17 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
         #for option in self.options:
         #    print(option, len(option.get_edge_list()))#, option.get_edge_list())
 
-        return self.best_option_action.act(s["option"])
+        if self.target is not None:
+            start = None    # None for now!!
+        else:
+            start = None
+
+        if self.target is not None:
+            goal = self.max_values_dictionary(self.as_m2s_m[self.target])[0]
+        else:
+            goal = None
+
+        return self.best_option_action.act([s["option"], start, goal])
 
     def update_option(self, sample):
 
@@ -91,6 +112,16 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
         s_m = Node(sample[0]["manager"], 0)
         s_m_ = Node(sample[3]["manager"], 0)
 
+        if self.target is not None:
+            start = None    # None for now!!
+        else:
+            start = None
+
+        if self.target is not None:
+            goal = self.max_values_dictionary(self.as_m2s_m[self.target])[0]
+        else:
+            goal = None
+
         if s_m != s_m_:
             if self.target is not None:
                 if s_m_ == self.target:
@@ -106,7 +137,7 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
                         r_h_c = self.as_m2s_m[s_m][KeyDict(s_)][1]
 
                 else:
-                    r += self.wrong_end_option_reward
+                    r = self.wrong_end_option_reward
                     done = True
 
                     if r < -1:
@@ -116,11 +147,10 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
 
                     if r_h_c < -1:
                         r_h_c = -1
-
-        print(r_h_c)
+        # print(r_h_c)
 
         # here u should take the old episode reward for that state
-        self.best_option_action.observe((s, a, r_h_c, s_, done, info))
+        self.best_option_action.observe((s, a, r_h_c, s_, done, info, start, goal))
 
         self.heuristic_reward.append(self.counter_as)
         self.samples.append((s, a, r, s_, done, info, s_m, s_m_))
@@ -145,7 +175,11 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
                         if KeyDict(s_) not in (self.as_m2s_m[s_m]):
                             self.as_m2s_m[s_m][KeyDict(s_)] = [copy.deepcopy(s_), r]
                         else:
-                            self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.8 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.2 * r
+
+                            if self.as_m2s_m[s_m][KeyDict(s_)][1] < self.correct_option_end_reward:
+                                self.as_m2s_m[s_m][KeyDict(s_)][1] = r
+                            else:
+                                self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.8 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.2 * r
 
                     #option.observe_imitation((s, a, r, s_, done, info))
 
@@ -174,7 +208,11 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
                     if KeyDict(s_) not in (self.as_m2s_m[s_m]):
                         self.as_m2s_m[s_m][KeyDict(s_)] = [copy.deepcopy(s_), r]
                     else:
-                        self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.8 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.2 * r
+
+                        if self.as_m2s_m[s_m][KeyDict(s_)][1] < self.correct_option_end_reward:
+                            self.as_m2s_m[s_m][KeyDict(s_)][1] = r
+                        else:
+                            self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.8 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.2 * r
 
                 #option.observe_imitation((s, a, r, s_, done, info))
 

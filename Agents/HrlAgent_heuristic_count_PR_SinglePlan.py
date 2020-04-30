@@ -6,7 +6,7 @@ import math
 import copy
 import numpy as np
 
-class HrlAgent_heuristic_count_PR(HrlAgent):
+class HrlAgent_heuristic_count_PR_SinglePlan(HrlAgent):
 
     options_executed_episode = []
     heuristic_reward = []
@@ -54,24 +54,22 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
             self.distances_2_print.append(distances)
             self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
 
-            # print(self.current_node, node)
-            # print(self.best_option_action, self.best_edge)
-            # print()
-            # print()
+        if type(self.best_option_action) == type(self.exploration_option):
+            if self.current_node != node:
+                self.current_node = self.graph.get_current_node()
+                distances = self.graph.find_distances(self.current_node)
+                self.distances_2_print.append(distances)
+                self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
 
-        elif self.current_node != node:
-            self.current_node = self.graph.get_current_node()
-            distances = self.graph.find_distances(self.current_node)
-            self.distances_2_print.append(distances)
-            self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
+        else:
+            if self.current_node != node:
+                self.current_node = self.graph.get_current_node()
 
-            # print(self.current_node, node)
-            # print(self.best_option_action, self.best_edge)
-            # print()
-            # print()
-
-        #for option in self.options:
-        #    print(option, len(option.get_edge_list()))#, option.get_edge_list())
+            if self.target == node:
+                self.current_node = self.graph.get_current_node()
+                distances = self.graph.find_distances(self.current_node)
+                self.distances_2_print.append(distances)
+                self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
 
         return self.best_option_action.act(s["option"])
 
@@ -105,19 +103,20 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
                     else:
                         r_h_c = self.as_m2s_m[s_m][KeyDict(s_)][1]
 
-                else:
-                    r += self.wrong_end_option_reward
-                    done = True
+                    if r_h_c > (self.correct_option_end_reward + weight_heuristic_reward):
+                        r_h_c = self.correct_option_end_reward
 
-                    if r < -1:
-                        r = -1
-
-                    r_h_c += self.wrong_end_option_reward
-
-                    if r_h_c < -1:
-                        r_h_c = -1
-
-        print(r_h_c)
+                # else:
+                #     r += self.wrong_end_option_reward
+                #     done = True
+                #
+                #     if r < -1:
+                #         r = -1
+                #
+                #     r_h_c += self.wrong_end_option_reward
+                #
+                #     if r_h_c < -1:
+                #         r_h_c = -1
 
         # here u should take the old episode reward for that state
         self.best_option_action.observe((s, a, r_h_c, s_, done, info))

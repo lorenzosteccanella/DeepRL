@@ -1,11 +1,12 @@
-from Agents import GoalHrlAgent, GoalHrlAgent_heuristic_count_PR, RandomAgentOption, GoalA2COption, GoalHrlAgentSinglePlan
+from Agents import GoalHrlAgent, HrlAgent_heuristic_count_PR, RandomAgentOption, A2COption, GoalHrlAgentSinglePlan, \
+    GoalA2COption, GoalHrlAgent_heuristic_count_PR, GoalHrlAgent_heuristic_count_PR_SinglePlan, GoalA2CSILOption
 import gym
 import tensorflow as tf
 import os
 from Environment import Environment
-from Wrappers_Env import Montezuma_position_wrapper_only_1key
+from Wrappers_Env import XL_Position_observation_wrapper
 from Utils import ToolEpsilonDecayExploration, Preprocessing
-from Models.GoalA2CnetworksEager import *
+from Models.GoalA2CSILnetworksEager import *
 from Utils import SaveResult
 from Utils.HrlExplorationStrategies import get_best_action, get_epsilon_best_action, get_epsilon_exploration, get_epsilon_count_exploration
 import gridenvs.examples
@@ -20,24 +21,25 @@ class variables():
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
         self.seeds = range(1)
-        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  Montezuma_POSITION_1/')
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  heuristic_count_TEST_A2C_POSITION_XL/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
-        self.FILE_NAME = 'Position_Montezuma'
-        self.NUMBER_OF_EPOCHS = 3000
+        self.FILE_NAME = 'Position_XL_A2C_HRL_E_GREEDY'
+        self.NUMBER_OF_EPOCHS = 10000
 
         self.multi_processing = False
 
-        self.PROBLEM = 'MontezumaRevenge-ram-v0'
+        self.PROBLEM = 'GE_MazeKeyDoorXL-v0'
         environment = gym.make(self.PROBLEM)
 
-        self.ACTION_SPACE = list(range(0, environment.action_space.n))
+        self.ACTION_SPACE = [1, 2, 3, 4]
 
         self.wrapper_params = {
-            "stack_images_length": 1,
-            "n_zones": 10
+            "width": 30,
+            "height": 30,
+            "n_zones": 8
         }
 
-        self.wrapper = Montezuma_position_wrapper_only_1key(environment, self.wrapper_params)
+        self.wrapper = XL_Position_observation_wrapper(environment, self.wrapper_params)
 
         display_env = True
 
@@ -55,7 +57,7 @@ class variables():
         # Just to be sure that we don't have some others graph loaded
         tf.reset_default_graph()
 
-        # self.shared_conv_layers = SharedDenseLayers(1)
+        # self.shared_conv_layers = SharedDenseLayers(0.05)
         # self.goal_net_start = False #SharedGoalModel(32, 1)
         # self.goal_net_goal = self.shared_conv_layers #SharedGoalModel(32, 1)
         # self.critic = CriticNetwork(32)
@@ -65,7 +67,7 @@ class variables():
 
         self.option_params = {
             "option": GoalA2COption,
-            "h_size": 256,
+            "h_size": 64,
             "action_space": self.ACTION_SPACE,
             "critic_network": GoalCriticNetwork,
             "actor_network": GoalActorNetwork,
@@ -95,9 +97,9 @@ class variables():
 
         self.single_option = self.option_params["option"](self.option_params)
 
-        self.agent = GoalHrlAgentSinglePlan(self.option_params, self.random_agent, self.exploration_fn,
+        self.agent = GoalHrlAgent_heuristic_count_PR(self.option_params, self.random_agent, self.exploration_fn,
                                                      self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1,
-                                                     self.SAVE_RESULT, False, False, self.single_option)
+                                                     self.SAVE_RESULT, False, False, False)#self.single_option)
 
 
 

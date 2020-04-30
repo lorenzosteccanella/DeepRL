@@ -84,32 +84,6 @@ class HrlAgent(AbstractAgent):
         self.w_o = {}
         self.old_edge = None
 
-    def pixel_manager_obs(self, s = None, sample = None):
-        if s is not None:
-            s = copy.deepcopy(s)
-            node = Node(s["manager"], 0)
-            key = KeyDict(s["option"])
-
-            if node not in self.as_m2s_m:
-                self.as_m2s_m[node] = {}
-                #self.as_m2s_m[node][key] = [copy.deepcopy(s["option"]), 0.]
-
-        if sample is not None:
-
-            sample = copy.deepcopy(sample)
-            node1 = Node(sample[0]["manager"], 0)
-            node2 = Node(sample[3]["manager"], 0)
-            key1 = KeyDict(sample[0]["option"])
-            key2 = KeyDict(sample[3]["option"])
-
-            if node1 not in self.as_m2s_m:
-                self.as_m2s_m[node1] = {}
-                #self.as_m2s_m[node1][key1] = [copy.deepcopy(sample[0]["option"]), 0.]
-
-            if node2 not in self.as_m2s_m:
-                self.as_m2s_m[node2] = {}
-                #self.as_m2s_m[node2][key2] = [copy.deepcopy(sample[3]["option"]), 0.]
-
     def act(self, s):
         node = Node(s["manager"], 0)
         self.graph.node_update(node)
@@ -248,9 +222,11 @@ class HrlAgent(AbstractAgent):
 
         self.reward_manager += sample[2]
 
-        s = Node(sample[0]["manager"], 0)
-        r = self.reward_manager
-        s_ = Node(sample[3]["manager"], 0)
+        #beta = 1  # hyperparameter for pseudo count!!
+
+        s = self.graph.get_node(sample[0]["manager"])
+        r = self.reward_manager #+ (beta / math.sqrt(s.visit_count))
+        s_ = self.graph.get_node(sample[3]["manager"])
         a = Edge(s, s_)
         done = sample[4]
         info = sample[5]

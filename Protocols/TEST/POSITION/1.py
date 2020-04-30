@@ -1,11 +1,12 @@
-from Agents import HrlAgent, HrlAgent_heuristic_count_PR, RandomAgentOption, A2COption, A2CSILOption
+from Agents import GoalHrlAgent, GoalHrlAgent_heuristic_count_PR, RandomAgentOption, GoalA2COption, \
+    GoalHrlAgentSinglePlan, HrlAgent_heuristic_count_PR
 import gym
 import tensorflow as tf
 import os
 from Environment import Environment
 from Wrappers_Env import Position_observation_wrapper
 from Utils import ToolEpsilonDecayExploration, Preprocessing
-from Models.A2CnetworksEager import *
+from Models.GoalA2CnetworksEager import *
 from Utils import SaveResult
 from Utils.HrlExplorationStrategies import get_best_action, get_epsilon_best_action, get_epsilon_exploration, get_epsilon_count_exploration
 import gridenvs.examples
@@ -65,11 +66,11 @@ class variables():
         preprocessing = None #Preprocessing(84, 84, 3, self.number_of_stacked_frames, False)
 
         self.option_params = {
-            "option": A2CSILOption,
+            "option": GoalA2COption,
             "h_size": 64,
             "action_space": self.ACTION_SPACE,
-            "critic_network": CriticNetwork,
-            "actor_network": ActorNetwork,
+            "critic_network": GoalCriticNetwork,
+            "actor_network": GoalActorNetwork,
             "shared_representation": None,
             "weight_mse": 0.5,
             "weight_ce_exploration": 0.01,#.01,#.01,
@@ -94,11 +95,11 @@ class variables():
         # to know in how many episodes the epsilon will decay
         ToolEpsilonDecayExploration.epsilon_decay_end_steps(self.MIN_EPSILON, self.LAMBDA)
 
-        #self.single_option = self.option_params["option"](self.option_params)
+        self.single_option = self.option_params["option"](self.option_params)
 
-        self.agent = HrlAgent_heuristic_count_PR(self.option_params, self.random_agent, self.exploration_fn,
+        self.agent = GoalHrlAgent_heuristic_count_PR(self.option_params, self.random_agent, self.exploration_fn,
                                                      self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1,
-                                                     self.SAVE_RESULT, False, False, False) #self.single_option)
+                                                     self.SAVE_RESULT, False, False, False)#self.single_option)
 
 
 
