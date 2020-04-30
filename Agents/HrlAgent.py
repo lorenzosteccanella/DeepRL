@@ -10,27 +10,37 @@ import copy
 
 class HrlAgent(AbstractAgent):
 
+    """
+    The main Hierarchical Class
+    """
+
     manager_exp = 0
 
-    epsilon = 1
+    def __init__(self, option_params, exploration_option, exploration_fn, LAMBDA=1000, MIN_EPSILON=0,
+                 correct_option_end_reward=1.1, wrong_option_end_reward=-1.1, SaveResult = False):
 
-    def __init__(self, option_params, exploration_option, exploration_fn, pseudo_count_exploration = 1000, LAMBDA=1000, MIN_EPSILON=0, correct_option_end_reward=1.1, wrong_option_end_reward=-1.1, SaveResult = False, graph=False, options_list=False, single_option=False, as_m2s_m=False):
+        """
+        __init__
+
+        Args:
+            option_params : all the attributes needed to create an option. i.e. and A2Coption
+            exploration_option : an instance of an exploration option to perform random exploration
+            exploration_fn : an instance of an exploration function, that determines how the manager choose the option to execute i.e. epsilon-greedy
+            LAMBDA: parameter for exploration
+            MIN_EPSILON: parameter for exploration
+            correct_option_end_reward: the positive value we use to augment the reward in case the option ended correctly
+            wrong_option_end_reward: the negative value we use to augment the reward in case the option ended badly
+            SaveResult: an instance used to save statistics of performance
+        """
 
         self.option_params = option_params
-
         self.action_space = option_params["action_space"]
-
         self.save_result = SaveResult
-
-        if graph is False:
-            self.graph = Graph(save_results = self.save_result)
-        else:
-            self.graph = graph
+        self.graph = Graph(save_results = self.save_result)
 
         #exploration variables
         self.MIN_EPSILON = MIN_EPSILON
         self.LAMBDA = LAMBDA
-
 
         # variables to keep statistics of the execution
         self.number_of_options_executed = 1
@@ -47,58 +57,44 @@ class HrlAgent(AbstractAgent):
         self.old_edge = None
         self.n_steps = 0
         self.n_episodes = 0
-        self.samples_imitation = []
 
+        # variables for manager
         self.best_option_action = None
-        self.precomputed_option_action = None
         self.best_edge = None
         self.current_node = None
-        self.exploration_option = exploration_option
-        if options_list is False:
-            self.options = []
-        else:
-            self.options = options_list
-
-        self.single_option = single_option
-
-        #if single_option is not False:
-        #    self.single_option = self.option_params["option"](self.option_params)
-        #else:
-        #    self.single_option = single_option
-
         self.target = None
-
-        self.correct_option_end_reward = correct_option_end_reward
-        self.wrong_end_option_reward = wrong_option_end_reward
-
+        self.reward_manager = 0.
         HrlAgent.exploration_fn = exploration_fn
 
-        self.pseudo_count_exploration(pseudo_count_exploration)
+        # variables for options
+        self.correct_option_end_reward = correct_option_end_reward
+        self.wrong_end_option_reward = wrong_option_end_reward
+        self.options = []
+        self.exploration_option = exploration_option
         self.epsilon_count_exploration(self.LAMBDA, self.MIN_EPSILON)
-        self.reward_manager = 0.
-        if as_m2s_m is False:
-            self.as_m2s_m = {}
-        else:
-            self.as_m2s_m = as_m2s_m
-
-        self.w_o = {}
-        self.old_edge = None
+        self.options = {}
 
     def act(self, s):
+        """
+        act of the manager takes an environment obs "s" in input and choose the option to perform based
+        on the exploration function "exploration_fn"
+
+        Args:
+            s : the observation from the environment
+
+        Returns:
+            returns the option to perform
+        """
+
         node = Node(s["manager"], 0)
         self.graph.node_update(node)
-        # if structure to reduce computation cost
 
+        # if structure to reduce computation cost
         if self.current_node is None:
             self.current_node = self.graph.get_current_node()
             distances = self.graph.find_distances(self.current_node)
             self.distances_2_print.append(distances)
             self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
-
-            # print(self.current_node, node)
-            # print(self.best_option_action, self.best_edge)
-            # print()
-            # print()
 
         elif self.current_node != node:
             self.current_node = self.graph.get_current_node()
@@ -106,32 +102,35 @@ class HrlAgent(AbstractAgent):
             self.distances_2_print.append(distances)
             self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
 
-            # print(self.current_node, node)
-            # print(self.best_option_action, self.best_edge)
-            # print()
-            # print()
-
-        #for option in self.options:
-        #    print(option, len(option.get_edge_list()))#, option.get_edge_list())
-
         return self.best_option_action.act(s["option"])
 
-    def pseudo_count_exploration(self, pseudo_count_factor):
-        Edge.set_pseudo_count(pseudo_count_factor)
-
     def epsilon_count_exploration(self, LAMBDA, min_epsilon=0):
+        """
+        set the epsilon count exploration static variables in Node class
+
+        Args:
+            LAMBDA : value for exploration
+            min_epsilon : min exploration prob
+        """
         Node.set_lambda_node(LAMBDA, min_epsilon)
 
     def get_option(self, edge):
-        if edge not in self.w_o:
-            if self.single_option is not False:
-                self.w_o[edge] = self.single_option
-            else:
-                self.w_o[edge] = self.option_params["option"](self.option_params)
+        """
+        create a new option for every edge encountered used by "exploration_fn"
 
-        return self.w_o[edge]
+        Args:
+            edge: the edge "exploration_fn" decided to perform
+        """
+        if edge not in self.options:
+            self.options[edge] = self.option_params["option"](self.option_params)
+
+        return self.options[edge]
 
     def save_statistics(self):
+
+        """
+        just statistics of the run
+        """
 
         if self.number_of_options_executed % 1000 == 0 and self.old_number_of_options != self.number_of_options_executed:
             if self.save_result is not False:
@@ -193,6 +192,14 @@ class HrlAgent(AbstractAgent):
                 plt.close()
 
     def update_option(self, sample):
+
+        """
+        this is the function that updates the option
+
+        Args:
+            sample: a (s, a, r, s', done, info) tuple to train the option on
+        """
+
         s = sample[0]["option"]
         a = sample[1]
         r = sample[2]
@@ -200,58 +207,55 @@ class HrlAgent(AbstractAgent):
         done = sample[4]
         info = sample[5]
 
-        s_m = Node(sample[0]["manager"], 0)
-        s_m_ = Node(sample[3]["manager"], 0)
+        s_m = Node(sample[0]["manager"], 0)                             # the manager abstract state
+        s_m_ = Node(sample[3]["manager"], 0)                            # the manager abstract state at time t+1
 
-        if s_m != s_m_:
-            if self.target is not None:
-                if s_m_ == self.target:
+        if s_m != s_m_:                                                 # if we are at the transitioning from an abstract state to another
+            if self.target is not None:                                 # if we are using a real option and not an exploration option
+                if s_m_ == self.target:                                 # if we reached the new abstract state successfully
+                    r += self.correct_option_end_reward                 # we augment the reward with the correct option end reward
+                    done = True                                         # we set done to True the option has finished
 
-                    r += self.correct_option_end_reward
-                    done = True
-
-                else:
-                    r += self.wrong_end_option_reward
-                    if r < -1:
+                else:                                                   # we didn't finish in the abstract state the manager told us
+                    r += self.wrong_end_option_reward                   # we augment the reward with the wrong_option_end reward
+                    if r < -1:                                          # this is just to clip the negative value to -1
                         r = -1
-                    done = True
+                    done = True                                         # the option ended
 
-        self.best_option_action.observe((s, a, r, s_, done, info))
+        self.best_option_action.observe((s, a, r, s_, done, info))      # here we train the option selected on this experience
 
     def update_manager(self, sample):
 
-        self.reward_manager += sample[2]
+        """
+        this is the function that updates the manager
 
-        #beta = 1  # hyperparameter for pseudo count!!
+        Args:
+            sample: a (s, a, r, s', done, info) tuple to train the manager on
+        """
 
-        s = self.graph.get_node(sample[0]["manager"])
-        r = self.reward_manager #+ (beta / math.sqrt(s.visit_count))
-        s_ = self.graph.get_node(sample[3]["manager"])
-        a = Edge(s, s_)
-        done = sample[4]
+        self.reward_manager += sample[2]                                # here we keep a sum of all the reward collected in these abstract state
+        s = self.graph.get_node(sample[0]["manager"])                   # the abstract state
+        r = self.reward_manager                                         # the reward of the manager
+        s_ = self.graph.get_node(sample[3]["manager"])                  # the abstact state at time t+1
+        a = Edge(s, s_)                                                 # the Edge i'm in, this is a trick to define the edge I executed as always the wanted one, even when I'm ending in wrong abstract state
+        done = sample[4]                                                # the done returned from the environment
         info = sample[5]
-
-        right_termination_option = False
 
         if s != s_:
             if a is not None:
-                #if s_ == self.target:
-                    #self.graph.tabularQ((s, a, r, s_, done, info))
-                    #self.graph.WatkinsQ((s, a, r, s_, done, info), self.exploration_fn)
-                right_termination_option = True
-
-                self.graph.tabularMC((s, a, r, s_, done, right_termination_option))
-
+                self.graph.tabularMC((s, a, r, s_, done, True))
             self.reward_manager = 0
 
         if done:
             self.reward_manager = 0
 
-    def has_method(self, o, name):
-        return callable(getattr(o, name, None))
-
     def statistics_options(self, sample):
+        """
+        just to keep statistics of options
 
+        Args:
+            sample: a (s, a, r, s', done, info)
+        """
         edge = self.best_edge
         s_m = Node(sample[0]["manager"], 0)
         s_m_ = Node(sample[3]["manager"], 0)
@@ -288,38 +292,35 @@ class HrlAgent(AbstractAgent):
 
                 self.count_edges[str(edge)][0] += 1
 
-                if (self.has_method(self.best_option_action, 'get_ce_loss')):
-
-                    ce_loss = self.best_option_action.get_ce_loss()
-
-                    if ce_loss is not None:
-                        self.entropy_edges[str(edge)].append(ce_loss)
-
         self.save_statistics()
 
-    def observe(self, sample):  # in (s, a, r, s_, done, info) format
+    def observe(self, sample):
 
+        """
+        this is the function called from Environment that call updated manager and update option and updates the Graph
+
+        Args:
+            sample: a (s, a, r, s', done, info) tuple
+        """
+
+        # just statistics for performance
         self.n_steps += 1
         self.total_r += sample[2]
 
+        # just statistics for performance
         if sample[4]:
             self.total_r_2_print.append(self.total_r)
             self.total_r = 0
 
-        self.graph.abstract_state_discovery(sample, self.target)
+        self.graph.abstract_state_discovery(sample, self.target)           # the function that update the graph
+        self.update_option(sample)                                         # update option
+        self.update_manager(sample)                                        # update manager
+        self.statistics_options(sample)                                    # update performance statistics
 
-        self.update_option(sample)
-
-        self.update_manager(sample)
-
-        self.statistics_options(sample)
-
-        # slowly decrease Epsilon based on manager experience
-        if not self.equal(sample[0]["manager"], sample[3]["manager"]):
+        if not self.equal(sample[0]["manager"], sample[3]["manager"]):     # count number of steps of manager level time
             self.manager_exp += 1
-            self.epsilon = self.MIN_EPSILON + (1 - self.MIN_EPSILON) * math.exp(-self.LAMBDA * self.manager_exp)
 
-        if sample[4]:
+        if sample[4]:                                                      # if we are at the end of the episode
             self.current_node = None
             self.best_edge = None
             self.target = None
@@ -327,13 +328,20 @@ class HrlAgent(AbstractAgent):
 
         return self.n_steps, self.n_episodes
 
-    def replay(self):
+    def replay(self):                                                       # just needed for the Environment doesn't do nothing
         pass
 
-    def reset_exploration(self):
-        self.manager_exp = 0
-
     def equal(self, a, b):
+
+
+        """
+        this is the function that define equality depending on the type I'm passing in
+
+        Args:
+            a : first element
+            b : second element
+        """
+
         if type(a).__name__ == "ndarray":
             return np.array_equal(a, b)
         else:

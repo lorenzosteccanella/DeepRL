@@ -1,5 +1,4 @@
 import scipy.misc
-from Utils.SumTree import SumTree
 import random
 import matplotlib.pyplot as plt
 import pickle
@@ -142,83 +141,6 @@ class ExperienceReplay:
 
     def update(self, idx, error):
         None
-
-#  Slightly modified from https://github.com/jaromiru
-class PrioritizedExperienceReplay:  # stored as ( s, a, r, s_ ) in SumTree
-
-    e = 0.01
-    a = 0.6
-
-    absolute_error_upper = 1.
-
-    PER_b = 0.1  # importance-sampling, from initial value increasing to 1
-
-    PER_b_increment_per_sampling = 0.001
-
-    def __init__(self, capacity):
-        self.tree = SumTree(capacity)
-
-    def _get_priority(self, error):
-        return (error + self.e) ** self.a
-
-    def add(self, sample):  # removed error argument, to new experience we give always the max
-        #p = self._get_priority(error)
-        #self.tree.add(p, sample)
-
-        max_priority = np.max(self.tree.tree[-self.tree.capacity:])
-
-        if max_priority == 0:
-            max_priority = self.absolute_error_upper
-
-        self.tree.add(max_priority, sample)  # set the max p for new p
-
-    def sample(self, n):
-
-        # Create a sample array that will contains the minibatch
-        batch = []
-
-        b_ISWeights = np.empty((n, 1), dtype=np.float32)
-
-        # Calculate the priority segment
-        # Here, as explained in the paper, we divide the Range[0, ptotal] into n ranges
-        priority_segment = self.tree.total() / n  # priority segment
-
-        # Here we increasing the PER_b each time we sample a new minibatch
-        self.PER_b = np.min([1., self.PER_b + self.PER_b_increment_per_sampling])  # max = 1
-
-        # Calculating the max_weight
-        p_min = np.min(self.tree.tree[-self.tree.capacity:][:self.tree.occupancy]) / self.tree.total()
-        max_weight = (p_min * n) ** (-self.PER_b)
-
-        for i in range(n):
-            """
-            A value is uniformly sample from each range
-            """
-            a, b = priority_segment * i, priority_segment * (i + 1)
-            value = np.random.uniform(a, b)
-
-            """
-            Experience that correspond to each value is retrieved
-            """
-            index, priority, data = self.tree.get(value)
-
-            # P(j)
-            sampling_probabilities = priority / self.tree.total()
-
-            #  IS = (1/N * 1/P(i))**b /max wi == (N*P(i))**-b  /max wi
-            b_ISWeights[i, 0] = np.power(n * sampling_probabilities, -self.PER_b) / max_weight
-            batch.append((index, data))
-
-        return batch, b_ISWeights
-
-    def update(self, idx, error):
-        clipped_errors = min(error, self.absolute_error_upper)  # clipping the error is this right?
-        p = self._get_priority(clipped_errors)
-        self.tree.update(idx, p)
-
-    def buffer_len(self):
-        return self.tree.occupancy
-
 
 class AnaliseResults:
 

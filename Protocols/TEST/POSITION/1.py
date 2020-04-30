@@ -1,14 +1,12 @@
-from Agents import GoalHrlAgent, GoalHrlAgent_heuristic_count_PR, RandomAgentOption, GoalA2COption, \
-    GoalHrlAgentSinglePlan, HrlAgent_heuristic_count_PR
+from Agents import HrlAgent, HrlAgent_heuristic_count_PR, RandomAgentOption, A2COption
 import gym
 import tensorflow as tf
 import os
 from Environment import Environment
 from Wrappers_Env import Position_observation_wrapper
-from Utils import ToolEpsilonDecayExploration, Preprocessing
-from Models.GoalA2CnetworksEager import *
+from Models.A2CnetworksEager import *
 from Utils import SaveResult
-from Utils.HrlExplorationStrategies import get_best_action, get_epsilon_best_action, get_epsilon_exploration, get_epsilon_count_exploration
+from Utils.HrlExplorationStrategies import get_epsilon_count_exploration
 import gridenvs.examples
 
 class variables():
@@ -18,7 +16,7 @@ class variables():
         tf.enable_eager_execution()
 
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
-        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # to train on CPU
 
         self.seeds = range(1)
         self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  heuristic_count_TEST_GOAL_A2C_POSITION_1/')
@@ -31,7 +29,7 @@ class variables():
         self.PROBLEM = 'GE_MazeKeyDoor-v10'
         environment = gym.make(self.PROBLEM)
 
-        self.ACTION_SPACE = [1, 2, 3, 4]
+        self.ACTION_SPACE = [0, 1, 2, 3, 4]
 
         self.wrapper_params = {
             "width": 10,
@@ -57,20 +55,14 @@ class variables():
         # Just to be sure that we don't have some others graph loaded
         tf.reset_default_graph()
 
-        # self.shared_conv_layers = SharedDenseLayers(0.05)
-        # self.goal_net_start = False #SharedGoalModel(32, 1)
-        # self.goal_net_goal = self.shared_conv_layers #SharedGoalModel(32, 1)
-        # self.critic = CriticNetwork(32)
-        # self.actor = ActorNetwork(32, len(self.ACTION_SPACE))
-
-        preprocessing = None #Preprocessing(84, 84, 3, self.number_of_stacked_frames, False)
+        preprocessing = None
 
         self.option_params = {
-            "option": GoalA2COption,
+            "option": A2COption,
             "h_size": 64,
             "action_space": self.ACTION_SPACE,
-            "critic_network": GoalCriticNetwork,
-            "actor_network": GoalActorNetwork,
+            "critic_network": CriticNetwork,
+            "actor_network": ActorNetwork,
             "shared_representation": None,
             "weight_mse": 0.5,
             "weight_ce_exploration": 0.01,#.01,#.01,
@@ -80,26 +72,15 @@ class variables():
             "batch_size": 6,
             "steps_of_training": 1,
             "preprocessing": preprocessing,
-            "sil_weight_mse": 0.01,
-            "sil_batch_size": 64,
-            "imitation_buffer_size": 1000,
-            "imitation_learning_steps": 8
         }
 
         self.random_agent = RandomAgentOption(self.ACTION_SPACE)
         self.LAMBDA = 0.05
         self.MIN_EPSILON = 0
-        self.PSEUDO_COUNT = 1000
         self.exploration_fn = get_epsilon_count_exploration
 
-        # to know in how many episodes the epsilon will decay
-        ToolEpsilonDecayExploration.epsilon_decay_end_steps(self.MIN_EPSILON, self.LAMBDA)
-
-        self.single_option = self.option_params["option"](self.option_params)
-
-        self.agent = GoalHrlAgent_heuristic_count_PR(self.option_params, self.random_agent, self.exploration_fn,
-                                                     self.PSEUDO_COUNT, self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1,
-                                                     self.SAVE_RESULT, False, False, False)#self.single_option)
+        self.agent = HrlAgent_heuristic_count_PR(self.option_params, self.random_agent, self.exploration_fn,
+                                                 self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1, self.SAVE_RESULT)
 
 
 

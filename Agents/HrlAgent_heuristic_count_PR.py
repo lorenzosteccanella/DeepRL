@@ -8,82 +8,78 @@ import numpy as np
 
 class HrlAgent_heuristic_count_PR(HrlAgent):
 
-    options_executed_episode = []
-    heuristic_reward = []
-    as_visited = []
+    """
+    Inherits from HrlAgent, and augment HrlAgent class including a strategy for the end termination state
+    """
+
+    options_executed_episode = []     # a list just to keep in memory all the options executed
+    heuristic_reward = []             # a list to keep in memory all the heuristic count reward in the episode
+    as_visited = []                   # a list to include all the abstract state visited
     counter_as = 0
-    samples = []
+    samples = []                      # a list to collect the samples of the episode
+    as_m2s_m = {}                     # a dictinory to keep in memory for each abstract state all the possible ending state and relative values
 
     def pixel_manager_obs(self, s = None, sample = None):
+
+        """
+        a function to populate the dictionary "as_m2s_m" for each asbtract state we save all possible ending states
+
+        Args:
+            s : an abstract state
+            sample: a (s, a, r, s', done, info) tuple
+        """
+
         if s is not None:
             s = copy.deepcopy(s)
             node = Node(s["manager"], 0)
-            key = KeyDict(s["option"])
 
             if node not in self.as_m2s_m:
                 self.as_m2s_m[node] = {}
-                #self.as_m2s_m[node][key] = [copy.deepcopy(s["option"]), 0.]
 
         if sample is not None:
 
             sample = copy.deepcopy(sample)
             node1 = Node(sample[0]["manager"], 0)
             node2 = Node(sample[3]["manager"], 0)
-            key1 = KeyDict(sample[0]["option"])
-            key2 = KeyDict(sample[3]["option"])
 
             if node1 not in self.as_m2s_m:
                 self.as_m2s_m[node1] = {}
-                #self.as_m2s_m[node1][key1] = [copy.deepcopy(sample[0]["option"]), 0.]
 
             if node2 not in self.as_m2s_m:
                 self.as_m2s_m[node2] = {}
-                #self.as_m2s_m[node2][key2] = [copy.deepcopy(sample[3]["option"]), 0.]
 
     def act(self, s):
 
+        """
+        Overwrite of act HrlAgent to include pixel_manager_obs
+
+        Args:
+            s : the observation from the environment
+
+        Returns:
+            returns the option to perform
+        """
+
         self.pixel_manager_obs(s=s)
 
-        node = Node(s["manager"], 0)
-        self.graph.node_update(node)
-        # if structure to reduce computation cost
-
-        if self.current_node is None:
-            self.current_node = self.graph.get_current_node()
-            distances = self.graph.find_distances(self.current_node)
-            self.distances_2_print.append(distances)
-            self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
-
-            # print(self.current_node, node)
-            # print(self.best_option_action, self.best_edge)
-            # print()
-            # print()
-
-        elif self.current_node != node:
-            self.current_node = self.graph.get_current_node()
-            distances = self.graph.find_distances(self.current_node)
-            self.distances_2_print.append(distances)
-            self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
-
-            # print(self.current_node, node)
-            # print(self.best_option_action, self.best_edge)
-            # print()
-            # print()
-
-        #for option in self.options:
-        #    print(option, len(option.get_edge_list()))#, option.get_edge_list())
-
-        return self.best_option_action.act(s["option"])
+        return super().act(s)
 
     def update_option(self, sample):
 
-        max_d = 10
-        weight_heuristic_reward = 0.2
+        """
+        overwrite of update_option in HrlAgent now we include as well heuristic count pseudo reward
+
+        Args:
+            sample: a (s, a, r, s', done, info) tuple to train the option on
+        """
+
+        max_d = 10                                                      # max number of abstract states to reach we are interested in
+        weight_heuristic_reward = 0.2                                   # a weight value to decide how much the heuristic count reward value is worth
 
         s = sample[0]["option"]
         a = sample[1]
         r = sample[2]
-        r_h_c = sample[2]
+        r_h_c = sample[2]                                               # a reward based on heuristic count
         s_ = sample[3]["option"]
         done = sample[4]
         info = sample[5]
@@ -93,19 +89,18 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
 
         if s_m != s_m_:
             if self.target is not None:
-                if s_m_ == self.target:
-                    self.as_visited.append(s_m_)
-                    self.counter_as = len(set(self.as_visited)) # are we sure we should count here?
-                    #self.counter_as += 1
-                    r += self.correct_option_end_reward
-                    done = True
+                if s_m_ == self.target:                                 # if we ended correctly
+                    self.as_visited.append(s_m_)                        # we add the abstract state to the list of abstract statas reached
+                    self.counter_as = len(set(self.as_visited))         # we count how many singular abstract state we reached
+                    r += self.correct_option_end_reward                 # we augment the reward with the correct end reward
+                    done = True                                         # done is True we finished with the option
 
-                    if KeyDict(s_) not in (self.as_m2s_m[s_m]):
+                    if KeyDict(s_) not in (self.as_m2s_m[s_m]):         # we check if we are in ended state already encountered
                         r_h_c = r
-                    else:
+                    else:                                               # we already visited this ending state
                         r_h_c = self.as_m2s_m[s_m][KeyDict(s_)][1]
 
-                else:
+                else:                                                   # we endend wrongly
                     r += self.wrong_end_option_reward
                     done = True
 
@@ -117,16 +112,13 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
                     if r_h_c < -1:
                         r_h_c = -1
 
-        print(r_h_c)
-
-        # here u should take the old episode reward for that state
         self.best_option_action.observe((s, a, r_h_c, s_, done, info))
 
         self.heuristic_reward.append(self.counter_as)
         self.samples.append((s, a, r, s_, done, info, s_m, s_m_))
         self.options_executed_episode.append(self.best_option_action)
 
-        if self.counter_as >= max_d:
+        if self.counter_as >= max_d:                                   # if we reached the number of abstract state we are interested in we can start calculate the heuristic count pseudo reward
 
             rewards_h = [(min(element, max_d) / max_d) for element in self.heuristic_reward[::-1]]
 
@@ -147,8 +139,6 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
                         else:
                             self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.8 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.2 * r
 
-                    #option.observe_imitation((s, a, r, s_, done, info))
-
                     del self.samples[i]
                     del self.options_executed_episode[i]
                     del self.heuristic_reward[-(i+1)]
@@ -156,7 +146,7 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
                 else:
                     break
 
-        if sample[4]:
+        if sample[4]:                                                   # if we reached the end of episode we can start calculate the heuristic count pseudo reward
 
             rewards_h = [(min(element, max_d) / max_d) for element in self.heuristic_reward[::-1]]
 
@@ -170,13 +160,11 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
                 s_m = p_sample[6]
                 s_m_ = p_sample[7]
 
-                if done and r >= self.correct_option_end_reward:  # this means that we are at the correct end of an option
+                if done and r >= self.correct_option_end_reward:        # this means that we are at the correct end of an option
                     if KeyDict(s_) not in (self.as_m2s_m[s_m]):
                         self.as_m2s_m[s_m][KeyDict(s_)] = [copy.deepcopy(s_), r]
                     else:
                         self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.8 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.2 * r
-
-                #option.observe_imitation((s, a, r, s_, done, info))
 
             self.samples.clear()
             self.options_executed_episode.clear()
@@ -184,37 +172,18 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
             self.counter_as = 0
             self.heuristic_reward.clear()
 
-    def observe(self, sample):  # in (s, a, r, s_, done, info) format
+    def observe(self, sample):
+
+        """
+        Overwrite of HrlAgent observe to include pixel_manager_obs
+
+        Args:
+            sample: a (s, a, r, s', done, info) tuple
+        """
 
         self.pixel_manager_obs(sample=sample)
 
-        self.n_steps += 1
-        self.total_r += sample[2]
-
-        if sample[4]:
-            self.total_r_2_print.append(self.total_r)
-            self.total_r = 0
-
-        self.graph.abstract_state_discovery(sample, self.target)
-
-        self.update_option(sample)
-
-        self.update_manager(sample)
-
-        self.statistics_options(sample)
-
-        # slowly decrease Epsilon based on manager experience
-        if not self.equal(sample[0]["manager"], sample[3]["manager"]):
-            self.manager_exp += 1
-            self.epsilon = self.MIN_EPSILON + (1 - self.MIN_EPSILON) * math.exp(-self.LAMBDA * self.manager_exp)
-
-        if sample[4]:
-            self.current_node = None
-            self.best_edge = None
-            self.target = None
-            self.n_episodes += 1
-
-        return self.n_steps, self.n_episodes
+        return super().observe(sample)
 
 
 

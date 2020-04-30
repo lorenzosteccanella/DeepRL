@@ -3,13 +3,15 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 import warnings
+
 warnings.filterwarnings("ignore")
 plt.rcParams["figure.figsize"] = (20, 20)
-#plt.ion() # enable interactivity
-#plt.show()
-#fig = plt.figure() # make a figure
+
 
 class KeyDict:
+    """
+     A class that manages different types for a Dictionary, needed to get a correct hash depending on the type passed
+    """
 
     def __init__(self, s):
         self.s = s
@@ -33,39 +35,15 @@ class KeyDict:
             return hash(self.s)
 
 
-
-
-class Distances:
-
-    def __init__(self, node_list):
-        self.distances = {}
-        for node in node_list:
-            self.distances[node] = 0 # distances for all node setted to 0
-            edges = self.get_edges_of_a_node(node)
-            if (len(edges) == 0):
-                self.distances[node] = node.value
-
-    def update(self, graph):
-        for node in graph.node_list:
-            if node not in self.distances:
-                self.distances[node] = 0
-            edges = graph.get_edges_of_a_node(node)
-            if (len(edges) == 0):
-                self.distances[node] = node.value
-
 class Edge:
 
-    pseudo_count_factor = 1000
-
-    def __init__(self, origin, destination, value=0, edge_cost = 0):
+    def __init__(self, origin, destination, value=0):
 
         self.succes_execution_counter = 0
         self.origin = origin
-        self.visit_count = 1
         self.destination = destination
-        self.edge_cost = edge_cost
-        self.value = value + self.edge_cost
-        self.option = None
+        self.visit_count = 1
+        self.value = value
 
     def get_value(self):
         return self.value
@@ -77,19 +55,13 @@ class Edge:
         return self.destination
 
     def set_value(self, value):
-        self.value = value + self.edge_cost
+        self.value = value
 
     def visited(self):
         self.visit_count += 1
         self.value = self.value
 
-    def set_option(self, option):
-        self.option = option
-
-    def get_option(self):
-        return self.option
-
-    def update_succes_execution_counter(self, value):
+    def update_succes_execution_counter(self):
         self.succes_execution_counter += 1
 
     def __eq__(self, other):
@@ -105,13 +77,14 @@ class Edge:
                 return False
 
     def __repr__(self):
-        return "Edge ["+repr(self.origin) + ", " + repr(self.destination) + "]"
+        return "Edge [" + repr(self.origin) + ", " + repr(self.destination) + "]"
 
     def __str__(self):
         if type(self.origin.state).__name__ == "ndarray":
-            return "[" + str(hash(self.origin.state.tostring())) + ", " + str(hash(self.destination.state.tostring())) + "]"
+            return "[" + str(hash(self.origin.state.tostring())) + ", " + str(
+                hash(self.destination.state.tostring())) + "]"
         else:
-            return "["+str(self.origin.state) + ", " + str(self.destination.state) + "]"
+            return "[" + str(self.origin.state) + ", " + str(self.destination.state) + "]"
 
     def __hash__(self):
         if type(self.origin.state).__name__ == "ndarray":
@@ -119,13 +92,8 @@ class Edge:
         else:
             return hash((self.origin, self.destination))
 
-    @staticmethod
-    def set_pseudo_count(pseudo_count_factor):
-        Edge.pseudo_count_factor = pseudo_count_factor
-
 
 class Node:
-
     lambda_node = 1000
     min_epsilon = 0
 
@@ -154,7 +122,7 @@ class Node:
         return self.visit_count
 
     def reset_n_visits(self):
-        self.visit_count=1
+        self.visit_count = 1
 
     def __eq__(self, other):
         if type(self.state).__name__ == "ndarray":
@@ -164,15 +132,15 @@ class Node:
 
     def __repr__(self):
         if type(self.state).__name__ == "ndarray":
-            return "Node ["+str(hash(self.state.tostring()))+"]"
+            return "Node [" + str(hash(self.state.tostring())) + "]"
         else:
-            return "Node ["+str(self.state)+"]"
+            return "Node [" + str(self.state) + "]"
 
     def __str__(self):
         if type(self.state).__name__ == "ndarray":
             return "[" + str(hash(self.state.tostring())) + ", " + str(self.value) + ", " + str(self.visit_count) + "]"
         else:
-            return "["+str(self.state) + ", " + str(self.value)+", " + str(self.visit_count) + "]"
+            return "[" + str(self.state) + ", " + str(self.value) + ", " + str(self.visit_count) + "]"
 
     def __hash__(self):
         if type(self.state).__name__ == "ndarray":
@@ -188,7 +156,8 @@ class Node:
 
 class Graph:
 
-    def __init__(self, edge_list = list(), node_list = list(), Q = {}, E = {}, distances = {}, node_edges_dictionary = {}, destination_node_edges_dictionary = {}, save_results = False):
+    def __init__(self, edge_list=list(), node_list=list(), Q={}, E={}, distances={}, node_edges_dictionary={},
+                 destination_node_edges_dictionary={}, save_results=False):
         self.edge_list = edge_list
         self.node_list = node_list
         self.current_node = None
@@ -201,7 +170,7 @@ class Graph:
         self.distances = distances
         self.total_reward_node = 0
         self.total_reward_edge = 0
-        self.node_edges_dictionary = node_edges_dictionary # this is the graph representation with nodes as key and eges list as values, this structure is just used to speed up computation
+        self.node_edges_dictionary = node_edges_dictionary  # this is the graph representation with nodes as key and eges list as values, this structure is just used to speed up computation
         self.destination_node_edges_dictionary = destination_node_edges_dictionary
         self.node_dictionary = {}
         self.path = []
@@ -225,13 +194,13 @@ class Graph:
                     return maxQ
 
                 G = nx.MultiDiGraph()
-                edge_lab={}
+                edge_lab = {}
 
                 for node in self.node_list:
                     G.add_node((node))
 
                 for edge in self.edge_list:
-                    G.add_edge(edge.origin, edge.destination, weight= edge.value)
+                    G.add_edge(edge.origin, edge.destination, weight=edge.value)
                     edge_lab.update({(edge.origin, edge.destination): str(self.Q[edge.origin][edge])})
                 pos = nx.drawing.nx_agraph.graphviz_layout(G)
                 nx.draw(G, pos, edge_color='black', width=1, linewidths=1, connectionstyle='arc3, rad = 0.1', \
@@ -239,8 +208,10 @@ class Graph:
                         labels={node: (repr(node) + "\n" + str(round(V(node), 5))) for node in G.nodes()})
 
                 nx.draw_networkx_nodes(G, pos, nodelist=[(root)], node_color='y', alpha=1)
-                nx.draw_networkx_edge_labels(G, pos, connectionstyle='arc3, rad = 0.1', edge_labels = edge_lab, font_color='red', label_pos=0.3)
-                nx.draw_networkx_edges(G, pos, connectionstyle='arc3, rad = 0.1', edgelist=route, edge_color='g', width=5)
+                nx.draw_networkx_edge_labels(G, pos, connectionstyle='arc3, rad = 0.1', edge_labels=edge_lab,
+                                             font_color='red', label_pos=0.3)
+                nx.draw_networkx_edges(G, pos, connectionstyle='arc3, rad = 0.1', edgelist=route, edge_color='g',
+                                       width=5)
 
                 plt.draw()
                 plt.savefig(self.save_results.get_path() + "/Graph.png", format="PNG")
@@ -261,7 +232,8 @@ class Graph:
                 edge.set_value(self.total_reward_edge)
                 self.edge_list.append(edge)
                 self.node_edges_dictionary[old_node].append(edge)
-                self.destination_node_edges_dictionary[new_node].append(edge)  # this structure is just to speed up at the cost of memory
+                self.destination_node_edges_dictionary[new_node].append(
+                    edge)  # this structure is just to speed up at the cost of memory
                 a_q_s = {edge: edge.value}
                 self.Q[old_node].update(a_q_s)
                 a_e_s = {edge: 0}
@@ -280,8 +252,6 @@ class Graph:
         elif target is not None:
             self.total_reward_edge += reward
 
-
-
     def node_update(self, old_node, new_node=False, reward=False, done=False):
 
         self.new_node_encontered = False
@@ -292,7 +262,8 @@ class Graph:
             self.node_dictionary[old_node] = old_node
             self.new_node_encontered = True
             self.node_edges_dictionary[old_node] = []
-            self.destination_node_edges_dictionary[old_node] = [] # this structure is just to speed up at the cost of memory
+            self.destination_node_edges_dictionary[
+                old_node] = []  # this structure is just to speed up at the cost of memory
             self.Q[old_node] = {}
             self.E[old_node] = {}
 
@@ -302,25 +273,22 @@ class Graph:
                 self.node_dictionary[new_node] = new_node
                 self.new_node_encontered = True
                 self.node_edges_dictionary[new_node] = []
-                self.destination_node_edges_dictionary[new_node] = [] # this structure is just to speed up at the cost of memory
+                self.destination_node_edges_dictionary[
+                    new_node] = []  # this structure is just to speed up at the cost of memory
                 self.Q[new_node] = {}
                 self.E[new_node] = {}
 
-        #setting the value for the specific abstract node
-        if new_node: # if we recived the new node together with the old node as parameters
+        # setting the value for the specific abstract node
+        if new_node:  # if we recived the new node together with the old node as parameters
             node = self.node_dictionary[new_node]
 
-        #this is just used to add the first abstract state at the beginning of a epoch
-        else: # if we recived just the old node as parameter i.e. new_node = False and reward = False
+        # this is just used to add the first abstract state at the beginning of a epoch
+        else:  # if we recived just the old node as parameter i.e. new_node = False and reward = False
             node = self.node_dictionary[old_node]
 
         if new_node:
             if old_node != new_node:
-                node.visited() # to augment the visit counter
-
-        #else:
-        #    node.visited()
-
+                node.visited()  # to augment the visit counter
 
         self.current_node = node
 
@@ -344,8 +312,6 @@ class Graph:
             self.total_reward_edge = 0
             self.current_edge = None
             self.current_node = None
-            #self.print_edge_list()
-            #self.print_networkx_graph()
 
         return self.new_node_encontered, self.new_edge_encontered
 
@@ -359,18 +325,14 @@ class Graph:
 
     def string_node_list(self):
         string = ""
-
         for node in self.node_list:
             string += node.__str__() + "\n"
-
         return string
 
     def string_edge_list(self):
         string = ""
-
         for edge in self.edge_list:
             string += edge.__str__() + "\n"
-
         return string
 
     def get_number_of_nodes(self):
@@ -409,7 +371,6 @@ class Graph:
         if len(edges) == 0:
             return self.path
 
-
         for i, edge in zip(range(len(edges)), edges):
             if self.distances[edge.origin][edge] == max_distance:
                 best_edge_index.append(i)
@@ -431,7 +392,7 @@ class Graph:
         edges = self.get_edges_of_a_node(root)
         max_distance = - float("inf")
         best_edge_array = []
-        if(len(edges)==0):
+        if (len(edges) == 0):
             return False
         for edge in edges:
             if self.distances[edge.origin][edge] == max_distance:
@@ -469,14 +430,12 @@ class Graph:
                     newQ = discounted_r[i]
                     if newQ > self.Q[s][a]:
                         self.Q[s][a] = newQ
-                    #td_error = (discounted_r[i] - self.Q[s][a])
-                    #self.Q[s][a] = self.Q[s][a] + learning_rate * td_error
-                    #if 1e-4 > self.Q[s][a] > - 1e-4:
+                    # td_error = (discounted_r[i] - self.Q[s][a])
+                    # self.Q[s][a] = self.Q[s][a] + learning_rate * td_error
+                    # if 1e-4 > self.Q[s][a] > - 1e-4:
                     #   self.Q[s][a] = 0.  # round(self.Q[s][a], 7)
-                    #print(actions, right_termination)
+                    # print(actions, right_termination)
             self.batch.clear()
-
-
 
     def tabularQ(self, sample):
 
@@ -488,7 +447,7 @@ class Graph:
 
         self.batch.append(sample)
 
-        if done or len(self.batch)==N:
+        if done or len(self.batch) == N:
             rewards = np.array([o[2] for o in self.batch])
             dones = np.array([o[4] for o in self.batch])
             s1_t_N = self.batch[-1][3]
@@ -506,7 +465,6 @@ class Graph:
 
             returns = returns[:-1]
 
-            #if sum(returns)>=0.:    # WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
             for i, sample in zip(range(len(self.batch)), self.batch):
                 s = sample[0]
                 a = sample[1]
@@ -515,80 +473,17 @@ class Graph:
                     td_error = (returns[i] - self.Q[s][a])
                     self.Q[s][a] = self.Q[s][a] + learning_rate * td_error
                     if 1e-4 > self.Q[s][a] > - 1e-4:
-                        self.Q[s][a] = 0. #round(self.Q[s][a], 7)
+                        self.Q[s][a] = 0.
 
             self.batch.clear()
 
-
-    def WatkinsQ(self, sample, exploration_fn):
-
-        learning_rate = 0.9
-        gamma = 0.99
-        lamb = 0.8
-
-        s = sample[0]
-        a = sample[1]
-        r = sample[2]
-        s_ = sample[3]
-        done = sample[4]
-
-        if len(self.Q[s_])>0:
-            o_, edge_ = exploration_fn(s_, self.Q, True)
-            if edge_ is not None:
-                QS1 = self.Q[s_][edge_]
-            else:
-                QS1 = 0
-        else:
-            QS1 = 0
-
-        if len(self.Q[s_])>0:
-            maxQS1 = - float("inf")
-            for edge in self.Q[s_]:
-                if maxQS1 < (self.Q[s_][edge]):
-                    maxQS1 = (self.Q[s_][edge])
-        else:
-            maxQS1 = 0
-
-        td_error = r + gamma * maxQS1 - self.Q[s][a]
-
-        # Check wether the action choosen was exploratory or not
-        if len(self.Q[s_]) > 0:
-            exploratory_action = 0 if maxQS1 == QS1 else 1
-        else:
-            exploratory_action = 1
-
-        self.E[s][a] += 1  # Update trace for the current state
-
-        for s_i in self.node_list:
-            edges = self.get_edges_of_a_node(s_i)
-            for a_i in edges:
-                self.Q[s_i][a_i] += learning_rate * td_error * self.E[s_i][a_i]
-
-                # Update traces
-                if exploratory_action:
-                    self.E[s_i][a_i] = 0
-                else:
-                    self.E[s_i][a_i] *= gamma * lamb
-
-
     def find_distances(self, root):
-        """
-        Bellman-Ford algorithm to get the longest path (highest value)
-        :param root: the origin of the path
-        :return: distances.
-        """
+
         if len(self.node_list) > 0 and len(self.edge_list) > 0:
-
-            #if len(self.distances) < len(self.node_list):
-
-            #root_origin=self.node_list[0]
-            #if self.new_edge_encontered:
-
-                #self.distances= self.value_iteration(0.0001) #distances= self.value_iteration(0.0001) #
 
             self.distances = self.Q
 
-            self.path.clear() # used by best_path function
+            self.path.clear()  # used by best_path function
             path = self.best_path(root, self.distances)
             self.print_networkx_graph(root, path, self.distances)
 
@@ -623,4 +518,3 @@ class Graph:
         node_s = Node(state, 0)
 
         return self.node_dictionary[node_s]
-
