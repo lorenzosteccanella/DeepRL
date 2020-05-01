@@ -302,62 +302,87 @@ class Graph:
 
     def node_update(self, old_node, new_node=False):
 
+        """
+
+        The function that discovers new nodes, this is used by abstract_state_discovery to update the node list with
+        a tuple (s, a, r, s', done, info) and by act in HrlAgent passing only old_node.
+
+
+        Args:
+            old_node = the node the agent was in
+            new_node = the node the agent ended up to at t+1
+
+        Return:
+            old_node = the node the agent was in at time "t"
+            new_node = the node the agent is in at time "t+1"
+
+        """
+
         self.new_node_encontered = False
 
         # if the nodes are new I add them to the list
         if old_node not in self.node_list:
             self.node_list.append(old_node)
-            self.node_dictionary[old_node] = old_node
-            self.new_node_encontered = True
-            self.node_edges_dictionary[old_node] = []
-            self.destination_node_edges_dictionary[
-                old_node] = []  # this structure is just to speed up at the cost of memory
-            self.Q[old_node] = {}
+            self.node_dictionary[old_node] = old_node                                     # this is just an auxiliary structure to speed up at cost of memory
+            self.new_node_encontered = True                                               # flag variable used in the past by HrlAgent to reset exploration
+            self.node_edges_dictionary[old_node] = []                                     # just to populate the key of dictionary for edges
+            self.destination_node_edges_dictionary[old_node] = []                         # just to populate the key of dictionary for edges
+            self.Q[old_node] = {}                                                         # just to poulate the key of dictionary for Q learning
 
-        if new_node:
+        if new_node:                                                                      # here it means that we pass old_node "s" and new node "s_t+1"
             if new_node not in self.node_list:
                 self.node_list.append(new_node)
-                self.node_dictionary[new_node] = new_node
-                self.new_node_encontered = True
-                self.node_edges_dictionary[new_node] = []
-                self.destination_node_edges_dictionary[
-                    new_node] = []  # this structure is just to speed up at the cost of memory
-                self.Q[new_node] = {}
+                self.node_dictionary[new_node] = new_node                                 # this is just an auxiliary structure to speed up at cost of memory
+                self.new_node_encontered = True                                           # flag variable used in the past by HrlAgent to reset exploration
+                self.node_edges_dictionary[new_node] = []                                 # just to populate the key of dictionary for edges
+                self.destination_node_edges_dictionary[new_node] = []                     # just to populate the key of dictionary for edges
+                self.Q[new_node] = {}                                                     # just to poulate the key of dictionary for Q learning
 
-        # setting the value for the specific abstract node
-        if new_node:  # if we recived the new node together with the old node as parameters
+        if new_node:
             node = self.node_dictionary[new_node]
 
         # this is just used to add the first abstract state at the beginning of a epoch
-        else:  # if we recived just the old node as parameter i.e. new_node = False and reward = False
+        else:                                                                             # if we recived just the old node as parameter i.e. new_node = False
             node = self.node_dictionary[old_node]
 
         if new_node:
             if old_node != new_node:
-                node.visited()  # to augment the visit counter
+                node.visited()                                                            # to augment the visit counter
 
         self.current_node = node
 
-        return self.node_list[self.node_list.index(old_node)], self.current_node
+        return self.node_dictionary[old_node], self.current_node
 
     def abstract_state_discovery(self, sample, target):
-        old_node = Node(sample[0]["manager"], 0)
 
-        new_node = Node(sample[3]["manager"], 0)
+        """
 
+        The function that discovers new nodes and edges, this is used in "observe()" of "HrlAgent"
+
+
+        Args:
+            sample: a (s, a, r, s', done, info) tuple to train the manager on
+            target: the node the manager is aiming at
+
+        Return:
+            self.new_node_encontered = the flag if we found a new node
+            self.new_edge_encontered = the flag if we found a new edge
+
+        """
+
+        old_node = Node(sample[0]["manager"], 0)                                          # we embed the manager state in a node object
+        new_node = Node(sample[3]["manager"], 0)                                          # we embed the manager state in a node object
         done = sample[4]
-
         r = sample[2]
 
-        old_node_in_list, new_node_in_list = self.node_update(old_node, new_node)
+        old_node_in_list, new_node_in_list = self.node_update(old_node, new_node)         # we update the node list
+        self.edge_update(old_node_in_list, new_node_in_list, r, target)                   # we update the edge list and the value of the edge
 
-        self.edge_update(old_node_in_list, new_node_in_list, r, target)
-
-        if done:
-            self.total_reward_node = 0
-            self.total_reward_edge = 0
-            self.current_edge = None
-            self.current_node = None
+        if done:                                                                          # end of the episode
+            self.total_reward_node = 0                                                    # reset total_reward_node
+            self.total_reward_edge = 0                                                    # reset total_reward_edge
+            self.current_edge = None                                                      # reset current_edge
+            self.current_node = None                                                      # reset current_node
 
         return self.new_node_encontered, self.new_edge_encontered
 
@@ -385,6 +410,21 @@ class Graph:
         return len(self.node_list)
 
     def get_node_best_edge_index(self, root, distances, edges=False, verbose=False):
+
+        """
+        The function that returns the best edge index from root node
+
+
+        Args:
+            root: the current node I'm in
+            distances: the value utility of each edge
+            edges: a list of edges
+            verbose: used to print the chooice at screen
+
+        Return:
+            best_edge_index = the index of the best edge
+        """
+
         max_distance = - float("inf")
         best_edge_index = []
         if not edges:
@@ -405,6 +445,19 @@ class Graph:
         return best_edge_index
 
     def best_path(self, root, distances):
+
+        """
+        The function that returns the best used to print what are the edge choices of the manager on the networkx
+
+
+        Args:
+            root: the current node I'm in
+            distances: the value utility of each edge
+
+        Return:
+            self.best_path = the best path
+        """
+
         max_distance = - float("inf")
         best_edge_index = []
         self.index_4_bestpathprint += 1
@@ -429,28 +482,6 @@ class Graph:
             self.path.append((edges[i].origin, edges[i].destination))
 
         return self.best_path(edges[random.choice(best_edge_index)].destination, distances)
-
-    def print_best_path(self, root, distances):
-        self.index_4_bestpathprint += 1
-        if self.index_4_bestpathprint > 20:
-            self.index_4_bestpathprint = 0
-            return False
-        edges = self.get_edges_of_a_node(root)
-        max_distance = - float("inf")
-        best_edge_array = []
-        if (len(edges) == 0):
-            return False
-        for edge in edges:
-            if self.distances[edge.origin][edge] == max_distance:
-                best_edge_array.append(edge)
-            elif self.distances[edge.origin][edge] > max_distance:
-                best_edge_array.clear()
-                best_edge_array.append(edge)
-                max_distance = self.distances[edge.origin][edge]
-
-        best_edge = random.choice(best_edge_array)
-        print(best_edge.destination.state)
-        return self.print_best_path(best_edge.destination, distances)
 
     def tabularMC(self, sample):
 
@@ -524,6 +555,16 @@ class Graph:
             self.batch.clear()
 
     def find_distances(self, root):
+        """
+        The function that returns the utility vale for each edge i.e. in case of Q learning Q values
+
+
+        Args:
+            root: the current node I'm in
+
+        Return:
+            self.distances : the utility value for each edge
+        """
 
         if len(self.node_list) > 0 and len(self.edge_list) > 0:
 
