@@ -1,6 +1,7 @@
 import numpy as np
 from Agents.AbstractAgent import AbstractAgent
 from Utils import ExperienceReplay
+import collections
 
 class A2CAgent(AbstractAgent):
     id = 0
@@ -16,8 +17,14 @@ class A2CAgent(AbstractAgent):
         self.id = A2CAgent.id
         A2CAgent.id += 1
 
+        self.correct_termination = collections.deque(maxlen = 10)
+
         self.n_steps = 0
         self.n_episodes = 0
+
+    def update_correct_termination(self, reward, done):
+        if done:
+            self.correct_termination.append(reward)
 
     def _get_actor_critic_error(self, batch):
 
@@ -69,9 +76,16 @@ class A2CAgent(AbstractAgent):
         predict = self.main_model_nn.prediction_actor([s])[0]
         a = np.random.choice(self.action_space, p=predict)
 
+        if sum(self.correct_termination) > 10:
+            print("Become Deterministic, option n ", self.id)
+            i_a = np.argmax(predict)
+            a = self.action_space[i_a]
+
         return a
 
     def observe(self, sample): # in (s, a, r, s_, done, info) format
+
+        self.update_correct_termination(sample[2], sample[4])
 
         self.n_steps += 1
 
@@ -88,30 +102,31 @@ class A2CAgent(AbstractAgent):
 
     def replay(self, done=False):
 
+        if sum(self.correct_termination) < 10:
 
-        if self.buffer.buffer_len() >= self.batch_size:
+            if self.buffer.buffer_len() >= self.batch_size:
 
-            for i in range(self.number_of_step_training):
+                for i in range(self.number_of_step_training):
 
-                batch, imp_w = self.buffer.sample(self.batch_size, False)  # shuffleing or not?
+                    batch, imp_w = self.buffer.sample(self.batch_size, False)  # shuffleing or not?
 
-                x, adv_actor, a_one_hot, y_critic = self._get_actor_critic_error(batch)
+                    x, adv_actor, a_one_hot, y_critic = self._get_actor_critic_error(batch)
 
-                _, __, self.ce_loss = self.main_model_nn.train(x, y_critic, a_one_hot, adv_actor)
+                    _, __, self.ce_loss = self.main_model_nn.train(x, y_critic, a_one_hot, adv_actor)
 
-            self.buffer.reset_buffer()
+                self.buffer.reset_buffer()
 
-        elif done is True:
+            elif done is True:
 
-            for i in range(self.number_of_step_training):
+                for i in range(self.number_of_step_training):
 
-                batch, imp_w = self.buffer.sample(self.buffer.buffer_len(), False)  # shuffleing or not?
+                    batch, imp_w = self.buffer.sample(self.buffer.buffer_len(), False)  # shuffleing or not?
 
-                x, adv_actor, a_one_hot, y_critic = self._get_actor_critic_error(batch)
+                    x, adv_actor, a_one_hot, y_critic = self._get_actor_critic_error(batch)
 
-                _, __, self.ce_loss = self.main_model_nn.train(x, y_critic, a_one_hot, adv_actor)
+                    _, __, self.ce_loss = self.main_model_nn.train(x, y_critic, a_one_hot, adv_actor)
 
-            self.buffer.reset_buffer()
+                self.buffer.reset_buffer()
 
-        else:
-            self.ce_loss = None
+            else:
+                self.ce_loss = None

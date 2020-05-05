@@ -39,7 +39,7 @@ class variables():
 
         self.wrapper = Position_observation_wrapper(environment, self.wrapper_params)
 
-        display_env = True
+        display_env = False
 
         if display_env:
             from Utils import ShowRenderHRL
@@ -80,7 +80,7 @@ class variables():
         self.exploration_fn = get_epsilon_count_exploration
 
         self.agent = HrlAgent_heuristic_count_PR(self.option_params, self.random_agent, self.exploration_fn,
-                                                 self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1, self.SAVE_RESULT)
+                                                 self.LAMBDA, self.MIN_EPSILON, 1.1, -0.1, self.SAVE_RESULT)
 
 
 

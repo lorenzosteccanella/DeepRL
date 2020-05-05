@@ -79,7 +79,7 @@ class variables():
         self.exploration_fn = get_epsilon_count_exploration
 
         self.agent = HrlAgent_heuristic_count_PR(self.option_params, self.random_agent, self.exploration_fn,
-                                                 self.LAMBDA, self.MIN_EPSILON, 1.1, -1.1, self.SAVE_RESULT)
+                                                 self.LAMBDA, self.MIN_EPSILON, 1.1, -0.1, self.SAVE_RESULT)
 
 
 

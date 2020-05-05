@@ -132,7 +132,7 @@ class HrlAgent(AbstractAgent):
         just statistics of the run
         """
 
-        if self.number_of_options_executed % 1000 == 0 and self.old_number_of_options != self.number_of_options_executed:
+        if self.number_of_options_executed % 100000 == 0 and self.old_number_of_options != self.number_of_options_executed:
             if self.save_result is not False:
                 message = ""
                 for tot_reward in self.total_r_2_print:
@@ -149,14 +149,15 @@ class HrlAgent(AbstractAgent):
                 self.save_result.save_data(self.FILE_NAME + "Path", message)
                 self.path_2_print.clear()
 
-            if self.save_result is not False:
-                message = ""
-                if self.distances_2_print is not None:
-                    for distance in self.distances_2_print:
-                        message += (str(distance) + " \n")
-                    message += "\n\n"
-                    self.save_result.save_data(self.FILE_NAME + "Distances", message)
-                    self.distances_2_print.clear()
+            # if self.save_result is not False:
+            #     message = ""
+            #     if self.distances_2_print is not None:
+            #         for distance in self.distances_2_print:
+            #             message += (str(distance) + " \n")
+            #         message += "\n\n"
+            #         self.save_result.save_data(self.FILE_NAME + "Distances", message)
+            #         self.distances_2_print.clear()
+
             if self.save_result is not False:
                 message = (str(self.number_of_options_executed) + " "
                            + str(self.number_of_successfull_option) + " "

@@ -62,8 +62,7 @@ class Montezuma_position_wrapper_only_1key(gym.Wrapper):
 
         x, y = self.get_xy(ram)
         #xy_skull, self.direction_of_skull = self.get_skull(ram, self.direction_of_skull)
-
-        return (x, y)
+        return (x, y)#, xy_skull, self.direction_of_skull)
 
 
     def get_xy(self, obs):
@@ -91,16 +90,5 @@ class Montezuma_position_wrapper_only_1key(gym.Wrapper):
 
         d_x = x//step_x
         d_y = y//step_y
-
-        # if self.old_position:
-        #
-        #     if self.old_position != (d_x, d_y, self.total_reward):
-        #         print(d_x, d_y, self.total_reward)
-        #
-        # else:
-        #
-        #     print(d_x, d_y, self.total_reward)
-
-        #print(x, y, s)
 
         return (x//step_x, y//step_y, self.total_reward, reward)
