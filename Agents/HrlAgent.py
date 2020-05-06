@@ -57,6 +57,7 @@ class HrlAgent(AbstractAgent):
         self.old_edge = None
         self.n_steps = 0
         self.n_episodes = 0
+        self.option_rewards = 0
 
         # variables for manager
         self.best_option_action = None
@@ -64,6 +65,7 @@ class HrlAgent(AbstractAgent):
         self.current_node = None
         self.target = None
         self.reward_manager = 0.
+        self.replan = False
         HrlAgent.exploration_fn = exploration_fn
 
         # variables for options
@@ -91,16 +93,17 @@ class HrlAgent(AbstractAgent):
 
         # if structure to reduce computation cost
         if self.current_node is None:
-            self.current_node = self.graph.get_current_node()
-            distances = self.graph.find_distances(self.current_node)
-            self.distances_2_print.append(distances)
-            self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
+            self.replan = True
 
         elif self.current_node != node:
+            self.replan = True
+
+        if self.replan:
             self.current_node = self.graph.get_current_node()
             distances = self.graph.find_distances(self.current_node)
             self.distances_2_print.append(distances)
             self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
+            self.replan = False
 
         return self.best_option_action.act(s["option"])
 
@@ -132,7 +135,7 @@ class HrlAgent(AbstractAgent):
         just statistics of the run
         """
 
-        if self.number_of_options_executed % 100000 == 0 and self.old_number_of_options != self.number_of_options_executed:
+        if self.number_of_options_executed % 10000 == 0 and self.old_number_of_options != self.number_of_options_executed:
             if self.save_result is not False:
                 message = ""
                 for tot_reward in self.total_r_2_print:
@@ -223,6 +226,7 @@ class HrlAgent(AbstractAgent):
                         r = -1
                     done = True                                         # the option ended
 
+        self.option_rewards += r
         self.best_option_action.observe((s, a, r, s_, done, info))      # here we train the option selected on this experience
 
     def update_manager(self, sample):
@@ -329,6 +333,8 @@ class HrlAgent(AbstractAgent):
             self.best_edge = None
             self.target = None
             self.n_episodes += 1
+            print("avg_rewards_options", self.option_rewards/self.number_of_options_executed)
+            self.option_rewards = 0
 
         return self.n_steps, self.n_episodes
 

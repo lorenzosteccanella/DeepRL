@@ -75,7 +75,6 @@ class A2CAgent(AbstractAgent):
 
         predict = self.main_model_nn.prediction_actor([s])[0]
         a = np.random.choice(self.action_space, p=predict)
-
         if sum(self.correct_termination) > 10:
             print("Become Deterministic, option n ", self.id)
             i_a = np.argmax(predict)

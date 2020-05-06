@@ -29,10 +29,10 @@ class variables():
         self.PROBLEM = 'MontezumaRevenge-ram-v0'
         environment = gym.make(self.PROBLEM)
 
-        self.ACTION_SPACE = list(range(0, environment.action_space.n))
+        self.ACTION_SPACE = [0, 1, 2, 3, 4, 5, 14, 15]
 
         self.wrapper_params = {
-            "stack_images_length": 1,
+            "stack_images_length": 4,
             "n_zones": 10
         }
 
@@ -58,7 +58,7 @@ class variables():
 
         self.option_params = {
             "option": A2COption,
-            "h_size": 64,
+            "h_size": 256,
             "action_space": self.ACTION_SPACE,
             "critic_network": CriticNetwork,
             "actor_network": ActorNetwork,

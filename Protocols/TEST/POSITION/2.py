@@ -39,7 +39,7 @@ class variables():
 
         self.wrapper = Position_observation_wrapper(environment, self.wrapper_params)
 
-        display_env = False
+        display_env = True
 
         if display_env:
             from Utils import ShowRenderHRL

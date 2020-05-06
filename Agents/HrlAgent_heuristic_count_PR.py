@@ -18,6 +18,7 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
     counter_as = 0
     samples = []                      # a list to collect the samples of the episode
     as_m2s_m = {}                     # a dictinory to keep in memory for each abstract state all the possible ending state and relative values
+    n_steps_option = 0
 
     def pixel_manager_obs(self, s = None, sample = None):
 
@@ -87,6 +88,8 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
         s_m = Node(sample[0]["manager"], 0)
         s_m_ = Node(sample[3]["manager"], 0)
 
+        self.n_steps_option +=1
+
         if s_m != s_m_:
             if self.target is not None:
                 if s_m_ == self.target:                                 # if we ended correctly
@@ -112,6 +115,23 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
                     if r_h_c < -1:
                         r_h_c = -1
 
+        if self.n_steps_option > 100:
+            self.replan = True
+            r = min(self.wrong_end_option_reward, r)
+            done = True
+
+            if r < -1:
+                r = -1
+
+            r_h_c += self.wrong_end_option_reward
+
+            if r_h_c < -1:
+                r_h_c = -1
+
+        if done:
+            self.n_steps_option = 0
+
+        self.option_rewards += r_h_c
         self.best_option_action.observe((s, a, r_h_c, s_, done, info))
 
         self.heuristic_reward.append(self.counter_as)
