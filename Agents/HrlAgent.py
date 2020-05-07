@@ -333,7 +333,6 @@ class HrlAgent(AbstractAgent):
             self.best_edge = None
             self.target = None
             self.n_episodes += 1
-            print("avg_rewards_options", self.option_rewards/self.number_of_options_executed)
             self.option_rewards = 0
 
         return self.n_steps, self.n_episodes
