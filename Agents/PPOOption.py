@@ -11,12 +11,10 @@ class PPOOption(AbstractOption):
 
         self.id = self.getID()
 
-        self.PPODNN = PPOEagerSync(parameters["h_size"], len(parameters["action_space"]), parameters["critic_network"],
-                                   parameters["target_critic_network"], parameters["actor_network"], parameters["target_actor_network"],
+        self.PPODNN = PPOEagerSeparate(parameters["h_size"], len(parameters["action_space"]), parameters["critic_network"],
+                                       parameters["actor_network"], parameters["target_actor_network"],
                                        parameters["learning_rate"], parameters["weight_mse"],
-                                   parameters["weight_ce_exploration"], parameters["e_clip"], parameters["tau"], parameters["n_step_update_weights"],
-                                    parameters["shared_representation"], parameters["target_shared_representation"],
-                                   parameters["learning_rate_reduction_obs"])
+                                   parameters["weight_ce_exploration"], parameters["e_clip"], parameters["tau"], parameters["n_step_update_weights"])
 
         self.agent = PPOAgent(parameters["action_space"], self.PPODNN, parameters["gamma"], parameters["batch_size"],
                               parameters["steps_of_training"])

@@ -92,7 +92,7 @@ class PPOAgent(AbstractAgent):
 
             for i in range(self.number_of_step_training):
 
-                batch, imp_w = self.buffer.sample(self.batch_size, False)  # shuffleing or not?
+                batch, imp_w = self.buffer.sample(self.batch_size, True)  # shuffleing or not?
 
                 x, adv_actor, a_one_hot, y_critic = self._get_actor_critic_error(batch)
 

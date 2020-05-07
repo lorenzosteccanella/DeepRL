@@ -59,7 +59,7 @@ class PPOEagerSync:
 
         #slim.model_analyzer.analyze_vars(self.model_actor_critic.trainable_variables, print_info=True)
 
-        self.optimizer = tf.train.RMSPropOptimizer(learning_rate=learning_rate)
+        self.optimizer = tf.keras.optimizers.SGD(learning_rate=learning_rate, momentum=0.9, nesterov=True)
         self.global_step = tf.Variable(0)
 
         self.steps_of_train = 0
@@ -136,8 +136,7 @@ class PPOEagerSync:
 class PPOEagerSeparate:
 
     def __init__(self, h_size, n_actions, model_critic, model_actor, target_model_actor, learning_rate, weight_mse,
-                 weight_ce, e_clip=0.2, tau=1, n_step_update_weights=1, shared_observation_model=False,
-                 learning_rate_observation_adjust=False, train_observation=False):
+                 weight_ce, e_clip=0.2, tau=1, n_step_update_weights=1):
 
         if inspect.isclass(model_critic):
             self.model_critic = model_critic(h_size)
@@ -158,8 +157,8 @@ class PPOEagerSeparate:
         self.soft_update = SoftUpdateWeightsPPO(self.model_actor, self.target_model_actor, tau)
         self.soft_update.exact_copy()
 
-        self.optimizer_critic = tf.train.RMSPropOptimizer(learning_rate=learning_rate)
-        self.optimizer_actor = tf.train.RMSPropOptimizer(learning_rate=learning_rate)
+        self.optimizer_critic = tf.keras.optimizers.SGD(learning_rate=learning_rate, momentum=0.9, nesterov=True)
+        self.optimizer_actor = tf.keras.optimizers.SGD(learning_rate=learning_rate, momentum=0.9, nesterov=True)
         self.global_step = tf.Variable(0)
 
         self.steps_of_train = 0
