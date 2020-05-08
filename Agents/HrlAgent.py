@@ -242,7 +242,7 @@ class HrlAgent(AbstractAgent):
 
         self.reward_manager += sample[2]                                # here we keep a sum of all the reward collected in these abstract state
         s = self.graph.get_node(sample[0]["manager"])                   # the abstract state
-        r = self.reward_manager # + (beta/math.sqrt(s.visit_count))       # the reward of the manager
+        r = self.reward_manager #+ (beta/math.sqrt(s.visit_count))       # the reward of the manager
         #print((beta/math.sqrt(s.visit_count)) )
         s_ = self.graph.get_node(sample[3]["manager"])                  # the abstact state at time t+1
         a = Edge(s, s_)                                                 # the Edge i'm in, this is a trick to define the edge I executed as always the wanted one, even when I'm ending in wrong abstract state

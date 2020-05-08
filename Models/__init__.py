@@ -1,2 +1,2 @@
-from .A2CnetworksEager import SharedConvLayers, SharedDenseLayers, CriticNetwork, ActorNetwork, ActorCriticNetwork, A2CEagerSync, A2CEagerSeparate
-from .PPOnetworksEager import SharedConvLayers, SharedDenseLayers, CriticNetwork, ActorNetwork, ActorCriticNetwork, PPOEagerSync, PPOEagerSeparate
+from .A2CnetworksEager import SharedConvLayers, SharedDenseLayers, CriticNetwork, ActorNetwork, NoisyActorNetwork, ActorCriticNetwork, A2CEagerSync, A2CEagerSeparate
+from .PPOnetworksEager import SharedConvLayers, SharedDenseLayers, CriticNetwork, ActorNetwork, NoisyActorNetwork, ActorCriticNetwork, PPOEagerSync, PPOEagerSeparate

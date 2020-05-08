@@ -22,7 +22,7 @@ class variables():
         self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  Montezuma_PPO_POSITION_1/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Position_PPO_Montezuma'
-        self.NUMBER_OF_EPOCHS = 3000
+        self.NUMBER_OF_EPOCHS = 4000
 
         self.multi_processing = False
 
@@ -32,8 +32,8 @@ class variables():
         self.ACTION_SPACE = [0, 1, 2, 3, 4, 5, 14, 15]
 
         self.wrapper_params = {
-            "stack_images_length": 1,
-            "n_zones": 40
+            "stack_images_length": 2,
+            "n_zones": 10
         }
 
         self.wrapper = Montezuma_position_wrapper_only_1key(environment, self.wrapper_params)
@@ -71,8 +71,8 @@ class variables():
             "tau": 1,
             "gamma": 0.95,
             "batch_size": 32,
-            "steps_of_training": 4,
-            "n_step_update_weights": 4 * 2,
+            "steps_of_training": 8,
+            "n_step_update_weights": 4,
             "preprocessing": preprocessing,
         }
 

@@ -1,6 +1,7 @@
 import numpy as np
 from Agents.AbstractAgent import AbstractAgent
 from Utils import ExperienceReplay
+import collections
 
 class PPOAgent(AbstractAgent):
     id = 0
@@ -16,8 +17,14 @@ class PPOAgent(AbstractAgent):
         self.id = PPOAgent.id
         PPOAgent.id += 1
 
+        self.correct_termination = collections.deque(maxlen = 10)
+
         self.n_steps = 0
         self.n_episodes = 0
+
+    def update_correct_termination(self, reward, done):
+        if done:
+            self.correct_termination.append(reward)
 
     def _get_actor_critic_error(self, batch):
 
@@ -68,9 +75,16 @@ class PPOAgent(AbstractAgent):
         predict = self.main_model_nn.prediction_actor([s])[0]
         a = np.random.choice(self.action_space, p=predict)
 
+        # if sum(self.correct_termination) > 10:
+        #     print("Become Deterministic, option n ", self.id)
+        #     i_a = np.argmax(predict)
+        #     a = self.action_space[i_a]
+
         return a
 
     def observe(self, sample): # in (s, a, r, s_, done, info) format
+
+        self.update_correct_termination(sample[2], sample[4])
 
         self.n_steps += 1
 

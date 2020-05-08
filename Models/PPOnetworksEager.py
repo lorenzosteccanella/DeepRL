@@ -159,7 +159,8 @@ class PPOEagerSeparate:
 
         self.optimizer_critic = tf.keras.optimizers.SGD(learning_rate=learning_rate, momentum=0.9, nesterov=True)
         self.optimizer_actor = tf.keras.optimizers.SGD(learning_rate=learning_rate, momentum=0.9, nesterov=True)
-        self.global_step = tf.Variable(0)
+        self.global_step_actor = tf.Variable(0)
+        self.global_step_critic = tf.Variable(0)
 
         self.steps_of_train = 0
         self.n_step_update_weight = n_step_update_weights
@@ -214,7 +215,7 @@ class PPOEagerSeparate:
 
         grads, grad_norm = tf.clip_by_global_norm(grads, max_grad_norm)
 
-        self.optimizer_critic.apply_gradients(zip(grads, self.model_critic.trainable_variables), self.global_step)
+        self.optimizer_critic.apply_gradients(zip(grads, self.model_critic.trainable_variables), self.global_step_critic)
 
         loss_value, grads, loss_ce = self.grad_actor(self.model_actor, self.target_model_actor, s, one_hot_a, advantage,
                                                      self.weight_ce, self.e_clip)
@@ -222,7 +223,7 @@ class PPOEagerSeparate:
         grads, grad_norm = tf.clip_by_global_norm(grads, max_grad_norm)
 
         self.optimizer_actor.apply_gradients(zip(grads, self.model_actor.trainable_variables),
-                                             self.global_step)
+                                             self.global_step_actor)
 
         self.steps_of_train += 1
         if self.steps_of_train % self.n_step_update_weight == 0:
