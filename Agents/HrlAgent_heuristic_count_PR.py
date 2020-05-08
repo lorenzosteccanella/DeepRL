@@ -76,7 +76,7 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
 
         s = sample[0]["option"]
         a = sample[1]
-        r = sample[2]
+        r = min(sample[2], 0.)                                 # remember this!!!!!
         s_ = sample[3]["option"]
         done = sample[4]
         info = sample[5]
@@ -168,7 +168,7 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
 
         s = sample[0]["option"]
         a = sample[1]
-        r = sample[2]
+        r = min(sample[2], 0.)                                 # remember this!!!!!
         r_h_c = r                                              # a reward based on heuristic count
         s_ = sample[3]["option"]
         done = sample[4]
@@ -181,9 +181,9 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
 
         if s_m != s_m_:
             if self.target is not None:
-                self.as_visited.append(s_m_)  # we add the abstract state to the list of abstract statas reached
-                self.counter_as = len(set(self.as_visited))  # we count how many singular abstract state we reached
                 if s_m_ == self.target:                                 # if we ended correctly
+                    self.as_visited.append(s_m_)  # we add the abstract state to the list of abstract statas reached
+                    self.counter_as = len(set(self.as_visited))  # we count how many singular abstract state we reached
                     r = self.correct_option_end_reward                  # we augment the reward with the correct end reward
                     done = True                                         # done is True we finished with the option
 

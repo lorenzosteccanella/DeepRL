@@ -6,7 +6,7 @@ import math
 import copy
 import numpy as np
 
-class HrlAgent_heuristic_count_PR(HrlAgent):
+class HrlAgent_SubGoal_Plan_heuristic_count_PR(HrlAgent):
 
     """
     Inherits from HrlAgent, and augment HrlAgent class including a strategy for the end termination state
@@ -63,7 +63,41 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
 
         self.pixel_manager_obs(s=s)
 
-        return super().act(s)
+        node = Node(s["manager"], 0)
+        self.graph.node_update(node)
+        # if structure to reduce computation cost
+
+        if self.current_node is None:
+            self.current_node = self.graph.get_current_node()
+            distances = self.graph.find_distances(self.current_node)
+            self.distances_2_print.append(distances)
+            self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
+
+        if type(self.best_option_action) == type(self.exploration_option):
+            if self.current_node != node:
+                self.current_node = self.graph.get_current_node()
+                distances = self.graph.find_distances(self.current_node)
+                self.distances_2_print.append(distances)
+                self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
+
+        else:
+            if self.current_node != node:
+                self.current_node = self.graph.get_current_node()
+
+            if self.target == node:
+                self.current_node = self.graph.get_current_node()
+                distances = self.graph.find_distances(self.current_node)
+                self.distances_2_print.append(distances)
+                self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
+
+        if self.replan:
+            self.current_node = self.graph.get_current_node()
+            distances = self.graph.find_distances(self.current_node)
+            self.distances_2_print.append(distances)
+            self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
+            self.replan = False
+
+        return self.best_option_action.act(s["option"])
 
     def update_option(self, sample):
 
@@ -76,7 +110,7 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
 
         s = sample[0]["option"]
         a = sample[1]
-        r = sample[2]
+        r = min(sample[2], 0.)                                 # remember this!!!!!
         s_ = sample[3]["option"]
         done = sample[4]
         info = sample[5]
@@ -94,11 +128,6 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
 
                 if s_m_ == self.target:
                     r = self.correct_option_end_reward
-                    done = True
-
-                else:
-
-                    r = self.wrong_end_option_reward
                     done = True
 
         if self.n_steps_option > 100:
@@ -168,7 +197,7 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
 
         s = sample[0]["option"]
         a = sample[1]
-        r = sample[2]
+        r = min(sample[2], 0.)                                 # remember this!!!!!
         r_h_c = r                                              # a reward based on heuristic count
         s_ = sample[3]["option"]
         done = sample[4]
@@ -181,9 +210,9 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
 
         if s_m != s_m_:
             if self.target is not None:
-                self.as_visited.append(s_m_)  # we add the abstract state to the list of abstract statas reached
-                self.counter_as = len(set(self.as_visited))  # we count how many singular abstract state we reached
                 if s_m_ == self.target:                                 # if we ended correctly
+                    self.as_visited.append(s_m_)  # we add the abstract state to the list of abstract statas reached
+                    self.counter_as = len(set(self.as_visited))  # we count how many singular abstract state we reached
                     r = self.correct_option_end_reward                  # we augment the reward with the correct end reward
                     done = True                                         # done is True we finished with the option
 
@@ -191,12 +220,6 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
                         r_h_c = r
                     else:                                               # we already visited this ending state
                         r_h_c = self.as_m2s_m[s_m][KeyDict(s_)][1]
-
-                else:                                                   # we endend wrongly
-                    r = self.wrong_end_option_reward
-                    done = True
-
-                    r_h_c = self.wrong_end_option_reward
 
         if self.n_steps_option > 100:
             self.replan = True
@@ -215,6 +238,9 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
             self.n_steps_option = 0
 
         self.option_rewards += r_h_c
+
+        print(self.best_option_action, r_h_c)
+
         self.best_option_action.observe((s, a, r_h_c, s_, done, info))
 
         self.heuristic_reward.append(self.counter_as)

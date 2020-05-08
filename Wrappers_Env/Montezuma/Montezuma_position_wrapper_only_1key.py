@@ -32,7 +32,7 @@ class Montezuma_position_wrapper_only_1key(gym.Wrapper):
     def step(self, action):
 
         acc_reward = 0
-        for i in range(2):
+        for i in range(4):
             observation, reward, done, info = self.env.step(action)
             acc_reward += reward
             if done:

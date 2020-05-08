@@ -1,4 +1,4 @@
-from Agents import HrlAgent, HrlAgent_heuristic_count_PR, RandomAgentOption, PPOOption
+from Agents import HrlAgent, HrlAgent_heuristic_count_PR, RandomAgentOption, PPOOption, HrlAgent_SubGoal_Plan_heuristic_count_PR
 import gym
 import tensorflow as tf
 import os
@@ -34,7 +34,7 @@ class variables():
         self.wrapper_params = {
             "width": 10,
             "height": 10,
-            "n_zones": 2
+            "n_zones": 8
         }
 
         self.wrapper = Position_observation_wrapper(environment, self.wrapper_params)
@@ -59,7 +59,7 @@ class variables():
 
         self.option_params = {
             "option": PPOOption,
-            "h_size": 64,
+            "h_size": 32,
             "action_space": self.ACTION_SPACE,
             "critic_network": CriticNetwork,
             "actor_network": ActorNetwork,
@@ -71,9 +71,9 @@ class variables():
             "e_clip": 0.2,
             "tau": 1,
             "gamma": 0.95,
-            "batch_size": 32,
-            "steps_of_training": 8,
-            "n_step_update_weights": 4,
+            "batch_size": 8,
+            "steps_of_training": 4,
+            "n_step_update_weights": 4,  # this should always be the same of steps_of_training
             "preprocessing": preprocessing,
         }
 
@@ -82,8 +82,8 @@ class variables():
         self.MIN_EPSILON = 0
         self.exploration_fn = get_epsilon_count_exploration
 
-        self.agent = HrlAgent_heuristic_count_PR(self.option_params, self.random_agent, self.exploration_fn,
-                                                 self.LAMBDA, self.MIN_EPSILON, 0.8, -0.1, self.SAVE_RESULT)
+        self.agent = HrlAgent_SubGoal_Plan_heuristic_count_PR(self.option_params, self.random_agent, self.exploration_fn,
+                                                              self.LAMBDA, self.MIN_EPSILON, 0.8, -0.1, self.SAVE_RESULT)
 
 
 

@@ -99,7 +99,7 @@ class PPOAgent(AbstractAgent):
         h = self.main_model_nn.prediction_h([s])
         return h
 
-    def replay(self):
+    def replay(self, done):
 
 
         if self.buffer.buffer_len() >= self.batch_size:
@@ -107,6 +107,18 @@ class PPOAgent(AbstractAgent):
             for i in range(self.number_of_step_training):
 
                 batch, imp_w = self.buffer.sample(self.batch_size, True)  # shuffleing or not?
+
+                x, adv_actor, a_one_hot, y_critic = self._get_actor_critic_error(batch)
+
+                _, __, self.ce_loss = self.main_model_nn.train(x, y_critic, a_one_hot, adv_actor)
+
+            self.buffer.reset_buffer()
+
+        elif done is True:
+
+            for i in range(self.number_of_step_training):
+
+                batch, imp_w = self.buffer.sample(self.buffer.buffer_len(), False)  # shuffleing or not?
 
                 x, adv_actor, a_one_hot, y_critic = self._get_actor_critic_error(batch)
 

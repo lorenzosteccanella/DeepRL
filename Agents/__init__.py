@@ -6,3 +6,4 @@ from .A2COption import A2COption
 from .PPOOption import PPOOption
 from .RandomAgentOption import RandomAgentOption
 from .HrlAgent_heuristic_count_PR import HrlAgent_heuristic_count_PR
+from .HrlAgent_SubGoal_Plan_heuristic_count_PR import HrlAgent_SubGoal_Plan_heuristic_count_PR

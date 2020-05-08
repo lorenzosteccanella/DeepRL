@@ -157,7 +157,7 @@ class PPOEagerSeparate:
         self.soft_update = SoftUpdateWeightsPPO(self.model_actor, self.target_model_actor, tau)
         self.soft_update.exact_copy()
 
-        self.optimizer_critic = tf.keras.optimizers.SGD(learning_rate=learning_rate, momentum=0.9, nesterov=True)
+        self.optimizer_critic = tf.keras.optimizers.SGD(learning_rate=(learning_rate * 0.1), momentum=0.9, nesterov=True)   # rememeber thissss
         self.optimizer_actor = tf.keras.optimizers.SGD(learning_rate=learning_rate, momentum=0.9, nesterov=True)
         self.global_step_actor = tf.Variable(0)
         self.global_step_critic = tf.Variable(0)
@@ -190,7 +190,7 @@ class PPOEagerSeparate:
 
         with tf.GradientTape() as tape:
             outputs = model(inputs)
-            old_output = target_model(inputs)
+            old_output = tf.stop_gradient(target_model(inputs))   # stop gradient here
             loss_pg = Losses.ppo_loss(outputs, old_output, one_hot_a, advantage, e_clip)
             loss_ce = Losses.entropy_exploration_loss(outputs)
             loss_value = loss_pg - (weight_ce * loss_ce)
