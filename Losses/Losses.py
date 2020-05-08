@@ -13,6 +13,15 @@ class Losses:
         return loss
 
     @staticmethod
+    def mse_loss_imp_w(x, y, imp_w):
+        predictions = tf.to_float(x)
+        labels = tf.to_float(y)
+        predictions.get_shape().assert_is_compatible_with(labels.get_shape())
+        losses = tf.math.squared_difference(predictions, labels)
+        loss = tf.losses.compute_weighted_loss(losses, imp_w)
+        return loss
+
+    @staticmethod
     def ppo_loss(logits, old_logits, one_hot_a, advantage, e_clip=0.2):
         softmax_logits = tf.nn.softmax(logits)
         old_softmax_logits = tf.nn.softmax(old_logits)

@@ -1,4 +1,5 @@
 import scipy.misc
+from Utils.SumTree import SumTree
 import random
 import matplotlib.pyplot as plt
 import pickle
@@ -9,22 +10,6 @@ import cv2
 import gym
 from gym import spaces
 import math
-from Environment import Environment
-
-
-class LoadEnvironment:
-
-    def Load(self, environment, preprocessing, display_env = True):
-        if display_env:
-            from Utils import ShowRenderHRL
-            rendering = ShowRenderHRL
-        else:
-            rendering = False
-
-        env = Environment(environment, preprocessing=preprocessing, rendering_custom_class=rendering)
-
-        return env
-
 
 
 class Preprocessing:
@@ -106,8 +91,7 @@ class Preprocessing:
 class ExperienceReplay:
 
     def __init__(self, max_size):
-        self.max_size = max_size
-        self.buffer = deque(maxlen=self.max_size)
+        self.buffer = deque(maxlen=max_size)
         self.max_reward = float('-inf')
 
     def add(self, experience):
@@ -135,12 +119,87 @@ class ExperienceReplay:
         self.buffer.clear()
 
     def reset_size(self, max_size):
-        if self.max_size != max_size:
-            self.max_size = max_size
-            self.buffer = deque(maxlen=self.max_size)
+        self.buffer = deque(maxlen=max_size)
 
     def update(self, idx, error):
         None
+
+#  Slightly modified from https://github.com/jaromiru
+class PrioritizedExperienceReplay:  # stored as ( s, a, r, s_ ) in SumTree
+
+    e = 0.01
+    a = 0.6
+
+    absolute_error_upper = 1.
+
+    PER_b = 0.1  # importance-sampling, from initial value increasing to 1
+
+    PER_b_increment_per_sampling = 0.001
+
+    def __init__(self, capacity):
+        self.tree = SumTree(capacity)
+
+    def _get_priority(self, error):
+        return (error + self.e) ** self.a
+
+    def add(self, sample):  # removed error argument, to new experience we give always the max
+        #p = self._get_priority(error)
+        #self.tree.add(p, sample)
+
+        max_priority = np.max(self.tree.tree[-self.tree.capacity:])
+
+        if max_priority == 0:
+            max_priority = self.absolute_error_upper
+
+        self.tree.add(max_priority, sample)  # set the max p for new p
+
+    def sample(self, n):
+
+        # Create a sample array that will contains the minibatch
+        batch = []
+
+        b_ISWeights = np.empty((n, 1), dtype=np.float32)
+
+        # Calculate the priority segment
+        # Here, as explained in the paper, we divide the Range[0, ptotal] into n ranges
+        priority_segment = self.tree.total() / n  # priority segment
+
+        # Here we increasing the PER_b each time we sample a new minibatch
+        self.PER_b = np.min([1., self.PER_b + self.PER_b_increment_per_sampling])  # max = 1
+
+        # Calculating the max_weight
+        p_min = np.min(self.tree.tree[-self.tree.capacity:][:self.tree.occupancy]) / self.tree.total()
+        max_weight = (p_min * n) ** (-self.PER_b)
+
+        for i in range(n):
+            """
+            A value is uniformly sample from each range
+            """
+            a, b = priority_segment * i, priority_segment * (i + 1)
+            value = np.random.uniform(a, b)
+
+            """
+            Experience that correspond to each value is retrieved
+            """
+            index, priority, data = self.tree.get(value)
+
+            # P(j)
+            sampling_probabilities = priority / self.tree.total()
+
+            #  IS = (1/N * 1/P(i))**b /max wi == (N*P(i))**-b  /max wi
+            b_ISWeights[i, 0] = np.power(n * sampling_probabilities, -self.PER_b) / max_weight
+            batch.append((index, data))
+
+        return batch, b_ISWeights
+
+    def update(self, idx, error):
+        clipped_errors = min(error, self.absolute_error_upper)  # clipping the error is this right?
+        p = self._get_priority(clipped_errors)
+        self.tree.update(idx, p)
+
+    def buffer_len(self):
+        return self.tree.occupancy
+
 
 class AnaliseResults:
 
@@ -213,36 +272,8 @@ class SoftUpdateWeightsEager:
     def update(self):
         weights_main_network = np.array(self.weights.model.get_weights())
         weights_target_network = np.array(self.model.model.get_weights())
-
         self.model.model.set_weights(self.tau * weights_main_network +
                                      (1 - self.tau) * weights_target_network)
-
-    def exact_copy(self):
-        weights_main_network = np.array(self.weights.model.get_weights())
-
-        self.model.model.set_weights(weights_main_network)
-
-class SoftUpdateWeightsPPO:
-
-    #θ_target = τ * θ_local + (1 - τ) * θ_target
-
-    def __init__(self, weights, model, tau=1e-3):
-        self.operation = []
-        self.model = model
-        self.weights = weights
-        self.tau = tau
-
-    def update(self):
-        weights_main_network = np.array(self.weights.get_weights())
-        weights_target_network = np.array(self.model.get_weights())
-
-        self.model.set_weights(self.tau * weights_main_network +
-                                     (1 - self.tau) * weights_target_network)
-
-    def exact_copy(self):
-        weights_main_network = np.array(self.weights.get_weights())
-
-        self.model.set_weights(weights_main_network)
 
 
 class UpdateWeightsEager:
