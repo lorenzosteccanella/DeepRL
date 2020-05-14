@@ -205,7 +205,7 @@ class PPOEagerSeparate:
 
         return loss_value, tape.gradient(loss_value, model.trainable_variables)
 
-    def train(self, s, y, one_hot_a, advantage, max_grad_norm=40):
+    def train(self, s, y, one_hot_a, advantage, max_grad_norm=0.5):
 
         s = np.array(s, dtype=np.float32)
 

@@ -9,3 +9,5 @@ from .PPOOption import PPOOption
 from .RandomAgentOption import RandomAgentOption
 from .HrlAgent_heuristic_count_PR import HrlAgent_heuristic_count_PR
 from .HrlAgent_SubGoal_Plan_heuristic_count_PR import HrlAgent_SubGoal_Plan_heuristic_count_PR
+from .HrlAgent_heuristic_count_PR_v2 import HrlAgent_heuristic_count_PR_v2
+from .HrlAgent_SubGoal_Plan_heuristic_count_PR_v2 import HrlAgent_SubGoal_Plan_heuristic_count_PR_v2

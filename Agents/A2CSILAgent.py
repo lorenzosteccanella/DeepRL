@@ -1,8 +1,10 @@
 import numpy as np
 from Agents.AbstractAgent import AbstractAgent
 from Utils import ExperienceReplay, PrioritizedExperienceReplay
+import collections
 
 class A2CSILAgent(AbstractAgent):
+    id = 0
 
     def __init__(self, action_space, main_model_nn, gamma, batch_size, sil_batch_size, imitation_buffer_size, imitation_learnig_steps):
 
@@ -16,9 +18,20 @@ class A2CSILAgent(AbstractAgent):
         self.imitation_learning_steps = imitation_learnig_steps
         self.sil_batch_size = sil_batch_size
         self.ce_loss = None
+        self.id = A2CSILAgent.id
+        A2CSILAgent.id += 1
+
+        self.correct_termination = collections.deque(maxlen = 10)
+        self.max_return_reward = 1 # this depends on the correct termination reward u set!!!!
 
         self.n_steps = 0
         self.n_episodes = 0
+
+    def update_correct_termination(self, reward, done):
+        if done:
+            self.correct_termination.append(reward)
+            # if self.max_return_reward < reward:
+            #     self.max_return_reward = reward
 
     def _get_actor_critic_error(self, batch):
 
@@ -96,9 +109,16 @@ class A2CSILAgent(AbstractAgent):
         predict = self.main_model_nn.prediction_actor([s])[0]
         a = np.random.choice(self.action_space, p=predict)
 
+        if sum(self.correct_termination) == (10 * self.max_return_reward):
+            print("Become Deterministic, option n ", self.id)
+            i_a = np.argmax(predict)
+            a = self.action_space[i_a]
+
         return a
 
     def observe(self, sample):
+
+        self.update_correct_termination(sample[2], sample[4])
 
         self.n_steps += 1
 
@@ -111,6 +131,7 @@ class A2CSILAgent(AbstractAgent):
         return self.n_steps, self.n_episodes
 
     def observe_online(self, sample):
+
         self.n_steps += 1
 
         self.buffer_online.add(sample)
@@ -122,10 +143,6 @@ class A2CSILAgent(AbstractAgent):
 
     def observe_imitation(self, sample):
         self.add_multy_trajectory_memory(sample)
-
-        if sample[4]:
-            for i in range(self.imitation_learning_steps):
-                self.train_single_trajectory_imitation()
 
     def add_multy_trajectory_memory(self, sample):
         self.trajectory.append((sample[0], sample[1], sample[2]))
@@ -159,7 +176,7 @@ class A2CSILAgent(AbstractAgent):
 
     def train_imitation(self):
         if self.buffer_imitation.buffer_len() >= self.sil_batch_size:
-            batch_imitation, imp_w = self.buffer_imitation.sample(self.sil_batch_size)
+            batch_imitation, imp_w = self.buffer_imitation.sample(self.sil_batch_size, True)
             x, adv_actor, a_one_hot, y_critic = self._get_imitation_error(batch_imitation)
 
             self.main_model_nn.train_imitation(x, y_critic, a_one_hot, adv_actor, imp_w)
@@ -183,16 +200,37 @@ class A2CSILAgent(AbstractAgent):
         self.buffer_imitation.reset_buffer()
 
 
-    def replay(self):
-        if self.buffer_online.buffer_len() >= self.batch_size:
+    def replay(self, done):
+        if sum(self.correct_termination) != (10 * self.max_return_reward):
+            if self.buffer_online.buffer_len() >= self.batch_size:
 
-            batch, imp_w = self.buffer_online.sample(self.batch_size, False)
-            x, adv_actor, a_one_hot, y_critic = self._get_actor_critic_error(batch)
+                batch, imp_w = self.buffer_online.sample(self.batch_size, False)
+                x, adv_actor, a_one_hot, y_critic = self._get_actor_critic_error(batch)
 
-            _, __, self.ce_loss = self.main_model_nn.train(x, y_critic, a_one_hot, adv_actor)
+                _, __, self.ce_loss = self.main_model_nn.train(x, y_critic, a_one_hot, adv_actor)
 
-            self.buffer_online.reset_buffer()
+                self.buffer_online.reset_buffer()
 
-            for i in range(self.imitation_learning_steps):
-                self.train_imitation()
+                for i in range(self.imitation_learning_steps):
+                    self.train_imitation()
 
+            elif done is True:
+
+                batch, imp_w = self.buffer_online.sample(self.batch_size, False)
+                x, adv_actor, a_one_hot, y_critic = self._get_actor_critic_error(batch)
+
+                _, __, self.ce_loss = self.main_model_nn.train(x, y_critic, a_one_hot, adv_actor)
+
+                self.buffer_online.reset_buffer()
+
+                for i in range(self.imitation_learning_steps):
+                    self.train_imitation()
+
+            else:
+                self.ce_loss = None
+
+    def replay_imitation(self, done):
+        if done:
+            if sum(self.correct_termination) < (10 * self.max_return_reward):
+                for i in range(self.imitation_learning_steps):
+                    self.train_imitation()

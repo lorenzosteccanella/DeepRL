@@ -5,6 +5,7 @@ from collections import deque
 import math
 import copy
 import numpy as np
+import dill
 
 class HrlAgent_SubGoal_Plan_heuristic_count_PR(HrlAgent):
 
@@ -19,6 +20,7 @@ class HrlAgent_SubGoal_Plan_heuristic_count_PR(HrlAgent):
     samples = []                      # a list to collect the samples of the episode
     as_m2s_m = {}                     # a dictinory to keep in memory for each abstract state all the possible ending state and relative values
     n_steps_option = 0
+    HER_experience_batch = []
 
     def pixel_manager_obs(self, s = None, sample = None):
 
@@ -73,12 +75,13 @@ class HrlAgent_SubGoal_Plan_heuristic_count_PR(HrlAgent):
             self.distances_2_print.append(distances)
             self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
 
-        if type(self.best_option_action) == type(self.exploration_option):
-            if self.current_node != node:
-                self.current_node = self.graph.get_current_node()
-                distances = self.graph.find_distances(self.current_node)
-                self.distances_2_print.append(distances)
-                self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
+        if type(self.best_option_action) == type(self.exploration_option):  # this is used to stop the exploration option once encontereda new abstract state
+            pass
+            # if self.current_node != node:
+            #     self.current_node = self.graph.get_current_node()
+            #     distances = self.graph.find_distances(self.current_node)
+            #     self.distances_2_print.append(distances)
+            #     self.best_option_action, self.best_edge = self.exploration_fn(self.current_node, distances)
 
         else:
             if self.current_node != node:
@@ -102,6 +105,19 @@ class HrlAgent_SubGoal_Plan_heuristic_count_PR(HrlAgent):
     def update_option(self, sample):
 
         self.update_option_online_version(sample)
+
+    def HER_training(self, s, a, s_, info, s_m, s_m_):
+        # HER style training
+        edge = Edge(s_m, s_m_)
+        option = self.get_option(edge)
+        if KeyDict(s_) not in (self.as_m2s_m[s_m]):  # we check if we are in ended state already encountered
+            HER_r = self.correct_option_end_reward
+        else:  # we already visited this ending state
+            HER_r = self.as_m2s_m[s_m][KeyDict(s_)][1]
+        HER_done = True
+        for sample in self.HER_experience_batch:
+            option.observe_imitation(sample)
+        option.observe_imitation((s, a, HER_r, s_, HER_done, info))
 
     def update_option_offline_version(self, sample):
 
@@ -150,7 +166,7 @@ class HrlAgent_SubGoal_Plan_heuristic_count_PR(HrlAgent):
                 if rewards_h[i] == 1:
                     s = p_sample[0]
                     a = p_sample[1]
-                    r = p_sample[2] + weight_heuristic_reward * rewards_h[i] if p_sample[2]>0 and p_sample[4]  else p_sample[2]
+                    r = p_sample[2] + weight_heuristic_reward * rewards_h[i] if p_sample[2]>0 and p_sample[4] else p_sample[2]
                     s_ = p_sample[3]
                     done = p_sample[4]
                     info = p_sample[5]
@@ -171,7 +187,7 @@ class HrlAgent_SubGoal_Plan_heuristic_count_PR(HrlAgent):
             for i, p_sample, option in zip(range(len(self.samples)), self.samples, self.options_executed_episode):
                 s = p_sample[0]
                 a = p_sample[1]
-                r = p_sample[2] + weight_heuristic_reward * rewards_h[i] if p_sample[2]>0 and p_sample[4]  else p_sample[2]
+                r = p_sample[2] + weight_heuristic_reward * rewards_h[i] if p_sample[2]>0 and p_sample[4] else p_sample[2]
                 s_ = p_sample[3]
                 done = p_sample[4]
                 info = p_sample[5]
@@ -217,31 +233,38 @@ class HrlAgent_SubGoal_Plan_heuristic_count_PR(HrlAgent):
                     done = True                                         # done is True we finished with the option
 
                     if KeyDict(s_) not in (self.as_m2s_m[s_m]):         # we check if we are in ended state already encountered
+                        print("new ended state")
                         r_h_c = r
                     else:                                               # we already visited this ending state
                         r_h_c = self.as_m2s_m[s_m][KeyDict(s_)][1]
 
+                else:
+                    self.HER_training(s, a, s_, info, s_m, s_m_)
+
+            else:
+                self.HER_training(s, a, s_, info, s_m, s_m_)
+
+            self.HER_experience_batch.clear()                       # I'm transitioning from abstract states clear the offline experience batch
+        else:
+            self.HER_experience_batch.append((s, a, r, s_, done, info))
+
         if self.n_steps_option > 100:
             self.replan = True
-            r = min(self.wrong_end_option_reward, r)
+
+            r = self.wrong_end_option_reward
             done = True
 
-            if r < -1:
-                r = -1
-
-            r_h_c += self.wrong_end_option_reward
-
-            if r_h_c < -1:
-                r_h_c = -1
+            r_h_c = self.wrong_end_option_reward
 
         if done:
             self.n_steps_option = 0
 
-        self.option_rewards += r_h_c
+            print(self.best_option_action, r_h_c)
 
-        print(self.best_option_action, r_h_c)
+        self.option_rewards += r_h_c                                  # just for statistics
 
         self.best_option_action.observe((s, a, r_h_c, s_, done, info))
+        #self.best_option_action.observe_imitation((s, a, r, s_, done, info))
 
         self.heuristic_reward.append(self.counter_as)
         self.samples.append((s, a, r, s_, done, info, s_m, s_m_))
@@ -266,7 +289,11 @@ class HrlAgent_SubGoal_Plan_heuristic_count_PR(HrlAgent):
                         if KeyDict(s_) not in (self.as_m2s_m[s_m]):
                             self.as_m2s_m[s_m][KeyDict(s_)] = [copy.deepcopy(s_), r]
                         else:
-                            self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.6 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.4 * r
+                            if self.as_m2s_m[s_m][KeyDict(s_)][1] < r:
+                                self.as_m2s_m[s_m][KeyDict(s_)][1] = r
+
+                            #self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.6 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.4 * r    # changed for max let's see
+                            #self.as_m2s_m[s_m][KeyDict(s_)][1] = r
 
                     del self.samples[i]
                     del self.options_executed_episode[i]
@@ -293,7 +320,11 @@ class HrlAgent_SubGoal_Plan_heuristic_count_PR(HrlAgent):
                     if KeyDict(s_) not in (self.as_m2s_m[s_m]):
                         self.as_m2s_m[s_m][KeyDict(s_)] = [copy.deepcopy(s_), r]
                     else:
-                        self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.6 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.4 * r
+                        if self.as_m2s_m[s_m][KeyDict(s_)][1] < r:
+                            self.as_m2s_m[s_m][KeyDict(s_)][1] = r
+
+                        #self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.6 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.4 * r    # changed for max let's see
+                        #self.as_m2s_m[s_m][KeyDict(s_)][1] = r
 
             self.samples.clear()
             self.options_executed_episode.clear()
@@ -314,5 +345,23 @@ class HrlAgent_SubGoal_Plan_heuristic_count_PR(HrlAgent):
 
         return super().observe(sample)
 
+    def load(self, filename):
+        f = open(filename, 'rb')
+        tmp_dict = dill.load(f)
+        f.close()
+
+        tmp_dict["save_result"] = self.save_result
+        tmp_dict["graph"].save_results = self.save_result
+
+        #for key in tmp_dict["graph"].Q.keys():
+        #    for key2 in tmp_dict["graph"].Q[key].keys():
+        #        tmp_dict["graph"].Q[key][key2] = 0
+
+        self.__dict__.update(tmp_dict)
+
+    def save(self, filename):
+        f = open(filename, 'wb')
+        dill.dump(self.__dict__, f, 2)
+        f.close()
 
 

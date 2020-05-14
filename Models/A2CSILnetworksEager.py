@@ -112,7 +112,7 @@ class A2CSILEagerSync:
 
 class A2CSILEagerSeparate:
 
-    def __init__(self, h_size, n_actions, model_critic, model_actor, learning_rate_online, weight_mse, weight_sil_mse, weight_ce, shared_observation_model=False, learning_rate_observation_adjust=1, train_observation=False):
+    def __init__(self, h_size, n_actions, model_critic, model_actor, learning_rate_online, weight_mse, weight_sil_mse, weight_ce):
 
         if inspect.isclass(model_critic):
             self.model_critic = model_critic(h_size)
@@ -128,8 +128,10 @@ class A2CSILEagerSeparate:
         self.weight_sil_mse = weight_sil_mse
         self.weight_ce = weight_ce
 
-        self.optimizer_critic = tf.train.RMSPropOptimizer(learning_rate=learning_rate_online)
+        self.optimizer_critic = tf.train.RMSPropOptimizer(learning_rate=learning_rate_online * 0.1)
         self.optimizer_actor = tf.train.RMSPropOptimizer(learning_rate=learning_rate_online)
+        self.optimizer_critic_imitation = tf.train.RMSPropOptimizer(learning_rate=learning_rate_online * 0.1)
+        self.optimizer_actor_imitation = tf.train.RMSPropOptimizer(learning_rate=learning_rate_online)
         self.global_step = tf.Variable(0)
 
     def get_action(self, s):
@@ -189,7 +191,7 @@ class A2CSILEagerSeparate:
 
         return loss_value, tape.gradient(loss_value, model.trainable_variables)
 
-    def train(self, s, y, one_hot_a, advantage, max_grad_norm=40):
+    def train(self, s, y, one_hot_a, advantage, max_grad_norm=0.5):
 
         s = np.array(s, dtype=np.float32)
 
@@ -210,7 +212,7 @@ class A2CSILEagerSeparate:
 
         return [None, None, loss_ce.numpy()]
 
-    def train_imitation(self, s, y, one_hot_a, advantage, imp_w, max_grad_norm=40):
+    def train_imitation(self, s, y, one_hot_a, advantage, imp_w, max_grad_norm=0.5):
 
         s = np.array(s, dtype=np.float32)
 
@@ -220,13 +222,13 @@ class A2CSILEagerSeparate:
 
         grads, grad_norm = tf.clip_by_global_norm(grads, max_grad_norm)
 
-        self.optimizer_critic.apply_gradients(zip(grads, self.model_critic.trainable_variables), self.global_step)
+        self.optimizer_critic_imitation.apply_gradients(zip(grads, self.model_critic.trainable_variables), self.global_step)
 
         loss_value, grads = self.grad_imitation_actor(self.model_actor, s, one_hot_a, advantage, imp_w)
 
         grads, grad_norm = tf.clip_by_global_norm(grads, max_grad_norm)
 
-        self.optimizer_actor.apply_gradients(zip(grads, self.model_actor.trainable_variables),
+        self.optimizer_actor_imitation.apply_gradients(zip(grads, self.model_actor.trainable_variables),
                                              self.global_step)
 
         return [None, None, None]

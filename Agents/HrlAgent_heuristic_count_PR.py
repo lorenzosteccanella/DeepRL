@@ -5,6 +5,7 @@ from collections import deque
 import math
 import copy
 import numpy as np
+import dill
 
 class HrlAgent_heuristic_count_PR(HrlAgent):
 
@@ -19,6 +20,7 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
     samples = []                      # a list to collect the samples of the episode
     as_m2s_m = {}                     # a dictinory to keep in memory for each abstract state all the possible ending state and relative values
     n_steps_option = 0
+    HER_experience_batch = []
 
     def pixel_manager_obs(self, s = None, sample = None):
 
@@ -68,6 +70,19 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
     def update_option(self, sample):
 
         self.update_option_online_version(sample)
+
+    def HER_training(self, s, a, s_, info, s_m, s_m_):
+        # HER style training
+        edge = Edge(s_m, s_m_)
+        option = self.get_option(edge)
+        if KeyDict(s_) not in (self.as_m2s_m[s_m]):  # we check if we are in ended state already encountered
+            HER_r = self.correct_option_end_reward
+        else:  # we already visited this ending state
+            HER_r = self.as_m2s_m[s_m][KeyDict(s_)][1]
+        HER_done = True
+        for sample in self.HER_experience_batch:
+            option.observe_imitation(sample)
+        option.observe_imitation((s, a, HER_r, s_, HER_done, info))
 
     def update_option_offline_version(self, sample):
 
@@ -177,7 +192,7 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
         s_m = Node(sample[0]["manager"], 0)
         s_m_ = Node(sample[3]["manager"], 0)
 
-        self.n_steps_option +=1
+        self.n_steps_option += 1
 
         if s_m != s_m_:
             if self.target is not None:
@@ -198,6 +213,15 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
 
                     r_h_c = self.wrong_end_option_reward
 
+                    self.HER_training(s, a, s_, info, s_m, s_m_)
+            else:
+                self.HER_training(s, a, s_, info, s_m, s_m_)
+
+            self.HER_experience_batch.clear()  # I'm transitioning from abstract states clear the offline experience batch
+
+        else:
+            self.HER_experience_batch.append((s, a, r, s_, done, info))
+
         if self.n_steps_option > 100:
             self.replan = True
             r = min(self.wrong_end_option_reward, r)
@@ -213,9 +237,11 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
 
         if done:
             self.n_steps_option = 0
+            print(self.best_option_action, r_h_c)
 
         self.option_rewards += r_h_c
         self.best_option_action.observe((s, a, r_h_c, s_, done, info))
+        #self.best_option_action.observe_imitation((s, a, r_h_c, s_, done, info))
 
         self.heuristic_reward.append(self.counter_as)
         self.samples.append((s, a, r, s_, done, info, s_m, s_m_))
@@ -240,7 +266,11 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
                         if KeyDict(s_) not in (self.as_m2s_m[s_m]):
                             self.as_m2s_m[s_m][KeyDict(s_)] = [copy.deepcopy(s_), r]
                         else:
-                            self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.6 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.4 * r
+                            if self.as_m2s_m[s_m][KeyDict(s_)][1] < r:
+                                self.as_m2s_m[s_m][KeyDict(s_)][1] = r
+
+                            #self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.6 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.4 * r    # changed for max let's see
+                            #self.as_m2s_m[s_m][KeyDict(s_)][1] = r
 
                     del self.samples[i]
                     del self.options_executed_episode[i]
@@ -267,7 +297,12 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
                     if KeyDict(s_) not in (self.as_m2s_m[s_m]):
                         self.as_m2s_m[s_m][KeyDict(s_)] = [copy.deepcopy(s_), r]
                     else:
-                        self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.6 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.4 * r
+                        if self.as_m2s_m[s_m][KeyDict(s_)][1] < r:
+                            self.as_m2s_m[s_m][KeyDict(s_)][1] = r
+
+                        #self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.6 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.4 * r    # changed for max let's see
+
+                        #self.as_m2s_m[s_m][KeyDict(s_)][1] = r
 
             self.samples.clear()
             self.options_executed_episode.clear()
@@ -287,6 +322,25 @@ class HrlAgent_heuristic_count_PR(HrlAgent):
         self.pixel_manager_obs(sample=sample)
 
         return super().observe(sample)
+
+    def load(self, filename):
+        f = open(filename, 'rb')
+        tmp_dict = dill.load(f)
+        f.close()
+
+        tmp_dict["save_result"] = self.save_result
+        tmp_dict["graph"].save_results = self.save_result
+
+        #for key in tmp_dict["graph"].Q.keys():
+        #    for key2 in tmp_dict["graph"].Q[key].keys():
+        #        tmp_dict["graph"].Q[key][key2] = 0
+
+        self.__dict__.update(tmp_dict)
+
+    def save(self, filename):
+        f = open(filename, 'wb')
+        dill.dump(self.__dict__, f, 2)
+        f.close()
 
 
 

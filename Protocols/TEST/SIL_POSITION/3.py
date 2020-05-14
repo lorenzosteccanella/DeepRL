@@ -1,4 +1,5 @@
-from Agents import HrlAgent, HrlAgent_heuristic_count_PR, RandomAgentOption, PPOOption, HrlAgent_SubGoal_Plan_heuristic_count_PR
+from Agents import HrlAgent, HrlAgent_heuristic_count_PR, RandomAgentOption, A2CSILOption, \
+    HrlAgent_SubGoal_Plan_heuristic_count_PR, HrlAgent_heuristic_count_PR_v2, HrlAgent_SubGoal_Plan_heuristic_count_PR_v2
 import gym
 import tensorflow as tf
 import os
@@ -32,13 +33,13 @@ class variables():
         self.ACTION_SPACE = [0, 1, 2, 3, 4, 5, 14, 15]
 
         self.wrapper_params = {
-            "stack_images_length": 2,
-            "n_zones": 10
+            "stack_images_length": 1,
+            "n_zones": 40
         }
 
         self.wrapper = Montezuma_position_wrapper_only_1key(environment, self.wrapper_params)
 
-        display_env = True
+        display_env = False
 
         if display_env:
             from Utils import ShowRenderHRL
@@ -57,32 +58,31 @@ class variables():
         preprocessing = None
 
         self.option_params = {
-            "option": PPOOption,
-            "h_size": 32,
+            "option": A2CSILOption,
+            "h_size": 128,
             "action_space": self.ACTION_SPACE,
             "critic_network": CriticNetwork,
             "actor_network": ActorNetwork,
-            "target_actor_network": ActorNetwork,
             "shared_representation": None,
             "weight_mse": 0.5,
+            "sil_weight_mse": 0.01,
             "weight_ce_exploration": 0.01,
-            "learning_rate": 0.001,
-            "e_clip": 0.2,
-            "tau": 1,
+            "learning_rate": 0.0005,
             "gamma": 0.95,
-            "batch_size": 8,
-            "steps_of_training": 4,
-            "n_step_update_weights": 4,
+            "batch_size": 6,
+            "sil_batch_size": 64,
+            "imitation_buffer_size": 1000,
+            "imitation_learning_steps": 8,
             "preprocessing": preprocessing,
         }
 
         self.random_agent = RandomAgentOption(self.ACTION_SPACE)
-        self.LAMBDA = 0.005
+        self.LAMBDA = 0.05
         self.MIN_EPSILON = 0
         self.exploration_fn = get_epsilon_count_exploration
 
-        self.agent = HrlAgent_heuristic_count_PR(self.option_params, self.random_agent, self.exploration_fn,
-                                                 self.LAMBDA, self.MIN_EPSILON, 0.8, -0.1, self.SAVE_RESULT)
+        self.agent = HrlAgent_SubGoal_Plan_heuristic_count_PR_v2(self.option_params, self.random_agent, self.exploration_fn,
+                                                              self.LAMBDA, self.MIN_EPSILON, 0.8, -1, self.SAVE_RESULT)
 
 
 

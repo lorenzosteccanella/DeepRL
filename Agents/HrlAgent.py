@@ -135,7 +135,7 @@ class HrlAgent(AbstractAgent):
         just statistics of the run
         """
 
-        if self.number_of_options_executed % 10000 == 0 and self.old_number_of_options != self.number_of_options_executed:
+        if self.number_of_options_executed % 4000 == 0 and self.old_number_of_options != self.number_of_options_executed:
             if self.save_result is not False:
                 message = ""
                 for tot_reward in self.total_r_2_print:
@@ -194,6 +194,9 @@ class HrlAgent(AbstractAgent):
                 plt.bar(range(len(names)), values)
                 plt.savefig(self.save_result.get_path() + "/edgeXedge_transition_prob", format="PNG")
                 plt.close()
+
+            if self.save_result is not False:
+                self.save(self.save_result.get_path() + "/model")
 
     def update_option(self, sample):
 
@@ -355,4 +358,23 @@ class HrlAgent(AbstractAgent):
             return np.array_equal(a, b)
         else:
             return a == b
+
+    def load(self, filename):
+        f = open(filename, 'rb')
+        tmp_dict = dill.load(f)
+        f.close()
+
+        tmp_dict["save_result"] = self.save_result
+        tmp_dict["graph"].save_results = self.save_result
+
+        #for key in tmp_dict["graph"].Q.keys():
+        #    for key2 in tmp_dict["graph"].Q[key].keys():
+        #        tmp_dict["graph"].Q[key][key2] = 0
+
+        self.__dict__.update(tmp_dict)
+
+    def save(self, filename):
+        f = open(filename, 'wb')
+        dill.dump(self.__dict__, f, 2)
+        f.close()
 
