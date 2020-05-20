@@ -20,37 +20,42 @@ class variables():
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # to train on CPU
 
         self.seeds = range(1)
-        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  heuristic_count_TEST_SIL_POSITION_1/')
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  heuristic_count_TEST_SIL_POSITION_TRANSFER_1/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
-        self.FILE_NAME = 'Position_SIL_HRL_E_GREEDY'
-        self.NUMBER_OF_EPOCHS = 10000
+        self.FILE_NAME = 'Position_Transfer_SIL_HRL_E_GREEDY'
+        self.NUMBER_OF_EPOCHS = 1000
 
         self.multi_processing = False
 
-        self.PROBLEM = 'GE_MazeKeyDoor-v10'
+        self.PROBLEM = 'GE_MazeKeyDoor10keyDoor1-v0'
+        self.TEST_TRANSFER_PROBLEM = ['GE_MazeKeyDoor10keyDoor2-v0', 'GE_MazeKeyDoor10keyDoor3-v0', 'GE_MazeKeyDoor10keyDoor1-v0','GE_MazeKeyDoor10keyDoor2-v0', 'GE_MazeKeyDoor10keyDoor3-v0']
+
         environment = gym.make(self.PROBLEM)
 
         self.ACTION_SPACE = [0, 1, 2, 3, 4]
 
         self.wrapper_params = {
-            "width": 10,
-            "height": 10,
-            "n_zones": 2
+            "width": 16,
+            "height": 16,
+            "n_zones": 4
         }
 
         self.wrapper = Position_observation_wrapper(environment, self.wrapper_params)
 
-        display_env = True
+        self.display_env = True
 
-        if display_env:
+        if self.display_env:
             from Utils import ShowRenderHRL
             rendering = ShowRenderHRL
         else:
             rendering = False
 
-        self.env = Environment(self.wrapper, preprocessing=False, rendering_custom_class=rendering, display_env=display_env)
+        self.env = Environment(self.wrapper, preprocessing=False, rendering_custom_class=rendering, display_env=self.display_env)
 
     def reset(self):
+
+        self.index_execution = 0
+
         self.env.close()
 
         # Just to be sure that we don't have some others graph loaded
@@ -78,16 +83,43 @@ class variables():
         }
 
         self.random_agent = RandomAgentOption(self.ACTION_SPACE)
-        self.LAMBDA = 0.05
+        self.LAMBDA = 0.005
         self.MIN_EPSILON = 0
         self.exploration_fn = get_epsilon_count_exploration
 
-        self.agent = HrlAgent_heuristic_count_PR_v2(self.option_params, self.random_agent, self.exploration_fn,
+        self.agent_params = (self.option_params, self.random_agent, self.exploration_fn,
                                                               self.LAMBDA, self.MIN_EPSILON, 0.8, - 1, self.SAVE_RESULT)
+
+        self.agent = HrlAgent_heuristic_count_PR_v2(*self.agent_params)
 
         #self.agent.load("/home/lorenzo/Documenti/UPF/DeepRL/results/TEST  -  heuristic_count_TEST_SIL_POSITION_1/Wed_May_13_17:56:31_2020/seed_0/model")
 
+    def transfer_learning_test(self):
 
+        if self.env is not None:
+            self.env.close()
+
+        self.number_of_stacked_frames = 1
+        environment = gym.make(self.TEST_TRANSFER_PROBLEM[self.index_execution])
+        self.wrapper = Position_observation_wrapper(environment, self.wrapper_params)
+
+        if self.display_env:
+            from Utils import ShowRenderHRL
+            rendering = ShowRenderHRL
+        else:
+            rendering = False
+
+        self.env = Environment(self.wrapper, preprocessing=False, rendering_custom_class=rendering, display_env=self.display_env)
+
+        self.TRANSFER_FILE_NAME = self.FILE_NAME + " - " + self.TEST_TRANSFER_PROBLEM[self.index_execution]
+
+        self.agent.set_name_file_2_save(self.TRANSFER_FILE_NAME)
+
+        self.agent.reset_pseudo_count_exploration()
+        self.agent.reset_statistics()
+        self.agent.reset_Q()
+
+        self.index_execution += 1
 
 
 

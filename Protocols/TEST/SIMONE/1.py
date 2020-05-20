@@ -4,6 +4,7 @@ import gym
 import tensorflow as tf
 import os
 from Environment import Environment
+from stable_baselines.common.atari_wrappers import *
 from Wrappers_Env import Montezuma_position_wrapper_only_1key
 from Models.PPOnetworksEager import *
 from Utils import SaveResult
@@ -29,6 +30,8 @@ class variables():
 
         self.PROBLEM = 'MontezumaRevenge-ram-v0'
         environment = gym.make(self.PROBLEM)
+        environment = NoopResetEnv(environment)
+        environment = FireResetEnv(environment)
 
         self.ACTION_SPACE = [0, 1, 2, 3, 4, 5, 14, 15]
 

@@ -117,6 +117,33 @@ class HrlAgent(AbstractAgent):
         """
         Node.set_lambda_node(LAMBDA, min_epsilon)
 
+    def single_option_per_as(self, edge):
+
+        if edge not in self.options:
+            self.options[edge] = self.option_params["option"](self.option_params)
+
+        return self.options[edge]
+
+    def task_indipendent_options(self, edge):
+
+        origin = edge.origin.state
+        destination = edge.destination.state
+
+        task_indipendent_origin = origin[0:2]
+        task_indipendent_destination = destination[0:2]
+        task_dependent_origin = origin[2::]
+        task_dependent_destination = destination[2::]
+
+        if task_dependent_origin == task_dependent_destination:
+            edge = Edge(Node(task_indipendent_origin, 0.), Node(task_indipendent_destination, 0.))
+        # else use the normal edge that u recive in input
+
+        if edge not in self.options:
+            self.options[edge] = self.option_params["option"](self.option_params)
+
+        return self.options[edge]
+
+
     def get_option(self, edge):
         """
         create a new option for every edge encountered used by "exploration_fn"
@@ -124,10 +151,8 @@ class HrlAgent(AbstractAgent):
         Args:
             edge: the edge "exploration_fn" decided to perform
         """
-        if edge not in self.options:
-            self.options[edge] = self.option_params["option"](self.option_params)
 
-        return self.options[edge]
+        return self.task_indipendent_options(edge)
 
     def save_statistics(self):
 
@@ -135,7 +160,7 @@ class HrlAgent(AbstractAgent):
         just statistics of the run
         """
 
-        if self.number_of_options_executed % 4000 == 0 and self.old_number_of_options != self.number_of_options_executed:
+        if self.number_of_options_executed % 1000 == 0 and self.old_number_of_options != self.number_of_options_executed:
             if self.save_result is not False:
                 message = ""
                 for tot_reward in self.total_r_2_print:
@@ -248,7 +273,7 @@ class HrlAgent(AbstractAgent):
         r = self.reward_manager #+ (beta/math.sqrt(s.visit_count))       # the reward of the manager
         #print((beta/math.sqrt(s.visit_count)) )
         s_ = self.graph.get_node(sample[3]["manager"])                  # the abstact state at time t+1
-        a = Edge(s, s_)                                                 # the Edge i'm in, this is a trick to define the edge I executed as always the wanted one, even when I'm ending in wrong abstract state
+        a = Edge(s, s_)  #self.best_edge                                # the Edge i'm in, this is a trick to define the edge I executed as always the wanted one, even when I'm ending in wrong abstract state
         done = sample[4]                                                # the done returned from the environment
         info = sample[5]
 
@@ -257,6 +282,11 @@ class HrlAgent(AbstractAgent):
                 self.graph.tabularMC((s, a, r, s_, done, True))
             self.reward_manager = 0
 
+        elif done:
+            #self.graph.tabularMC(False, True)
+            if self.best_edge is not None:
+                self.graph.tabularMC((s, self.best_edge, r, s_, done, True), False)
+                #self.graph.tabularMC(False, True)
         if done:
             self.reward_manager = 0
 
@@ -340,7 +370,7 @@ class HrlAgent(AbstractAgent):
 
         return self.n_steps, self.n_episodes
 
-    def replay(self):                                                       # just needed for the Environment doesn't do nothing
+    def replay(self, done):                                                       # just needed for the Environment doesn't do nothing
         pass
 
     def equal(self, a, b):
@@ -377,4 +407,36 @@ class HrlAgent(AbstractAgent):
         f = open(filename, 'wb')
         dill.dump(self.__dict__, f, 2)
         f.close()
+
+    def reset_pseudo_count_exploration(self):
+        for node in self.graph.node_list:
+            node.reset_n_visits()
+            node.reset_epsilon_count()
+
+    def reset_Q(self):
+        self.graph.reset_Q()
+
+    def reset_statistics(self):
+
+        # variables to keep statistics of the execution
+        # variables to keep statistics of the execution
+        self.number_of_options_executed = 1
+        self.number_of_successfull_option = 0
+        self.count_edges = {}
+        self.count_couple_edges = {}
+        self.entropy_edges = {}
+        self.list_percentual_of_successfull_options = []
+        self.old_number_of_options = 0
+        self.path_2_print = []
+        self.distances_2_print = []
+        self.total_r_2_print = []
+        self.total_r = 0.
+        self.old_edge = None
+        self.n_steps = 0
+        self.n_episodes = 0
+        self.option_rewards = 0
+
+
+        self.best_option_action = None
+        self.current_node = None
 

@@ -271,21 +271,23 @@ class HrlAgent_SubGoal_Plan_heuristic_count_PR_v2(HrlAgent):
                     else:                                               # we already visited this ending state
                         r_h_c = self.as_m2s_m[s_m][KeyDict(s_)][1]
 
+                    self.HER_experience_batch.clear()
+
                 else:
-                    self.HER_training(s, a, s_, info, s_m, s_m_)
+                    self.HER_training_wo_heuristic(s, a, s_, info, s_m, s_m_)
                     self.counter_as = 0
                     self.as_visited.clear()
                     self.update_heuristic_count_values = True
 
             else:
-                self.HER_training(s, a, s_, info, s_m, s_m_)
+                self.HER_training_wo_heuristic(s, a, s_, info, s_m, s_m_)
                 self.counter_as = 0
                 self.as_visited.clear()
                 self.update_heuristic_count_values = True
 
-            self.HER_experience_batch.clear()                       # I'm transitioning from abstract states clear the offline experience batch
-        else:
-            self.HER_experience_batch.append((s, a, r, s_, done, info))
+            #self.HER_experience_batch.clear()                       # I'm transitioning from abstract states clear the offline experience batch
+        #else:
+        self.HER_experience_batch.append((s, a, r, s_, done, info))
 
         if self.n_steps_option > 100:
             self.replan = True
@@ -302,8 +304,8 @@ class HrlAgent_SubGoal_Plan_heuristic_count_PR_v2(HrlAgent):
 
         self.option_rewards += r_h_c                                  # just for statistics
 
-        self.best_option_action.observe((s, a, r_h_c, s_, done, info))
-        #self.best_option_action.observe_imitation((s, a, r, s_, done, info))
+        self.best_option_action.observe_online((s, a, r_h_c, s_, done, info))
+        self.best_option_action.observe_imitation((s, a, r, s_, done, info))
 
         self.heuristic_reward.append(self.counter_as)
         self.samples.append((s, a, r, s_, done, info, s_m, s_m_))
@@ -328,10 +330,10 @@ class HrlAgent_SubGoal_Plan_heuristic_count_PR_v2(HrlAgent):
                         if KeyDict(s_) not in (self.as_m2s_m[s_m]):
                             self.as_m2s_m[s_m][KeyDict(s_)] = [copy.deepcopy(s_), r]
                         else:
-                            if self.as_m2s_m[s_m][KeyDict(s_)][1] < r:
-                                self.as_m2s_m[s_m][KeyDict(s_)][1] = r
+                            # if self.as_m2s_m[s_m][KeyDict(s_)][1] < r:
+                            #     self.as_m2s_m[s_m][KeyDict(s_)][1] = r
 
-                            #self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.6 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.4 * r    # changed for max let's see
+                            self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.6 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.4 * r    # changed for max let's see
                             #self.as_m2s_m[s_m][KeyDict(s_)][1] = r
 
                     del self.samples[i]
@@ -359,10 +361,10 @@ class HrlAgent_SubGoal_Plan_heuristic_count_PR_v2(HrlAgent):
                     if KeyDict(s_) not in (self.as_m2s_m[s_m]):
                         self.as_m2s_m[s_m][KeyDict(s_)] = [copy.deepcopy(s_), r]
                     else:
-                        if self.as_m2s_m[s_m][KeyDict(s_)][1] < r:
-                            self.as_m2s_m[s_m][KeyDict(s_)][1] = r
+                        # if self.as_m2s_m[s_m][KeyDict(s_)][1] < r:
+                        #     self.as_m2s_m[s_m][KeyDict(s_)][1] = r
 
-                        #self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.6 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.4 * r    # changed for max let's see
+                        self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.6 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.4 * r    # changed for max let's see
                         #self.as_m2s_m[s_m][KeyDict(s_)][1] = r
 
             self.samples.clear()

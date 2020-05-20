@@ -9,8 +9,9 @@ class A2CSILAgent(AbstractAgent):
     def __init__(self, action_space, main_model_nn, gamma, batch_size, sil_batch_size, imitation_buffer_size, imitation_learnig_steps):
 
         self.batch_size = batch_size
+        self.imitation_buffer_size = imitation_buffer_size
         self.buffer_online = ExperienceReplay(self.batch_size)
-        self.buffer_imitation = PrioritizedExperienceReplay(imitation_buffer_size)
+        self.buffer_imitation = PrioritizedExperienceReplay(self.imitation_buffer_size)
         self.trajectory = []
         self.action_space = action_space
         self.main_model_nn = main_model_nn
@@ -234,3 +235,15 @@ class A2CSILAgent(AbstractAgent):
             if sum(self.correct_termination) < (10 * self.max_return_reward):
                 for i in range(self.imitation_learning_steps):
                     self.train_imitation()
+
+    def set_name_file_2_save(self, filename):
+        self.FILE_NAME = filename + " - "
+
+    def reset(self):
+
+        self.n_steps = 0
+        self.n_episodes = 0
+        del self.buffer_online
+        del self.buffer_imitation
+        self.buffer_online = ExperienceReplay(self.batch_size)
+        self.buffer_imitation = PrioritizedExperienceReplay(self.imitation_buffer_size)

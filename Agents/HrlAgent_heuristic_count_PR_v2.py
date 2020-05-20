@@ -5,6 +5,7 @@ from collections import deque
 import math
 import copy
 import numpy as np
+import dill
 
 class HrlAgent_heuristic_count_PR_v2(HrlAgent):
 
@@ -21,6 +22,8 @@ class HrlAgent_heuristic_count_PR_v2(HrlAgent):
     n_steps_option = 0
     HER_experience_batch = []
     update_heuristic_count_values = False
+    #just a list with the meenings of actions
+    meaning_actions = ['NOOP', 'FIRE', 'UP', 'RIGHT', 'LEFT', 'DOWN', 'UPRIGHT', 'UPLEFT', 'DOWNRIGHT', 'DOWNLEFT', 'UPFIRE', 'RIGHTFIRE', 'LEFTFIRE', 'DOWNFIRE', 'UPRIGHTFIRE', 'UPLEFTFIRE', 'DOWNRIGHTFIRE', 'DOWNLEFTFIRE']
 
     def pixel_manager_obs(self, s = None, sample = None):
 
@@ -237,12 +240,12 @@ class HrlAgent_heuristic_count_PR_v2(HrlAgent):
 
                     r_h_c = self.wrong_end_option_reward
 
-                    self.HER_training_wo_heuristic(s, a, s_, info, s_m, s_m_)
+                    self.HER_training(s, a, s_, info, s_m, s_m_)
                     self.counter_as = 0
                     self.as_visited.clear()
                     self.update_heuristic_count_values = True
             else:
-                self.HER_training_wo_heuristic(s, a, s_, info, s_m, s_m_)
+                self.HER_training(s, a, s_, info, s_m, s_m_)
                 self.counter_as = 0
                 self.as_visited.clear()
                 self.update_heuristic_count_values = True
@@ -264,14 +267,15 @@ class HrlAgent_heuristic_count_PR_v2(HrlAgent):
 
             if r_h_c < -1:
                 r_h_c = -1
-
+        #print(self.best_option_action, s, self.meaning_actions[a], r, r_h_c, s_, done, s_m.state, s_m_.state, self.target.state)
         if done:
             self.n_steps_option = 0
             print(self.best_option_action, r_h_c)
+            #print()
 
         self.option_rewards += r_h_c
-        self.best_option_action.observe_online((s, a, r_h_c, s_, done, info))
-        self.best_option_action.observe_imitation((s, a, r, s_, done, info))
+        self.best_option_action.observe((s, a, r_h_c, s_, done, info))
+        #self.best_option_action.observe_imitation((s, a, r, s_, done, info))
 
         self.heuristic_reward.append(self.counter_as)
         self.samples.append((s, a, r, s_, done, info, s_m, s_m_))
@@ -296,10 +300,10 @@ class HrlAgent_heuristic_count_PR_v2(HrlAgent):
                         if KeyDict(s_) not in (self.as_m2s_m[s_m]):
                             self.as_m2s_m[s_m][KeyDict(s_)] = [copy.deepcopy(s_), r]
                         else:
-                            # if self.as_m2s_m[s_m][KeyDict(s_)][1] < r:
-                            #     self.as_m2s_m[s_m][KeyDict(s_)][1] = r
+                            if self.as_m2s_m[s_m][KeyDict(s_)][1] < r:
+                                self.as_m2s_m[s_m][KeyDict(s_)][1] = r
 
-                            self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.6 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.4 * r    # changed for max let's see
+                            #self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.6 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.4 * r    # changed for max let's see
                             #self.as_m2s_m[s_m][KeyDict(s_)][1] = r
 
                     del self.samples[i]
@@ -327,10 +331,10 @@ class HrlAgent_heuristic_count_PR_v2(HrlAgent):
                     if KeyDict(s_) not in (self.as_m2s_m[s_m]):
                         self.as_m2s_m[s_m][KeyDict(s_)] = [copy.deepcopy(s_), r]
                     else:
-                        # if self.as_m2s_m[s_m][KeyDict(s_)][1] < r:
-                        #     self.as_m2s_m[s_m][KeyDict(s_)][1] = r
+                        if self.as_m2s_m[s_m][KeyDict(s_)][1] < r:
+                            self.as_m2s_m[s_m][KeyDict(s_)][1] = r
 
-                        self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.6 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.4 * r    # changed for max let's see
+                        #self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.6 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.4 * r    # changed for max let's see
 
                         #self.as_m2s_m[s_m][KeyDict(s_)][1] = r
 
@@ -353,6 +357,25 @@ class HrlAgent_heuristic_count_PR_v2(HrlAgent):
         self.pixel_manager_obs(sample=sample)
 
         return super().observe(sample)
+
+    def load(self, filename):
+        f = open(filename, 'rb')
+        tmp_dict = dill.load(f)
+        f.close()
+
+        tmp_dict["save_result"] = self.save_result
+        tmp_dict["graph"].save_results = self.save_result
+
+        #for key in tmp_dict["graph"].Q.keys():
+        #    for key2 in tmp_dict["graph"].Q[key].keys():
+        #        tmp_dict["graph"].Q[key][key2] = 0
+
+        self.__dict__.update(tmp_dict)
+
+    def save(self, filename):
+        f = open(filename, 'wb')
+        dill.dump(self.__dict__, f, 2)
+        f.close()
 
 
 

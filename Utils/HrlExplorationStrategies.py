@@ -17,7 +17,8 @@ def get_epsilon_count_exploration(self, current_node, distances):
         edges_from_current_node = self.graph.get_edges_of_a_node(current_node)
         if len(edges_from_current_node) > 0:                                                                            # if we are not for the first time in this abstract states
             if random.random() < self.current_node.epsilon:                                                             # epsilon greedy choose
-                random_edge_index = random.choice(range(len(edges_from_current_node) + 1))
+                #random_edge_index = random.choice(range(len(edges_from_current_node) + 1))
+                random_edge_index = random.choice(range(len(edges_from_current_node) + len(edges_from_current_node)))   # WARNING WARNING WARNING changed, now 50 % of chance to choose exploration option!!!!!!
                 if random_edge_index >= len(edges_from_current_node):                                                   # if randomly we choose the exploration option
                     # here it means we choose the exploration option
                     self.target = None

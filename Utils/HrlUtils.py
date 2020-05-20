@@ -133,6 +133,9 @@ class Node:
     def reset_n_visits(self):
         self.visit_count = 1
 
+    def reset_epsilon_count(self):
+        self.epsilon = self.min_epsilon + (1 - self.min_epsilon) * (math.exp(-self.lambda_node * self.visit_count))
+
     def __eq__(self, other):
         if type(self.state).__name__ == "ndarray":
             return np.array_equal(self.state, other.state)
@@ -483,14 +486,16 @@ class Graph:
 
         return self.best_path(edges[random.choice(best_edge_index)].destination, distances)
 
-    def tabularMC(self, sample):
+    def tabularMC(self, sample, done=False):
 
         learning_rate = 0.6
         gamma = 0.95
+        if done is False:
+            done = sample[4]
+            self.batch.append(sample)
 
-        done = sample[4]
-
-        self.batch.append(sample)
+        else:
+            done = done                # I ended the episode in the middle of an abstract state
 
         if done:
             rewards = np.array([o[2] for o in self.batch])
@@ -509,20 +514,25 @@ class Graph:
                         self.Q[s][a] = newQ
                     # td_error = (discounted_r[i] - self.Q[s][a])
                     # self.Q[s][a] = self.Q[s][a] + learning_rate * td_error
-                    # if 1e-4 > self.Q[s][a] > - 1e-4:
-                    #   self.Q[s][a] = 0.  # round(self.Q[s][a], 7)
+                    # if 1e-4 > self.Q[s][a] > - 1e-4:                        # TRICK TRICK TRICK
+                    #     self.Q[s][a] = 0.
+                    # if self.Q[s][a] < 0.:                        # TRICK TRICK TRICK
+                    #     self.Q[s][a] = 0.
                     # print(actions, right_termination)
             self.batch.clear()
 
-    def tabularQ(self, sample):
+    def tabularQ(self, sample, done = False):
 
         learning_rate = 0.9
         gamma = 0.95
         N = 6
 
-        done = sample[4]
+        if done is False:
+            done = sample[4]
+            self.batch.append(sample)
 
-        self.batch.append(sample)
+        else:
+            done = done                # I ended the episode in the middle of an abstract state
 
         if done or len(self.batch) == N:
             rewards = np.array([o[2] for o in self.batch])
@@ -541,16 +551,18 @@ class Graph:
                 returns[t] = rewards[t] + gamma * returns[t + 1] * (1 - dones[t])
 
             returns = returns[:-1]
-            if sum(returns) >= 0.:
-                for i, sample in zip(range(len(self.batch)), self.batch):
-                    s = sample[0]
-                    a = sample[1]
-                    correct_termination = sample[5]
-                    if correct_termination:
-                        td_error = (returns[i] - self.Q[s][a])
-                        self.Q[s][a] = self.Q[s][a] + learning_rate * td_error
-                        if 1e-4 > self.Q[s][a] > - 1e-4:
-                            self.Q[s][a] = 0.
+            #if sum(returns) >= 0.:
+            for i, sample in zip(range(len(self.batch)), self.batch):
+                s = sample[0]
+                a = sample[1]
+                correct_termination = sample[5]
+                if correct_termination:
+                    td_error = (returns[i] - self.Q[s][a])
+                    self.Q[s][a] = self.Q[s][a] + learning_rate * td_error
+                    if 1e-4 > self.Q[s][a] > - 1e-4:                        # TRICK TRICK TRICK
+                        self.Q[s][a] = 0.
+                    # if self.Q[s][a] < 0.:                        # TRICK TRICK TRICK
+                    #     self.Q[s][a] = 0.
 
             self.batch.clear()
 
@@ -605,3 +617,8 @@ class Graph:
         node_s = Node(state, 0)
 
         return self.node_dictionary[node_s]
+
+    def reset_Q(self):
+        for state in self.Q.keys():
+            for action in self.Q[state].keys():
+                self.Q[state][action] = 0.

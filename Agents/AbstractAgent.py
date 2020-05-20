@@ -14,5 +14,8 @@ class AbstractAgent(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def replay(self):
+    def replay(self, done):
         pass
+
+    def set_name_file_2_save(self, filename):
+        self.FILE_NAME = filename + " - "

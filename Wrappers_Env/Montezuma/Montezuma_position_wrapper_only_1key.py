@@ -32,7 +32,12 @@ class Montezuma_position_wrapper_only_1key(gym.Wrapper):
     def step(self, action):
 
         acc_reward = 0
+        observation_ram = self.env.unwrapped._get_ram()
+        if observation_ram[56] != 0:
+            self.env.step(0)
+
         for i in range(4):
+            self.env.unwrapped._get_image()
             observation, reward, done, info = self.env.step(action)
             acc_reward += reward
             if done:
@@ -64,8 +69,8 @@ class Montezuma_position_wrapper_only_1key(gym.Wrapper):
         max_x = 145 - 9
         max_y = 252 - 148
 
-        x = x / (max_x)
-        y = y / (max_y)
+        x = (x / (max_x)) * 10
+        y = (y / (max_y)) * 10
 
         return x, y
 

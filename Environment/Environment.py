@@ -52,7 +52,7 @@ class Environment:
             r_a = np.clip(r, -1, 1)
 
             self.n_step, self.n_episodes = agent.observe((s, a, r_a, s_, done, info))   # qui stai passando la reward clipped!!!
-            agent.replay()
+            agent.replay(done)
 
             self.total_r_episode += r
             #self.n_step += 1
