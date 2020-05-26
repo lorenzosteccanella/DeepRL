@@ -172,7 +172,7 @@ class Graph:
     The main Graph class!
     """
 
-    def __init__(self, edge_list=list(), node_list=list(), Q={}, distances={}, node_edges_dictionary={},
+    def __init__(self, edge_list=[], node_list=[], Q={}, distances={}, node_edges_dictionary={},
                  destination_node_edges_dictionary={}, save_results=False):
 
         """
@@ -189,26 +189,27 @@ class Graph:
         """
 
         # graph variables
-        self.edge_list = edge_list                                                      # to keep the list of edges founded
-        self.node_list = node_list                                                      # to keep the list of nodes founded
+        self.edge_list = []                                                      # to keep the list of edges founded
+        self.node_list = []                                                      # to keep the list of nodes founded
         self.current_node = None                                                        # the current node we are in
         self.current_edge = None                                                        # the current edge we are in
         self.new_node_encontered = False                                                # a flag variable to return if we found a new edge or not to the manager
         self.new_edge_encontered = False                                                # a flag variable to return if we found a new node or not to the manager
-        self.Q = Q                                                                      # a dictionary to create the structure where we can save Q values
-        self.distances = distances                                                      # the computed utility of each edges, distances is general it contains Q values when Q learning is used
+        self.Q = {}                                                                      # a dictionary to create the structure where we can save Q values
+        self.distances = {}                                                      # the computed utility of each edges, distances is general it contains Q values when Q learning is used
         self.total_reward_node = 0                                                      # A variable to track and update the value of a node
         self.total_reward_edge = 0                                                      # A variable to track and update the value of an edge
 
         # more dictionary structures to speed up at cost of more memory usage
-        self.node_edges_dictionary = node_edges_dictionary                              # this is the graph representation with nodes as key and going edges list as values, this structure is just used to speed up computation
-        self.destination_node_edges_dictionary = destination_node_edges_dictionary      # this is the graph representation with nodes as key and destination edges list as values, this structure is just used to speed up computation
+        self.node_edges_dictionary = {}                            # this is the graph representation with nodes as key and going edges list as values, this structure is just used to speed up computation
+        self.destination_node_edges_dictionary = {}      # this is the graph representation with nodes as key and destination edges list as values, this structure is just used to speed up computation
         self.node_dictionary = {}                                                       # a dictionary of node with node hashed as key, speed up
 
         # statistic variables
         self.index_4_bestpathprint = 0
         self.path = []
         self.i = 0
+        self.index_graph = 0
         self.save_results = save_results
 
         # manager learning variables
@@ -258,7 +259,7 @@ class Graph:
                                        width=5)
 
                 plt.draw()
-                plt.savefig(self.save_results.get_path() + "/Graph.png", format="PNG")
+                plt.savefig(self.save_results.get_path() + "/Graph_" + str(self.index_graph) + ".png", format="PNG", dpi=199)
                 plt.clf()
 
     def edge_update(self, old_node, new_node, reward, target):
@@ -495,7 +496,7 @@ class Graph:
             self.batch.append(sample)
 
         else:
-            done = done                # I ended the episode in the middle of an abstract state
+            done = done                # I ended the episode in the middle of an edge option execution
 
         if done:
             rewards = np.array([o[2] for o in self.batch])
@@ -521,7 +522,7 @@ class Graph:
                     # print(actions, right_termination)
             self.batch.clear()
 
-    def tabularQ(self, sample, done = False):
+    def tabularQ(self, sample, done=False):
 
         learning_rate = 0.9
         gamma = 0.95
@@ -534,7 +535,7 @@ class Graph:
         else:
             done = done                # I ended the episode in the middle of an abstract state
 
-        if done or len(self.batch) == N:
+        if done and len(self.batch) > 0 or len(self.batch) == N:
             rewards = np.array([o[2] for o in self.batch])
             dones = np.array([o[4] for o in self.batch])
             s1_t_N = self.batch[-1][3]
@@ -619,6 +620,7 @@ class Graph:
         return self.node_dictionary[node_s]
 
     def reset_Q(self):
+        self.index_graph += 1
         for state in self.Q.keys():
             for action in self.Q[state].keys():
                 self.Q[state][action] = 0.

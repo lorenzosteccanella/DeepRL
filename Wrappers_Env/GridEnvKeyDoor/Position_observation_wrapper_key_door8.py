@@ -4,7 +4,7 @@ from collections import deque
 import numpy as np
 import gym.spaces as spaces
 
-class Position_observation_wrapper(gym.Wrapper):
+class Position_observation_wrapper_key_door8(gym.Wrapper):
 
 
     def __init__(self, env, parameters):
@@ -54,56 +54,35 @@ class Position_observation_wrapper(gym.Wrapper):
 
         if position is None:
             x = 1
-            y = 8
+            y = 14
         else:
             x = position[0]
             y = position[1]
 
         x, y = self.normalize_position(x, y)
 
-        return {"vanilla": None, "manager": None, "option": (x, y)}
-
-    # def get_position_abstract_state_gridenv_GE_MazeKeyDoor_v0(self, position, reward, done):
-    #
-    #     if reward > 0:
-    #         self.total_reward += reward
-    #
-    #     step_x = int(self.width / self.n_zones)
-    #     step_y = int(self.height / self.n_zones)
-    #
-    #     #initial state returned when the environments is resetted
-    #     if position is None:
-    #         x = 1
-    #         y = 8
-    #     else:
-    #         x = position[0]
-    #         y = position[1]
-    #
-    #     # if self.Key == 0 and reward == 1:
-    #     #     self.Key = 1
-    #     #     return (x, y, self.Key, self.Door)
-    #     #
-    #     # if self.Key == 1 and reward == 1:
-    #     #     self.Door = 1
-    #     #     return (x, y, self.Key, self.Door)
-    #     if self.total_reward >= 0 and reward >= 0:
-    #         return (x//step_x, y//step_y, self.total_reward, reward)
-    #     else:
-    #         return (x // step_x, y // step_y, self.total_reward, 0)
+        return {"vanilla": (x, y, self.Key), "manager": None, "option": (x, y)}
 
     def get_position_abstract_state_gridenv_GE_MazeKeyDoor_v0(self, position, reward, done):
 
-        self.total_reward += reward
+        if reward > 0:
+            self.total_reward += reward
 
-        step_x = int(self.width / self.n_zones)
-        step_y = int(self.height / self.n_zones)
+        # if self.total_reward == 1:
+        #     self.Key = 1
+        #
+        # if self.total_reward == 2:
+        #     self.Door = 1
+
+        step_x = self.width // self.n_zones
+        step_y = self.height // self.n_zones
 
         #initial state returned when the environments is resetted
         if position is None:
             x = 1
-            y = 8
+            y = 6
         else:
             x = position[0]
             y = position[1]
 
-        return (x//step_x, y//step_y, self.total_reward, reward)
+        return (x//step_x, y//step_y, self.total_reward)

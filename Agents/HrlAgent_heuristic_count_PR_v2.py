@@ -25,7 +25,11 @@ class HrlAgent_heuristic_count_PR_v2(HrlAgent):
     #just a list with the meenings of actions
     meaning_actions = ['NOOP', 'FIRE', 'UP', 'RIGHT', 'LEFT', 'DOWN', 'UPRIGHT', 'UPLEFT', 'DOWNRIGHT', 'DOWNLEFT', 'UPFIRE', 'RIGHTFIRE', 'LEFTFIRE', 'DOWNFIRE', 'UPRIGHTFIRE', 'UPLEFTFIRE', 'DOWNRIGHTFIRE', 'DOWNLEFTFIRE']
 
-    def pixel_manager_obs(self, s = None, sample = None):
+    avg_sum = 0
+    avg_count = 0
+
+
+    def pixel_manager_obs(self, option):
 
         """
         a function to populate the dictionary "as_m2s_m" for each asbtract state we save all possible ending states
@@ -35,24 +39,8 @@ class HrlAgent_heuristic_count_PR_v2(HrlAgent):
             sample: a (s, a, r, s', done, info) tuple
         """
 
-        if s is not None:
-            s = copy.deepcopy(s)
-            node = Node(s["manager"], 0)
-
-            if node not in self.as_m2s_m:
-                self.as_m2s_m[node] = {}
-
-        if sample is not None:
-
-            sample = copy.deepcopy(sample)
-            node1 = Node(sample[0]["manager"], 0)
-            node2 = Node(sample[3]["manager"], 0)
-
-            if node1 not in self.as_m2s_m:
-                self.as_m2s_m[node1] = {}
-
-            if node2 not in self.as_m2s_m:
-                self.as_m2s_m[node2] = {}
+        if option.id not in self.as_m2s_m:
+            self.as_m2s_m[option.id] = {}
 
     def act(self, s):
 
@@ -66,9 +54,12 @@ class HrlAgent_heuristic_count_PR_v2(HrlAgent):
             returns the option to perform
         """
 
-        self.pixel_manager_obs(s=s)
+        a = super().act(s)
 
-        return super().act(s)
+        if self.best_option_action is not None:
+            self.pixel_manager_obs(self.best_option_action)
+
+        return a
 
     def update_option(self, sample):
 
@@ -78,10 +69,11 @@ class HrlAgent_heuristic_count_PR_v2(HrlAgent):
         # HER style training
         edge = Edge(s_m, s_m_)
         option = self.get_option(edge)
-        if KeyDict(s_) not in (self.as_m2s_m[s_m]):  # we check if we are in ended state already encountered
+        self.pixel_manager_obs(option)
+        if KeyDict(s_) not in (self.as_m2s_m[option.id]):  # we check if we are in ended state already encountered
             HER_r = self.correct_option_end_reward
         else:  # we already visited this ending state
-            HER_r = self.as_m2s_m[s_m][KeyDict(s_)][1]
+            HER_r = self.as_m2s_m[option.id][KeyDict(s_)][1]
         HER_done = True
         for sample in self.HER_experience_batch:
             option.observe_imitation(sample)
@@ -226,13 +218,14 @@ class HrlAgent_heuristic_count_PR_v2(HrlAgent):
                 if s_m_ == self.target:                                 # if we ended correctly
                     self.as_visited.append(s_m_)  # we add the abstract state to the list of abstract statas reached
                     self.counter_as = len(set(self.as_visited))  # we count how many singular abstract state we reached
-                    r = self.correct_option_end_reward                  # we augment the reward with the correct end reward
+                    r = max(r + self.correct_option_end_reward, self.correct_option_end_reward / 2)    # we augment the reward with the correct end reward
+
                     done = True                                         # done is True we finished with the option
 
-                    if KeyDict(s_) not in (self.as_m2s_m[s_m]):         # we check if we are in ended state already encountered
+                    if KeyDict(s_) not in (self.as_m2s_m[self.best_option_action.id]):         # we check if we are in ended state already encountered
                         r_h_c = r
                     else:                                               # we already visited this ending state
-                        r_h_c = self.as_m2s_m[s_m][KeyDict(s_)][1]
+                        r_h_c = self.as_m2s_m[self.best_option_action.id][KeyDict(s_)][1]
 
                 else:                                                   # we endend wrongly
                     r = self.wrong_end_option_reward
@@ -270,7 +263,7 @@ class HrlAgent_heuristic_count_PR_v2(HrlAgent):
         #print(self.best_option_action, s, self.meaning_actions[a], r, r_h_c, s_, done, s_m.state, s_m_.state, self.target.state)
         if done:
             self.n_steps_option = 0
-            print(self.best_option_action, r_h_c)
+            #print(self.best_option_action, r_h_c)
             #print()
 
         self.option_rewards += r_h_c
@@ -297,14 +290,19 @@ class HrlAgent_heuristic_count_PR_v2(HrlAgent):
                     s_m_ = p_sample[7]
 
                     if done and r >= self.correct_option_end_reward:  # this means that we are at the correct end of an option
-                        if KeyDict(s_) not in (self.as_m2s_m[s_m]):
-                            self.as_m2s_m[s_m][KeyDict(s_)] = [copy.deepcopy(s_), r]
+                        if KeyDict(s_) not in (self.as_m2s_m[option.id]):
+                            self.as_m2s_m[option.id][KeyDict(s_)] = [copy.deepcopy(s_), r]
+                            self.avg_sum += r
+                            self.avg_count += 1
                         else:
-                            if self.as_m2s_m[s_m][KeyDict(s_)][1] < r:
-                                self.as_m2s_m[s_m][KeyDict(s_)][1] = r
 
-                            #self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.6 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.4 * r    # changed for max let's see
-                            #self.as_m2s_m[s_m][KeyDict(s_)][1] = r
+                            # self.as_m2s_m[option.id][KeyDict(s_)][1] = (self.avg_sum / self.avg_count)
+
+                            if self.as_m2s_m[option.id][KeyDict(s_)][1] < r:
+                                self.as_m2s_m[option.id][KeyDict(s_)][1] = r
+
+                            #self.as_m2s_m[option.id][KeyDict(s_)][1] = 0.6 * self.as_m2s_m[option.id][KeyDict(s_)][1] + 0.4 * r    # changed for max let's see
+                            #self.as_m2s_m[option.id][KeyDict(s_)][1] = r
 
                     del self.samples[i]
                     del self.options_executed_episode[i]
@@ -328,15 +326,19 @@ class HrlAgent_heuristic_count_PR_v2(HrlAgent):
                 s_m_ = p_sample[7]
 
                 if done and r >= self.correct_option_end_reward:        # this means that we are at the correct end of an option
-                    if KeyDict(s_) not in (self.as_m2s_m[s_m]):
-                        self.as_m2s_m[s_m][KeyDict(s_)] = [copy.deepcopy(s_), r]
+                    if KeyDict(s_) not in (self.as_m2s_m[option.id]):
+                        self.as_m2s_m[option.id][KeyDict(s_)] = [copy.deepcopy(s_), r]
+                        self.avg_sum += r
+                        self.avg_count += 1
                     else:
-                        if self.as_m2s_m[s_m][KeyDict(s_)][1] < r:
-                            self.as_m2s_m[s_m][KeyDict(s_)][1] = r
 
-                        #self.as_m2s_m[s_m][KeyDict(s_)][1] = 0.6 * self.as_m2s_m[s_m][KeyDict(s_)][1] + 0.4 * r    # changed for max let's see
+                        # self.as_m2s_m[option.id][KeyDict(s_)][1] = (self.avg_sum / self.avg_count)
+                        if self.as_m2s_m[option.id][KeyDict(s_)][1] < r:
+                            self.as_m2s_m[option.id][KeyDict(s_)][1] = r
 
-                        #self.as_m2s_m[s_m][KeyDict(s_)][1] = r
+                        #self.as_m2s_m[option.id][KeyDict(s_)][1] = 0.6 * self.as_m2s_m[option.id][KeyDict(s_)][1] + 0.4 * r    # changed for max let's see
+
+                        #self.as_m2s_m[option.id][KeyDict(s_)][1] = r
 
             self.samples.clear()
             self.options_executed_episode.clear()
@@ -353,8 +355,6 @@ class HrlAgent_heuristic_count_PR_v2(HrlAgent):
         Args:
             sample: a (s, a, r, s', done, info) tuple
         """
-
-        self.pixel_manager_obs(sample=sample)
 
         return super().observe(sample)
 

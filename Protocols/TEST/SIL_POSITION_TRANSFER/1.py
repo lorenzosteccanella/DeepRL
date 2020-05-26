@@ -4,7 +4,7 @@ import gym
 import tensorflow as tf
 import os
 from Environment import Environment
-from Wrappers_Env import Position_observation_wrapper
+from Wrappers_Env import Position_observation_wrapper_key_door16
 from Models.PPOnetworksEager import *
 from Utils import SaveResult
 from Utils.HrlExplorationStrategies import get_epsilon_count_exploration
@@ -19,16 +19,17 @@ class variables():
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # to train on CPU
 
-        self.seeds = range(1)
+        self.seeds = [0]
         self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  heuristic_count_TEST_SIL_POSITION_TRANSFER_1/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Position_Transfer_SIL_HRL_E_GREEDY'
-        self.NUMBER_OF_EPOCHS = 1000
+        #self.NUMBER_OF_EPOCHS = 1000
+        self.NUMBER_OF_STEPS = 200000
 
         self.multi_processing = False
 
-        self.PROBLEM = 'GE_MazeKeyDoor10keyDoor1-v0'
-        self.TEST_TRANSFER_PROBLEM = ['GE_MazeKeyDoor10keyDoor2-v0', 'GE_MazeKeyDoor10keyDoor3-v0', 'GE_MazeKeyDoor10keyDoor1-v0','GE_MazeKeyDoor10keyDoor2-v0', 'GE_MazeKeyDoor10keyDoor3-v0']
+        self.PROBLEM = 'GE_MazeFourRoom16keyDoor2-v0'
+        self.TEST_TRANSFER_PROBLEM = []
 
         environment = gym.make(self.PROBLEM)
 
@@ -40,9 +41,9 @@ class variables():
             "n_zones": 4
         }
 
-        self.wrapper = Position_observation_wrapper(environment, self.wrapper_params)
+        self.wrapper = Position_observation_wrapper_key_door16(environment, self.wrapper_params)
 
-        self.display_env = True
+        self.display_env = False
 
         if self.display_env:
             from Utils import ShowRenderHRL
@@ -65,20 +66,20 @@ class variables():
 
         self.option_params = {
             "option": A2CSILOption,
-            "h_size": 128,
+            "h_size": 64,
             "action_space": self.ACTION_SPACE,
             "critic_network": CriticNetwork,
             "actor_network": ActorNetwork,
             "shared_representation": None,
             "weight_mse": 0.5,
             "sil_weight_mse": 0.01,
-            "weight_ce_exploration": 0.01,
-            "learning_rate": 0.001,
+            "weight_ce_exploration": 0.001,
+            "learning_rate": 0.0007,
             "gamma": 0.95,
             "batch_size": 6,
-            "sil_batch_size": 64,
+            "sil_batch_size": 512,
             "imitation_buffer_size": 1000,
-            "imitation_learning_steps": 8,
+            "imitation_learning_steps": 4,
             "preprocessing": preprocessing,
         }
 
@@ -101,7 +102,7 @@ class variables():
 
         self.number_of_stacked_frames = 1
         environment = gym.make(self.TEST_TRANSFER_PROBLEM[self.index_execution])
-        self.wrapper = Position_observation_wrapper(environment, self.wrapper_params)
+        self.wrapper = Position_observation_wrapper_key_door16(environment, self.wrapper_params)
 
         if self.display_env:
             from Utils import ShowRenderHRL

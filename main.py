@@ -62,6 +62,7 @@ def run(variables):
     rewards = []
     n_steps = []
     epoch = 0
+    nstep = 0
 
     # if variables.BufferFillAgent is not None:total_r
     #    print("RANDOM EXPLORATION TO FILL EXPERIENCE REPLAY BUFFER")
@@ -75,15 +76,15 @@ def run(variables):
     #    variables.randomAgent = None
 
     print("START TO LEARN")
-    while epoch < variables.NUMBER_OF_EPOCHS:
+    while nstep < variables.NUMBER_OF_STEPS:#epoch < variables.NUMBER_OF_EPOCHS:
         epoch, nstep, reward = variables.env.run(variables.agent)
-        print(epoch, nstep, reward, (sum(rewards[-10:]) / 10))
+        print(epoch, nstep, reward, (sum(rewards[-100:]) / 100))
         epochs.append(epoch)
         rewards.append(reward)
         n_steps.append(nstep)
 
         if variables.SAVE_RESULT is not False:
-            message = str(epoch) + " " + str(nstep) + " " + str(reward) + " " + str((sum(rewards[-10:]) / 10)) + "\n"
+            message = str(epoch) + " " + str(nstep) + " " + str(reward) + " " + str((sum(rewards[-100:]) / 100)) + "\n"
             variables.SAVE_RESULT.save_data("on_going_results", message)
 
 
@@ -120,12 +121,14 @@ if __name__ == '__main__':
                 variables.env.set_env(environment)
 
             epochs, rewards, n_steps = run(variables)
-            moving_average_reward = moving_average(rewards, 10)
+            moving_average_reward = moving_average(rewards, 100)
 
             if variables.SAVE_RESULT is not False:
                 message = [str(e) + " " + str(nstep) + " " + str(r) + "\n" for e, r, nstep in zip(epochs, moving_average_reward, n_steps)]
                 variables.SAVE_RESULT.save_data(variables.FILE_NAME, message)
-                variables.SAVE_RESULT.plot_results(variables.FILE_NAME, "reward-over-episodes", "episodes", "reward")
+                variables.SAVE_RESULT.plot_reward_ep(variables.FILE_NAME, "reward-over-episodes", "episodes", "reward")
+                variables.SAVE_RESULT.plot_reward_nstep(variables.FILE_NAME, "reward-over-nsteps", "nsteps", "reward")
+
                 if isinstance(variables.agent, HrlAgent):
                     if isinstance(variables.agent, list):
                         variables.SAVE_RESULT.plot_success_rate_transitions(variables.agent[0].FILE_NAME + "Transitions_performance")
@@ -148,11 +151,12 @@ if __name__ == '__main__':
                     print("\n"*6)
                     variables.transfer_learning_test()
                     epochs, rewards, n_steps = run(variables)
-                    moving_average_reward = moving_average(rewards, 10)
+                    moving_average_reward = moving_average(rewards, 100)
                     message = [str(e) + " " + str(nstep) + " " + str(r) + "\n" for e, r, nstep in zip(epochs, moving_average_reward, n_steps)]
                     if variables.SAVE_RESULT is not False:
                         variables.SAVE_RESULT.save_data(variables.TRANSFER_FILE_NAME, message)
-                        variables.SAVE_RESULT.plot_results(variables.TRANSFER_FILE_NAME, "reward-over-episodes", "episodes", "reward")
+                        variables.SAVE_RESULT.plot_reward_ep(variables.TRANSFER_FILE_NAME, "reward-over-episodes", "episodes", "reward")
+                        variables.SAVE_RESULT.plot_reward_nstep(variables.TRANSFER_FILE_NAME, "reward-over-nsteps", "nsteps", "reward")
                         if isinstance(variables.agent, HrlAgent):
                             if isinstance(variables.agent, list):
                                 variables.SAVE_RESULT.plot_success_rate_transitions(variables.agent[0].FILE_NAME + "Transitions_performance")
@@ -160,12 +164,15 @@ if __name__ == '__main__':
                                 variables.SAVE_RESULT.plot_success_rate_transitions(variables.agent.FILE_NAME + "Transitions_performance")
 
 
-        variables.SAVE_RESULT.plot_multiple_seeds(variables.FILE_NAME, "reward-over-episodes", "episodes", "reward")
-        variables.SAVE_RESULT.plot_multiple_seeds("Transitions_performance", "success rate of options' transitions",
-                                                  "number of options executed", "% of successful option executions")
+        variables.SAVE_RESULT.plot_multiple_seeds_reward_ep(variables.FILE_NAME, "reward-over-episodes", "episodes", "reward")
+        variables.SAVE_RESULT.plot_multiple_seeds_reward_nstep(variables.FILE_NAME, "reward-over-nsteps", "nsteps", "reward")
+        if isinstance(variables.agent, HrlAgent):
+            variables.SAVE_RESULT.plot_multiple_seeds("Transitions_performance", "success rate of options' transitions", "number of options executed", "% of successful option executions")
         if (has_method(variables, 'transfer_learning_test')):
             for file_name_transfer in variables.TEST_TRANSFER_PROBLEM:
-                variables.SAVE_RESULT.plot_multiple_seeds(variables.FILE_NAME+" - "+ file_name_transfer, "reward-over-episodes", "episodes", "reward")
+                variables.SAVE_RESULT.plot_multiple_seeds_reward_ep(variables.FILE_NAME + " - " + file_name_transfer, "reward-over-episodes", "episodes", "reward")
+                variables.SAVE_RESULT.plot_multiple_seeds_reward_nstep(variables.FILE_NAME + " - " + file_name_transfer, "reward-over-nsteps", "nsteps", "reward")
+
 
 
 

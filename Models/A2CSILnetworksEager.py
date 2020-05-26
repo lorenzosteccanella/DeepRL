@@ -128,10 +128,10 @@ class A2CSILEagerSeparate:
         self.weight_sil_mse = weight_sil_mse
         self.weight_ce = weight_ce
 
-        self.optimizer_critic = tf.train.RMSPropOptimizer(learning_rate=learning_rate_online * 0.1)
+        self.optimizer_critic = tf.train.RMSPropOptimizer(learning_rate=learning_rate_online)
         self.optimizer_actor = tf.train.RMSPropOptimizer(learning_rate=learning_rate_online)
-        self.optimizer_critic_imitation = tf.train.RMSPropOptimizer(learning_rate=learning_rate_online * 0.1)
-        self.optimizer_actor_imitation = tf.train.RMSPropOptimizer(learning_rate=learning_rate_online)
+        self.optimizer_critic_imitation = self.optimizer_critic
+        self.optimizer_actor_imitation = self.optimizer_actor
         self.global_step = tf.Variable(0)
 
     def get_action(self, s):

@@ -42,8 +42,8 @@ class Position_observation_wrapper_key_door16(gym.Wrapper):
         return observation, reward, done, info
 
     def normalize_position(self, x, y):
-        x = (x / (self.width -1)) * 10
-        y = (y / (self.height -1)) * 10
+        x = ((x / (self.width -1)) * 10) + 1
+        y = ((y / (self.height -1)) * 10) + 1
 
         return x, y
 
@@ -59,19 +59,19 @@ class Position_observation_wrapper_key_door16(gym.Wrapper):
             x = position[0]
             y = position[1]
 
-        # x, y = self.normalize_position(x, y)
+        x, y = self.normalize_position(x, y)
 
         return {"vanilla": (x, y, self.Key), "manager": None, "option": (x, y)}
 
     def get_position_abstract_state_gridenv_GE_MazeKeyDoor_v0(self, position, reward, done):
+        if reward > 0:
+            self.total_reward += reward
 
-        self.total_reward += reward
-
-        if self.total_reward == 1:
-            self.Key = 1
-
-        if self.total_reward == 2:
-            self.Door = 1
+        # if self.total_reward == 1:
+        #     self.Key = 1
+        #
+        # if self.total_reward == 2:
+        #     self.Door = 1
 
         step_x = self.width // self.n_zones
         step_y = self.height // self.n_zones
@@ -84,4 +84,4 @@ class Position_observation_wrapper_key_door16(gym.Wrapper):
             x = position[0]
             y = position[1]
 
-        return (x//step_x, y//step_y, self.Key, self.Door)#(x//step_x, y//step_y, self.total_reward, reward)
+        return (x//step_x, y//step_y, self.total_reward)

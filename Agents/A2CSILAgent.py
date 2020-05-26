@@ -23,7 +23,7 @@ class A2CSILAgent(AbstractAgent):
         A2CSILAgent.id += 1
 
         self.correct_termination = collections.deque(maxlen = 10)
-        self.max_return_reward = 1 # this depends on the correct termination reward u set!!!!
+        self.max_return_reward = 1000 # WARNING WARNING WARNING WARNING this depends on the correct termination reward u set!!!!
 
         self.n_steps = 0
         self.n_episodes = 0

@@ -131,8 +131,8 @@ class HrlAgent(AbstractAgent):
 
         task_indipendent_origin = origin[0:2]
         task_indipendent_destination = destination[0:2]
-        task_dependent_origin = origin[2::]
-        task_dependent_destination = destination[2::]
+        task_dependent_origin = origin[-1]
+        task_dependent_destination = destination[-1]
 
         if task_dependent_origin == task_dependent_destination:
             edge = Edge(Node(task_indipendent_origin, 0.), Node(task_indipendent_destination, 0.))
@@ -140,6 +140,8 @@ class HrlAgent(AbstractAgent):
 
         if edge not in self.options:
             self.options[edge] = self.option_params["option"](self.option_params)
+
+        # print(edge, self.options[edge])
 
         return self.options[edge]
 
@@ -270,7 +272,7 @@ class HrlAgent(AbstractAgent):
 
         self.reward_manager += sample[2]                                # here we keep a sum of all the reward collected in these abstract state
         s = self.graph.get_node(sample[0]["manager"])                   # the abstract state
-        r = self.reward_manager #+ (beta/math.sqrt(s.visit_count))       # the reward of the manager
+        r = self.reward_manager #+ (beta/math.sqrt(s.visit_count))      # the reward of the manager
         #print((beta/math.sqrt(s.visit_count)) )
         s_ = self.graph.get_node(sample[3]["manager"])                  # the abstact state at time t+1
         a = Edge(s, s_)  #self.best_edge                                # the Edge i'm in, this is a trick to define the edge I executed as always the wanted one, even when I'm ending in wrong abstract state
@@ -282,12 +284,8 @@ class HrlAgent(AbstractAgent):
                 self.graph.tabularMC((s, a, r, s_, done, True))
             self.reward_manager = 0
 
-        elif done:
-            #self.graph.tabularMC(False, True)
-            if self.best_edge is not None:
-                self.graph.tabularMC((s, self.best_edge, r, s_, done, True), False)
-                #self.graph.tabularMC(False, True)
         if done:
+            self.graph.tabularMC(False, True)
             self.reward_manager = 0
 
     def statistics_options(self, sample):
@@ -374,8 +372,6 @@ class HrlAgent(AbstractAgent):
         pass
 
     def equal(self, a, b):
-
-
         """
         this is the function that define equality depending on the type I'm passing in
 

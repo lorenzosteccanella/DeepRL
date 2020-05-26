@@ -4,7 +4,7 @@ from collections import deque
 import numpy as np
 import gym.spaces as spaces
 
-class Flat_Position_observation_wrapper_key_door16(gym.Wrapper):
+class Flat_Position_observation_wrapper_key_door8(gym.Wrapper):
 
 
     def __init__(self, env, parameters):
@@ -51,7 +51,7 @@ class Flat_Position_observation_wrapper_key_door16(gym.Wrapper):
 
         if position is None:
             x = 1
-            y = 14
+            y = 6
         else:
             x = position[0]
             y = position[1]

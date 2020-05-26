@@ -20,16 +20,17 @@ class variables():
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # to train on CPU
 
-        self.seeds = range(1)
+        self.seeds = [0]
         self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  TEST_SIL_POSITION_TRANSFER_1/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Position_Transfer_SIL'
-        self.NUMBER_OF_EPOCHS = 1000
+        #self.NUMBER_OF_EPOCHS = 1000
+        self.NUMBER_OF_STEPS = 200000
 
         self.multi_processing = False
 
-        self.PROBLEM = 'GE_MazeKeyDoor16keyDoor1-v0'
-        self.TEST_TRANSFER_PROBLEM = ['GE_MazeKeyDoor16keyDoor2-v0', 'GE_MazeKeyDoor16keyDoor3-v0', 'GE_MazeKeyDoor16keyDoor1-v0','GE_MazeKeyDoor16keyDoor2-v0', 'GE_MazeKeyDoor16keyDoor3-v0']
+        self.PROBLEM = 'GE_MazeFourRoom16keyDoor2-v0'
+        self.TEST_TRANSFER_PROBLEM = []
 
         environment = gym.make(self.PROBLEM)
 
@@ -64,7 +65,7 @@ class variables():
         preprocessing = None
 
         self.parameters = {
-            "h_size": 128,
+            "h_size": 64,
             "action_space": self.ACTION_SPACE,
             "critic_network": CriticNetwork,
             "actor_network": ActorNetwork,
@@ -72,12 +73,12 @@ class variables():
             "weight_mse": 0.5,
             "sil_weight_mse": 0.01,
             "weight_ce_exploration": 0.01,
-            "learning_rate": 0.001,
+            "learning_rate": 0.0007,
             "gamma": 0.95,
             "batch_size": 6,
-            "sil_batch_size": 64,
+            "sil_batch_size": 512,
             "imitation_buffer_size": 10000,
-            "imitation_learning_steps": 8,
+            "imitation_learning_steps": 4,
             "preprocessing": preprocessing,
         }
 
