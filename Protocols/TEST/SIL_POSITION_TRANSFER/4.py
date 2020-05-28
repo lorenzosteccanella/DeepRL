@@ -1,12 +1,12 @@
 from Agents import HrlAgent, HrlAgent_heuristic_count_PR, RandomAgentOption, A2CSILOption, \
     HrlAgent_SubGoal_Plan_heuristic_count_PR, HrlAgent_heuristic_count_PR_v2, \
-    HrlAgent_SubGoal_Plan_heuristic_count_PR_v2, A2CSILAgent
+    HrlAgent_SubGoal_Plan_heuristic_count_PR_v2, A2CSILwPHCOption
 import gym
 import tensorflow as tf
 import os
 from Environment import Environment
-from Wrappers_Env import Flat_Position_observation_wrapper_key_door
-from Models.A2CSILnetworksEager import *
+from Wrappers_Env import Position_observation_wrapper_key_door
+from Models.PPOnetworksEager import *
 from Utils import SaveResult
 from Utils.HrlExplorationStrategies import get_epsilon_count_exploration
 import gridenvs.examples
@@ -21,9 +21,9 @@ class variables():
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # to train on CPU
 
         self.seeds = range(5)
-        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  TEST_SIL_POSITION_TRANSFER_1/')
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  heuristic_count_TEST_SIL_POSITION_TRANSFER_1/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
-        self.FILE_NAME = 'Position_Transfer_SIL'
+        self.FILE_NAME = 'Position_Transfer_SIL_HRL_E_GREEDY'
         #self.NUMBER_OF_EPOCHS = 1000
         self.NUMBER_OF_STEPS = 200000
 
@@ -39,11 +39,12 @@ class variables():
         self.wrapper_params = {
             "width": 16,
             "height": 16,
+            "n_zones": 4
         }
 
-        self.wrapper = Flat_Position_observation_wrapper_key_door(environment, self.wrapper_params)
+        self.wrapper = Position_observation_wrapper_key_door(environment, self.wrapper_params)
 
-        self.display_env = False
+        self.display_env = True
 
         if self.display_env:
             from Utils import ShowRenderHRL
@@ -64,7 +65,8 @@ class variables():
 
         preprocessing = None
 
-        self.parameters = {
+        self.option_params = {
+            "option": A2CSILwPHCOption,
             "h_size": 64,
             "action_space": self.ACTION_SPACE,
             "critic_network": CriticNetwork,
@@ -77,17 +79,20 @@ class variables():
             "gamma": 0.95,
             "batch_size": 6,
             "sil_batch_size": 512,
-            "imitation_buffer_size": 100000,
+            "imitation_buffer_size": 10000,
             "imitation_learning_steps": 4,
             "preprocessing": preprocessing,
         }
 
-        self.a2cDNN_SIL = A2CSILEagerSeparate(self.parameters["h_size"], len(self.parameters["action_space"]), self.parameters["critic_network"],
-                                          self.parameters["actor_network"], self.parameters["learning_rate"], self.parameters["weight_mse"],
-                                          self.parameters["sil_weight_mse"], self.parameters["weight_ce_exploration"])
+        self.random_agent = RandomAgentOption(self.ACTION_SPACE)
+        self.LAMBDA = 0.005
+        self.MIN_EPSILON = 0
+        self.exploration_fn = get_epsilon_count_exploration
 
-        self.agent = A2CSILAgent(self.parameters["action_space"], self.a2cDNN_SIL, self.parameters["gamma"], self.parameters["batch_size"],
-                                 self.parameters["sil_batch_size"], self.parameters["imitation_buffer_size"], self.parameters["imitation_learning_steps"] )
+        self.agent_params = (self.option_params, self.random_agent, self.exploration_fn,
+                                                              self.LAMBDA, self.MIN_EPSILON, 0.8, - 0.1, self.SAVE_RESULT)
+
+        self.agent = HrlAgent_heuristic_count_PR_v2(*self.agent_params)
 
         #self.agent.load("/home/lorenzo/Documenti/UPF/DeepRL/results/TEST  -  heuristic_count_TEST_SIL_POSITION_1/Wed_May_13_17:56:31_2020/seed_0/model")
 
@@ -98,7 +103,7 @@ class variables():
     #
     #     self.number_of_stacked_frames = 1
     #     environment = gym.make(self.TEST_TRANSFER_PROBLEM[self.index_execution])
-    #     self.wrapper = Flat_Position_observation_wrapper_key_door(environment, self.wrapper_params)
+    #     self.wrapper = Position_observation_wrapper_key_door(environment, self.wrapper_params)
     #
     #     if self.display_env:
     #         from Utils import ShowRenderHRL
@@ -111,7 +116,10 @@ class variables():
     #     self.TRANSFER_FILE_NAME = self.FILE_NAME + " - " + self.TEST_TRANSFER_PROBLEM[self.index_execution]
     #
     #     self.agent.set_name_file_2_save(self.TRANSFER_FILE_NAME)
-    #     self.agent.reset()
+    #
+    #     self.agent.reset_pseudo_count_exploration()
+    #     self.agent.reset_statistics()
+    #     self.agent.reset_Q()
     #
     #     self.index_execution += 1
 
