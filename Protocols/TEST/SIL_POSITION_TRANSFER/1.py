@@ -14,7 +14,7 @@ class variables():
 
     def __init__(self):
 
-        tf.enable_eager_execution()
+        #tf.enable_eager_execution()
 
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # to train on CPU
@@ -60,7 +60,7 @@ class variables():
         self.env.close()
 
         # Just to be sure that we don't have some others graph loaded
-        tf.reset_default_graph()
+        #tf.reset_default_graph()
 
         preprocessing = None
 

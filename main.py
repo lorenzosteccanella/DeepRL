@@ -107,7 +107,7 @@ if __name__ == '__main__':
                 variables.SAVE_RESULT.set_seed(seed)
                 parameters = vars(variables)
                 variables.SAVE_RESULT.save_settings(parameters)
-            tf.set_random_seed(seed)
+            tf.random.set_seed(seed)
             random.seed(seed)
             np.random.seed(seed)
 
@@ -137,7 +137,7 @@ if __name__ == '__main__':
 
             if(has_method(variables, 'transfer_learning_test')):
                 for _ in range(len(variables.TEST_TRANSFER_PROBLEM)):
-                    tf.set_random_seed(seed)
+                    tf.random.set_seed(seed)
                     random.seed(seed)
                     np.random.seed(seed)
                     if variables.multi_processing is False:
