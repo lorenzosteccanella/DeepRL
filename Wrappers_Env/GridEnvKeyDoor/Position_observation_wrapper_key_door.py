@@ -3,6 +3,7 @@ from Utils import normalize, get_pixels_from_obs, np_in_list, ssim_in_list, SSIM
 from collections import deque
 import numpy as np
 import gym.spaces as spaces
+import random
 
 class Position_observation_wrapper_key_door(gym.Wrapper):
 
@@ -33,6 +34,10 @@ class Position_observation_wrapper_key_door(gym.Wrapper):
         return observation
 
     def step(self, action):
+
+        if random.random() > 0.8:
+            action = self.env.action_space.sample()
+
         obs, reward, done, info = self.env.step(action)
         observation = self.get_position(info["position"], reward)
 
