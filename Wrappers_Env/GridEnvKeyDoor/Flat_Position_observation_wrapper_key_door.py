@@ -4,7 +4,7 @@ from collections import deque
 import numpy as np
 import gym.spaces as spaces
 
-class Flat_Position_observation_wrapper_key_door8(gym.Wrapper):
+class Flat_Position_observation_wrapper_key_door(gym.Wrapper):
 
 
     def __init__(self, env, parameters):
@@ -31,6 +31,11 @@ class Flat_Position_observation_wrapper_key_door8(gym.Wrapper):
         obs, reward, done, info = self.env.step(action)
         observation = self.get_position(info["position"], reward)
 
+        if self.total_reward >= 3 and reward == 1:
+            reward = 1.
+        else:
+            reward = 0.
+
         return observation, reward, done, info
 
     def normalize_position(self, x, y):
@@ -51,11 +56,11 @@ class Flat_Position_observation_wrapper_key_door8(gym.Wrapper):
 
         if position is None:
             x = 1
-            y = 6
+            y = self.height - 2
         else:
             x = position[0]
             y = position[1]
 
         x, y = self.normalize_position(x, y)
 
-        return (x, y, self.Key, self.total_reward)
+        return (x, y, self.total_reward)
