@@ -26,18 +26,18 @@ class variables():
         
         tf.config.optimizer.set_jit(True)
 
-        self.seeds = range(5)
+        self.seeds = [0]
         self.MAX_R = 3
         self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  HRL-SIL-totr' + str(self.MAX_R) + '/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'HRL-SIL-totr3'
         #self.NUMBER_OF_EPOCHS = 1000
-        self.NUMBER_OF_STEPS = 200000
+        self.NUMBER_OF_STEPS = 400000
 
         self.multi_processing = False
 
         self.PROBLEM = 'GE_MazeTreasure16keyDoor1-v0'
-        self.TEST_TRANSFER_PROBLEM = []
+        self.TEST_TRANSFER_PROBLEM = ['GE_MazeTreasure16keyDoor2-v0', 'GE_MazeTreasure16keyDoor3-v0', 'GE_MazeTreasure16keyDoor4-v0', 'GE_MazeTreasure16keyDoor5-v0', 'GE_MazeTreasure16keyDoor6-v0']
 
         environment = gym.make(self.PROBLEM)
 

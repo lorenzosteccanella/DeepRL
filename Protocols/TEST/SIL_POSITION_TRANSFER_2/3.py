@@ -32,8 +32,8 @@ class variables():
 
         self.multi_processing = False
 
-        self.PROBLEM = 'GE_MazeTreasure16keyDoor1-v0'
-        self.TEST_TRANSFER_PROBLEM = ['GE_MazeTreasure16keyDoor2-v0', 'GE_MazeTreasure16keyDoor3-v0', 'GE_MazeTreasure16keyDoor4-v0', 'GE_MazeTreasure16keyDoor5-v0', 'GE_MazeTreasure16keyDoor6-v0']
+        self.PROBLEM = 'GE_MazeTreasure16key1-v0'
+        self.TEST_TRANSFER_PROBLEM = ['GE_MazeTreasure16key2-v0', 'GE_MazeTreasure16key3-v0', 'GE_MazeTreasure16key4-v0', 'GE_MazeTreasure16key5-v0', 'GE_MazeTreasure16key6-v0']
 
         environment = gym.make(self.PROBLEM)
 
