@@ -80,7 +80,7 @@ class variables():
             "batch_size": 6,
             "sil_batch_size": 512,
             "imitation_buffer_size": 10000,
-            "imitation_learning_steps": 4,
+            "imitation_learning_steps": 1,
             "preprocessing": preprocessing,
         }
 
