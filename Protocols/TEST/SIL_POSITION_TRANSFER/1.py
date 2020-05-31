@@ -19,23 +19,24 @@ class variables():
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # to train on CPU
 
-        # from tensorflow.keras.mixed_precision import experimental as mixed_precision
-        # policy = mixed_precision.Policy('mixed_float16')
-        # mixed_precision.set_policy(policy)
-        # # Now design your model and train it
-        #
-        # tf.config.optimizer.set_jit(True)
+        #from tensorflow.keras.mixed_precision import experimental as mixed_precision
+        #policy = mixed_precision.Policy('mixed_float16')
+        #mixed_precision.set_policy(policy)
+        # Now design your model and train it
+        
+        tf.config.optimizer.set_jit(True)
 
         self.seeds = range(5)
-        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  heuristic_count_TEST_SIL_POSITION_TRANSFER_1/')
+        self.MAX_R = 3
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  HRL-SIL-totr' + str(self.MAX_R) + '/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
-        self.FILE_NAME = 'Position_Transfer_SIL_HRL_E_GREEDY'
+        self.FILE_NAME = 'HRL-SIL-totr3'
         #self.NUMBER_OF_EPOCHS = 1000
         self.NUMBER_OF_STEPS = 200000
 
         self.multi_processing = False
 
-        self.PROBLEM = 'GE_MazeTreasure16keyDoor2-v0'
+        self.PROBLEM = 'GE_MazeTreasure16keyDoor1-v0'
         self.TEST_TRANSFER_PROBLEM = []
 
         environment = gym.make(self.PROBLEM)
@@ -102,32 +103,24 @@ class variables():
 
         #self.agent.load("/home/lorenzo/Documenti/UPF/DeepRL/results/TEST  -  heuristic_count_TEST_SIL_POSITION_1/Wed_May_13_17:56:31_2020/seed_0/model")
 
-    # def transfer_learning_test(self):
-    #
-    #     if self.env is not None:
-    #         self.env.close()
-    #
-    #     self.number_of_stacked_frames = 1
-    #     environment = gym.make(self.TEST_TRANSFER_PROBLEM[self.index_execution])
-    #     self.wrapper = Position_observation_wrapper_key_door(environment, self.wrapper_params)
-    #
-    #     if self.display_env:
-    #         from Utils import ShowRenderHRL
-    #         rendering = ShowRenderHRL
-    #     else:
-    #         rendering = False
-    #
-    #     self.env = Environment(self.wrapper, preprocessing=False, rendering_custom_class=rendering, display_env=self.display_env)
-    #
-    #     self.TRANSFER_FILE_NAME = self.FILE_NAME + " - " + self.TEST_TRANSFER_PROBLEM[self.index_execution]
-    #
-    #     self.agent.set_name_file_2_save(self.TRANSFER_FILE_NAME)
-    #
-    #     self.agent.reset_pseudo_count_exploration()
-    #     self.agent.reset_statistics()
-    #     self.agent.reset_Q()
-    #
-    #     self.index_execution += 1
+    def transfer_learning_test(self):
+        if self.env is not None:
+            self.env.close()
+        self.number_of_stacked_frames = 1
+        environment = gym.make(self.TEST_TRANSFER_PROBLEM[self.index_execution])
+        self.wrapper = Position_observation_wrapper_key_door(environment, self.wrapper_params)
+        if self.display_env:
+            from Utils import ShowRenderHRL
+            rendering = ShowRenderHRL
+        else:
+            rendering = False
+        self.env = Environment(self.wrapper, preprocessing=False, rendering_custom_class=rendering, display_env=self.display_env)
+        self.TRANSFER_FILE_NAME = self.FILE_NAME + " - " + self.TEST_TRANSFER_PROBLEM[self.index_execution]
+        self.agent.set_name_file_2_save(self.TRANSFER_FILE_NAME)
+        self.agent.reset_pseudo_count_exploration()
+        self.agent.reset_statistics()
+        self.agent.reset_Q()
+        self.index_execution += 1
 
 
 

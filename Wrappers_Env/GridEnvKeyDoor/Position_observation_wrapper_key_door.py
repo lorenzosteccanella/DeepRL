@@ -36,7 +36,10 @@ class Position_observation_wrapper_key_door(gym.Wrapper):
     def step(self, action):
 
         if random.random() > 0.8:
-            action = self.env.action_space.sample()
+            a = action
+            while a == action:
+                action = self.env.action_space.sample()
+            action = a
 
         obs, reward, done, info = self.env.step(action)
         observation = self.get_position(info["position"], reward)
@@ -44,7 +47,7 @@ class Position_observation_wrapper_key_door(gym.Wrapper):
         observation["vanilla"] = obs
         observation["manager"] = self.get_position_abstract_state_gridenv_GE_MazeKeyDoor_v0(info["position"], reward, done)
 
-        if self.total_reward >= 3 and reward == 1:
+        if self.total_reward >= 1 and reward == 1:
             reward = 1.
         else:
             reward = 0.

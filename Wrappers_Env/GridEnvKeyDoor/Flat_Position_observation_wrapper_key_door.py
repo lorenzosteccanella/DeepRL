@@ -31,12 +31,15 @@ class Flat_Position_observation_wrapper_key_door(gym.Wrapper):
     def step(self, action):
 
         if random.random() > 0.8:
-            action = self.env.action_space.sample()
+            a = action
+            while a == action:
+                action = self.env.action_space.sample()
+            action = a
 
         obs, reward, done, info = self.env.step(action)
         observation = self.get_position(info["position"], reward)
 
-        if self.total_reward >= 3 and reward == 1:
+        if self.total_reward >= 1 and reward == 1:
             reward = 1.
         else:
             reward = 0.
