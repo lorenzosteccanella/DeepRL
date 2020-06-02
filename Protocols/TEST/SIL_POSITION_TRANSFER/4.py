@@ -20,13 +20,14 @@ class variables():
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # to train on CPU
 
-        tf.config.optimizer.set_jit(True)
+        #tf.config.optimizer.set_jit(True)
 
-        self.seeds = [0]
-        self.MAX_R = 3
-        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + ' - HRL-SIL-HC-totr' + str(self.MAX_R) + '/')
+        #self.seeds = [1]
+        self.MAX_R = 1
+        self.MAX_MOVES = 400
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + ' - HRL-SIL-HC-totr' + " - " + str(self.MAX_R) + " - " + str(self.MAX_MOVES) +'/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
-        self.FILE_NAME = 'HRL-SIL-HC-totr3'
+        self.FILE_NAME = 'HRL-SIL-HC-totr'+str(self.MAX_R) + " - " + str(self.MAX_MOVES)
         #self.NUMBER_OF_EPOCHS = 1000
         self.NUMBER_OF_STEPS = 400000
 

@@ -1,5 +1,4 @@
 import gym
-from Utils import normalize, get_pixels_from_obs, np_in_list, ssim_in_list, SSIM_equal, sample_colors, make_gray_scale, hash_numpy_array_equal, make_downsampled_image
 from collections import deque
 import numpy as np
 import gym.spaces as spaces
@@ -39,7 +38,7 @@ class Flat_Position_observation_wrapper_key_door(gym.Wrapper):
         obs, reward, done, info = self.env.step(action)
         observation = self.get_position(info["position"], reward)
 
-        if self.total_reward >= 1 and reward == 1:
+        if self.total_reward >= 3 and reward == 1:
             reward = 1.
         else:
             reward = 0.
