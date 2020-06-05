@@ -1,10 +1,10 @@
-E_PATH='/homedtic/lsteccanella/DeepRL/Protocols/TEST/SIL_POSITION_TRANSFER_2/'
+E_PATH='/homedtic/lsteccanella/DeepRL/Protocols/TEST/SIL_POSITION_TRANSFER_3/'
 prefix='/homedtic/lsteccanella/DeepRL/Protocols/'
 suffix=
 
 for i in $(find $E_PATH -name '*.py' -type f);
 do 
-	for j in 0 1 2 3 4
+	for j in 2
 	do	
 		SEED=$j
 		PROT_PATH=${i#"$prefix"}
