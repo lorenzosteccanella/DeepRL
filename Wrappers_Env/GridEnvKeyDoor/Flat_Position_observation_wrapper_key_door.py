@@ -24,8 +24,8 @@ class Flat_Position_observation_wrapper_key_door(gym.Wrapper):
         self.Door = 0
         self.total_reward = 0.
 
-        obs = self.env.reset(**kwargs)
-        observation = self.get_position(None, 0.)
+        obs, info = self.env.reset(**kwargs)
+        observation = self.get_position(info["position"], 0.)
         return observation
 
     def step(self, action):
@@ -34,7 +34,6 @@ class Flat_Position_observation_wrapper_key_door(gym.Wrapper):
             a = action
             while a == action:
                 action = self.env.action_space.sample()
-            action = a
 
         obs, reward, done, info = self.env.step(action)
         observation = self.get_position(info["position"], reward)
@@ -62,12 +61,8 @@ class Flat_Position_observation_wrapper_key_door(gym.Wrapper):
         # if self.total_reward == 2:
         #     self.Door = 1
 
-        if position is None:
-            x = 1
-            y = self.height - 2
-        else:
-            x = position[0]
-            y = position[1]
+        x = position[0]
+        y = position[1]
 
         x, y = self.normalize_position(x, y)
 

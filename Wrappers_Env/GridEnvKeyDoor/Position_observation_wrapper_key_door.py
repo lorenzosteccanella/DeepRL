@@ -25,11 +25,11 @@ class Position_observation_wrapper_key_door(gym.Wrapper):
         self.Door = 0
         self.total_reward = 0.
 
-        obs = self.env.reset(**kwargs)
-        observation = self.get_position(None, 0.)
+        obs, info = self.env.reset(**kwargs)
+        observation = self.get_position(info["position"], 0.)
 
         observation["vanilla"] = obs
-        observation["manager"] = self.get_position_abstract_state_gridenv_GE_MazeKeyDoor_v0(None, 0., False)
+        observation["manager"] = self.get_position_abstract_state_gridenv_GE_MazeKeyDoor_v0(info["position"], 0., False)
 
         return observation
 
@@ -39,7 +39,6 @@ class Position_observation_wrapper_key_door(gym.Wrapper):
             a = action
             while a == action:
                 action = self.env.action_space.sample()
-            action = a
 
         obs, reward, done, info = self.env.step(action)
         observation = self.get_position(info["position"], reward)
@@ -62,15 +61,8 @@ class Position_observation_wrapper_key_door(gym.Wrapper):
 
     def get_position(self, position, reward):
 
-        # if reward > 0:
-        #     self.Key = 1
-
-        if position is None:
-            x = 1
-            y = 14
-        else:
-            x = position[0]
-            y = position[1]
+        x = position[0]
+        y = position[1]
 
         x, y = self.normalize_position(x, y)
 
@@ -81,21 +73,10 @@ class Position_observation_wrapper_key_door(gym.Wrapper):
         if reward > 0:
             self.total_reward += reward
 
-        # if self.total_reward == 1:
-        #     self.Key = 1
-        #
-        # if self.total_reward == 2:
-        #     self.Door = 1
-
         step_x = self.width // self.n_zones
         step_y = self.height // self.n_zones
 
-        #initial state returned when the environments is resetted
-        if position is None:
-            x = 1
-            y = self.height - 2
-        else:
-            x = position[0]
-            y = position[1]
+        x = position[0]
+        y = position[1]
 
         return (x//step_x, y//step_y, self.total_reward)
