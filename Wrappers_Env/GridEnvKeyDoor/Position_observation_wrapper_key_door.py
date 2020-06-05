@@ -1,8 +1,9 @@
 import gym
-import random
+from Utils import normalize, get_pixels_from_obs, np_in_list, ssim_in_list, SSIM_equal, sample_colors, make_gray_scale, hash_numpy_array_equal, make_downsampled_image
 from collections import deque
 import numpy as np
 import gym.spaces as spaces
+import random
 
 class Position_observation_wrapper_key_door(gym.Wrapper):
 
@@ -24,18 +25,21 @@ class Position_observation_wrapper_key_door(gym.Wrapper):
         self.Door = 0
         self.total_reward = 0.
 
-        obs, info = self.env.reset(**kwargs)
-        observation = self.get_position(info["position"], 0.)
+        obs = self.env.reset(**kwargs)
+        observation = self.get_position(None, 0.)
 
         observation["vanilla"] = obs
-        observation["manager"] = self.get_position_abstract_state_gridenv_GE_MazeKeyDoor_v0(info["position"], 0., False)
+        observation["manager"] = self.get_position_abstract_state_gridenv_GE_MazeKeyDoor_v0(None, 0., False)
 
         return observation
 
     def step(self, action):
 
-        # if random.random() > 0.8:
-        #     action = self.env.action_space.sample()
+        if random.random() > 0.8:
+            a = action
+            while a == action:
+                action = self.env.action_space.sample()
+            action = a
 
         obs, reward, done, info = self.env.step(action)
         observation = self.get_position(info["position"], reward)
@@ -45,10 +49,8 @@ class Position_observation_wrapper_key_door(gym.Wrapper):
 
         if self.total_reward >= 1 and reward == 1:
             reward = 1.
-        elif reward > 0.:
+        else:
             reward = 0.
-
-        #print(observation["manager"], observation["option"])
 
         return observation, reward, done, info
 
@@ -63,9 +65,12 @@ class Position_observation_wrapper_key_door(gym.Wrapper):
         # if reward > 0:
         #     self.Key = 1
 
-
-        x = position[0]
-        y = position[1]
+        if position is None:
+            x = 1
+            y = 14
+        else:
+            x = position[0]
+            y = position[1]
 
         x, y = self.normalize_position(x, y)
 
@@ -76,13 +81,21 @@ class Position_observation_wrapper_key_door(gym.Wrapper):
         if reward > 0:
             self.total_reward += reward
 
+        # if self.total_reward == 1:
+        #     self.Key = 1
+        #
+        # if self.total_reward == 2:
+        #     self.Door = 1
 
         step_x = self.width // self.n_zones
         step_y = self.height // self.n_zones
 
-        x = position[0]
-        y = position[1]
-	
-        #print(x, y)
+        #initial state returned when the environments is resetted
+        if position is None:
+            x = 1
+            y = self.height - 2
+        else:
+            x = position[0]
+            y = position[1]
 
         return (x//step_x, y//step_y, self.total_reward)

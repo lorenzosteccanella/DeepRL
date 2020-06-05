@@ -11,7 +11,6 @@
 #SBATCH -e /homedtic/lsteccanella/DeepRL/Cluster_utils/jobs/%N.%j.err # STDERR # output of the error
 
 # set -x # output verbose
-
 source /homedtic/lsteccanella/DeepRL/Cluster_utils/modules.sh
 source /homedtic/lsteccanella/DeepRL/Cluster_utils/cluster_env_2/bin/activate
 python -u /homedtic/lsteccanella/DeepRL/main.py "$@"
