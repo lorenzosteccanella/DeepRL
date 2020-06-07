@@ -5,7 +5,7 @@ import numpy as np
 import gym.spaces as spaces
 import random
 
-class Position_observation_wrapper_key_door(gym.Wrapper):
+class Position_observation_wrapper_key_door_totr3(gym.Wrapper):
 
 
     def __init__(self, env, parameters):
@@ -48,7 +48,7 @@ class Position_observation_wrapper_key_door(gym.Wrapper):
 
         if self.total_reward >= 1 and reward == 1:
             reward = 1.
-        else:
+        elif reward > 0.:
             reward = 0.
 
         return observation, reward, done, info

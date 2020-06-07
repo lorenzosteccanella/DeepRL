@@ -3,6 +3,7 @@ import time
 import matplotlib.pyplot as plt
 import pickle
 import numpy as np
+from random import randint
 
 
 class SaveResult:
@@ -20,6 +21,7 @@ class SaveResult:
 
     @staticmethod
     def make_dir_path(dir_name):
+        time.sleep(randint(1,10))
         dir_name = "results/" + dir_name
         if not os.path.exists("results/"):
             os.mkdir("results/")

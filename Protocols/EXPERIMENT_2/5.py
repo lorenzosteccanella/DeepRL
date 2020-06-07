@@ -31,22 +31,22 @@ class variables():
         self.MAX_R = 3
         self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(__file__)) + '  - NO TRANSFER -  SIL-totr' + str(self.MAX_R) + '/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
-        self.FILE_NAME = 'SIL-totr3'
+        self.FILE_NAME = 'SIL-totr' + str(self.MAX_R)
         #self.NUMBER_OF_EPOCHS = 1000
         self.NUMBER_OF_STEPS = 400000
 
         self.multi_processing = False
 
-        self.PROBLEM = 'GE_MazeTreasure15keyDoorLava0-v0'
-        self.TEST_TRANSFER_PROBLEM = ['GE_MazeTreasure15keyDoorLava1-v0', 'GE_MazeTreasure15keyDoorLava2-v0']
+        self.PROBLEM = 'GE_MazeTreasure16keyDoorLava1-v0'
+        self.TEST_TRANSFER_PROBLEM = ['GE_MazeTreasure16keyDoorLava2-v0']
 
         environment = gym.make(self.PROBLEM)
 
         self.ACTION_SPACE = [0, 1, 2, 3, 4]
 
         self.wrapper_params = {
-            "width": 15,
-            "height": 15,
+            "width": 16,
+            "height": 16,
         }
 
         self.wrapper = Flat_Position_observation_wrapper_key_door(environment, self.wrapper_params)

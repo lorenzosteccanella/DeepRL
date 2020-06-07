@@ -27,16 +27,16 @@ class variables():
         tf.config.optimizer.set_jit(True)
 
         self.seeds = [0]
-        self.MAX_R = 3
-        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  HRL-SIL-totr' + str(self.MAX_R) + '/')
+        self.MAX_R = 1
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(__file__)) + '  -  HRL-SIL-totr' + str(self.MAX_R) + '/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
-        self.FILE_NAME = 'HRL-SIL-totr3'
+        self.FILE_NAME = 'HRL-SIL-totr' + str(self.MAX_R)
         #self.NUMBER_OF_EPOCHS = 1000
         self.NUMBER_OF_STEPS = 400000
 
         self.multi_processing = False
 
-        self.PROBLEM = 'GE_MazeTreasure15keyDoor1-v0'
+        self.PROBLEM = 'GE_MazeTreasure16keyDoor1-v0'
         self.TEST_TRANSFER_PROBLEM = []
 
         environment = gym.make(self.PROBLEM)
@@ -44,8 +44,8 @@ class variables():
         self.ACTION_SPACE = [0, 1, 2, 3, 4]
 
         self.wrapper_params = {
-            "width": 15,
-            "height": 15,
+            "width": 16,
+            "height": 16,
             "n_zones": 4
         }
 
@@ -87,7 +87,7 @@ class variables():
             "batch_size": 6,
             "sil_batch_size": 512,
             "imitation_buffer_size": 10000,
-            "imitation_learning_steps": 4,
+            "imitation_learning_steps": 1,
             "preprocessing": preprocessing,
         }
 

@@ -1,6 +1,6 @@
-E_PATH='/homedtic/lsteccanella/DeepRL/Protocols/TEST/SIL_POSITION_TRANSFER_3/'
+E_PATH='/homedtic/lsteccanella/DeepRL/Protocols/EXPERIMENT_3/'
 prefix='/homedtic/lsteccanella/DeepRL/Protocols/'
-suffix=
+suffix=0
 
 for i in $(find $E_PATH -name '*.py' -type f);
 do 

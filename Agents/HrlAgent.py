@@ -171,13 +171,13 @@ class HrlAgent(AbstractAgent):
                 self.save_result.save_data(self.FILE_NAME + "Total Reward", message)
                 self.total_r_2_print.clear()
 
-            if self.save_result is not False:
-                message = ""
-                for target in self.path_2_print:
-                    message += (str(target) + "\n-> ")
-                message += "\n\n"
-                self.save_result.save_data(self.FILE_NAME + "Path", message)
-                self.path_2_print.clear()
+            #if self.save_result is not False:
+            #    message = ""
+            #    for target in self.path_2_print:
+            #        message += (str(target) + "\n-> ")
+            #    message += "\n\n"
+            #    self.save_result.save_data(self.FILE_NAME + "Path", message)
+            #    self.path_2_print.clear()
 
             # if self.save_result is not False:
             #     message = ""
@@ -205,11 +205,11 @@ class HrlAgent(AbstractAgent):
                 self.save_result.save_data(self.FILE_NAME + "Nodes_Edge_discovered", message)
             self.old_number_of_options = self.number_of_options_executed
 
-            if self.save_result is not False:
+            #if self.save_result is not False:
 
-                self.save_result.save_pickle_data(self.FILE_NAME + "edge_option_stats.pkl", self.count_edges)
-                self.save_result.save_pickle_data(self.FILE_NAME + "edge_entropy_stats.pkl", self.entropy_edges)
-                self.save_result.save_pickle_data(self.FILE_NAME + "edgeXedge_option_stats.pkl", self.count_couple_edges)
+            #    self.save_result.save_pickle_data(self.FILE_NAME + "edge_option_stats.pkl", self.count_edges)
+            #    self.save_result.save_pickle_data(self.FILE_NAME + "edge_entropy_stats.pkl", self.entropy_edges)
+            #    self.save_result.save_pickle_data(self.FILE_NAME + "edgeXedge_option_stats.pkl", self.count_couple_edges)
 
             if self.save_result is not False:
                 names = []
@@ -219,11 +219,11 @@ class HrlAgent(AbstractAgent):
                     values.append(float((v[1] / v[0]) * 100))
 
                 plt.bar(range(len(names)), values)
-                plt.savefig(self.save_result.get_path() + "/edgeXedge_transition_prob", format="PNG")
+                plt.savefig(self.save_result.get_path() + "/edgeXedge_transition_prob.png", format="PNG")
                 plt.close()
 
-            if self.save_result is not False:
-                self.save(self.save_result.get_path() + "/model")
+            #if self.save_result is not False:
+            #    self.save(self.save_result.get_path() + "/model")
 
     def update_option(self, sample):
 
