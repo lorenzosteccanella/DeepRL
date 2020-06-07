@@ -29,7 +29,7 @@ class variables():
 
         self.seeds = [0]
         self.MAX_R = 3
-        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(__file__)) + '  - NO TRANSFER -  SIL-totr' + str(self.MAX_R) + 'v2/')
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(__file__)) + '  - NO TRANSFER -  SIL-totr' + str(self.MAX_R) + 'v3/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'SIL-totr' + str(self.MAX_R)
         #self.NUMBER_OF_EPOCHS = 1000

@@ -28,7 +28,7 @@ class variables():
 
         self.seeds = [0]
         self.MAX_R = 3
-        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(__file__)) + '  - NO TRANSFER -  HRL-SIL-totr' + str(self.MAX_R) + 'v2/')
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(__file__)) + '  - NO TRANSFER -  HRL-SIL-totr' + str(self.MAX_R) + 'v3/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'HRL-SIL-totr' + str(self.MAX_R)
         #self.NUMBER_OF_EPOCHS = 1000
@@ -129,7 +129,7 @@ class variables():
         }
 
         self.random_agent = RandomAgentOption(self.ACTION_SPACE)
-        self.LAMBDA = 0.005
+        self.LAMBDA = 0.01
         self.MIN_EPSILON = 0
         self.exploration_fn = get_epsilon_count_exploration
 

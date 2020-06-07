@@ -5,11 +5,11 @@ import gym
 import tensorflow as tf
 import os
 from Environment import Environment
-from Wrappers_Env import Flat_Position_observation_wrapper_key_door
 from Models.A2CSILnetworksEager import *
 from Utils import SaveResult
 from Utils.HrlExplorationStrategies import get_epsilon_count_exploration
 import gridenvs.examples
+import importlib
 
 class variables():
 
@@ -23,28 +23,29 @@ class variables():
         tf.config.optimizer.set_jit(True)
 
         self.seeds = [0]
-        self.MAX_R = 3
-        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(__file__)) + '  -  SIL-HC-totr' + str(self.MAX_R) + '/')
+        self.MAX_R = 1
+        self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(__file__)) + '  -  DEATH-SIL-HC-totr' + str(self.MAX_R) + '/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
-        self.FILE_NAME = 'SIL-HC-totr' + str(self.MAX_R)
+        self.FILE_NAME = 'DEATH-SIL-HC-totr' + str(self.MAX_R)
         #self.NUMBER_OF_EPOCHS = 1000
         self.NUMBER_OF_STEPS = 400000
 
         self.multi_processing = False
 
-        self.PROBLEM = 'GE_MazeTreasure16keyDoorLava0-v0'
-        self.TEST_TRANSFER_PROBLEM = ['GE_MazeTreasure16keyDoorLava1-v0', 'GE_MazeTreasure16keyDoorLava2-v0']
+        self.PROBLEM = 'GE_MazeTreasure8x16keyDoorLava0-v0'
+        self.TEST_TRANSFER_PROBLEM = ['GE_MazeTreasure8x16keyDoorLava1-v0', 'GE_MazeTreasure8x16keyDoorLava2-v0']
 
         environment = gym.make(self.PROBLEM)
 
         self.ACTION_SPACE = [0, 1, 2, 3, 4]
 
         self.wrapper_params = {
-            "width": 16,
+            "width": 8,
             "height": 16,
         }
+        self.wrapper_env = getattr(importlib.import_module('Wrappers_Env.GridEnvKeyDoor.Flat_Position_observation_wrapper_key_door_totr' + str(self.MAX_R) + '_DET' ), 'Flat_Position_observation_wrapper_key_door_totr' + str(self.MAX_R) + '_DET' )
 
-        self.wrapper = Flat_Position_observation_wrapper_key_door(environment, self.wrapper_params)
+        self.wrapper = self.wrapper_env(environment, self.wrapper_params)
 
         self.display_env = False
 
@@ -101,7 +102,7 @@ class variables():
     
         self.number_of_stacked_frames = 1
         environment = gym.make(self.TEST_TRANSFER_PROBLEM[self.index_execution])
-        self.wrapper = Flat_Position_observation_wrapper_key_door(environment, self.wrapper_params)
+        self.wrapper = self.wrapper_env(environment, self.wrapper_params)
     
         if self.display_env:
             from Utils import ShowRenderHRL

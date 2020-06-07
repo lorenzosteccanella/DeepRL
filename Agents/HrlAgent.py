@@ -71,7 +71,7 @@ class HrlAgent(AbstractAgent):
         # variables for options
         self.correct_option_end_reward = correct_option_end_reward
         self.wrong_end_option_reward = wrong_option_end_reward
-        self.options = []
+        #self.options = []
         self.exploration_option = exploration_option
         self.epsilon_count_exploration(self.LAMBDA, self.MIN_EPSILON)
         self.options = {}

@@ -76,7 +76,7 @@ def run(variables):
     #    variables.randomAgent = None
 
     print("START TO LEARN")
-    while nstep < variables.NUMBER_OF_STEPS: #and (sum(rewards[-100:]) / 100) < variables.MAX_R:#epoch < variables.NUMBER_OF_EPOCHS:
+    while nstep < variables.NUMBER_OF_STEPS and (sum(rewards[-100:]) / 100) < variables.MAX_R:#epoch < variables.NUMBER_OF_EPOCHS:
         epoch, nstep, reward = variables.env.run(variables.agent)
         print(epoch, nstep, reward, (sum(rewards[-100:]) / 100))
         epochs.append(epoch)
@@ -142,17 +142,17 @@ if __name__ == '__main__':
 
         if(has_method(variables, 'transfer_learning_test')):
             for _ in range(len(variables.TEST_TRANSFER_PROBLEM)):
-                tf.random.set_seed(seed)
-                random.seed(seed)
-                np.random.seed(seed)
-                if variables.multi_processing is False:
-                    variables.env.env.seed(seed)  # Should I set the seed of the environment as well?
-                else:
-                    from stable_baselines.common.vec_env import SubprocVecEnv, DummyVecEnv
-                    environment = SubprocVecEnv(
-                        [make_env(variables.PROBLEM, variables.wrapper, variables.wrapper_params, i) for i in
-                         range(variables.num_workers)])
-                    variables.env.set_env(environment)
+                #tf.random.set_seed(seed)
+                #random.seed(seed)
+                #np.random.seed(seed)
+                #if variables.multi_processing is False:
+                #    variables.env.env.seed(seed)  # Should I set the seed of the environment as well?
+                #else:
+                #    from stable_baselines.common.vec_env import SubprocVecEnv, DummyVecEnv
+                #    environment = SubprocVecEnv(
+                #        [make_env(variables.PROBLEM, variables.wrapper, variables.wrapper_params, i) for i in
+                #         range(variables.num_workers)])
+                #    variables.env.set_env(environment)
                 print("\n"*6)
                 variables.transfer_learning_test()
                 epochs, rewards, n_steps = run(variables)
