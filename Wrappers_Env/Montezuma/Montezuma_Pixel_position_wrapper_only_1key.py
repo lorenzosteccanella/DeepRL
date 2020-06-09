@@ -32,12 +32,14 @@ class Montezuma_Pixel_position_wrapper_only_1key(gym.Wrapper):
         for i in range(2):
             observation, reward, done, info = self.env.step(action)
             acc_reward += reward
+            print(reward)
+            if reward == 100:
+                print("MIAOOOOO")
+                done = True
             if done:
-                break
+                break           
 
         reward = acc_reward
-        if reward == 100:
-            done = True
 
         observation, ram = self.observation(observation)
 

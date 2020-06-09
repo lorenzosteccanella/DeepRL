@@ -296,7 +296,7 @@ class HrlAgent_heuristic_count_PR_v2(HrlAgent):
                             self.avg_count += 1
                         else:
 
-                            # self.as_m2s_m[option.id][KeyDict(s_)][1] = (self.avg_sum / self.avg_count)
+                            #self.as_m2s_m[option.id][KeyDict(s_)][1] = (self.avg_sum / self.avg_count)
 
                             if self.as_m2s_m[option.id][KeyDict(s_)][1] < r:
                                 self.as_m2s_m[option.id][KeyDict(s_)][1] = r
@@ -332,8 +332,9 @@ class HrlAgent_heuristic_count_PR_v2(HrlAgent):
                         self.avg_count += 1
                     else:
 
-                        # self.as_m2s_m[option.id][KeyDict(s_)][1] = (self.avg_sum / self.avg_count)
-                        if self.as_m2s_m[option.id][KeyDict(s_)][1] < r:
+                        #self.as_m2s_m[option.id][KeyDict(s_)][1] = (self.avg_sum / self.avg_count)
+                        
+			if self.as_m2s_m[option.id][KeyDict(s_)][1] < r:
                             self.as_m2s_m[option.id][KeyDict(s_)][1] = r
 
                         #self.as_m2s_m[option.id][KeyDict(s_)][1] = 0.6 * self.as_m2s_m[option.id][KeyDict(s_)][1] + 0.4 * r    # changed for max let's see

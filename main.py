@@ -76,7 +76,7 @@ def run(variables):
     #    variables.randomAgent = None
 
     print("START TO LEARN")
-    while nstep < variables.NUMBER_OF_STEPS and (sum(rewards[-100:]) / 100) < variables.MAX_R:#epoch < variables.NUMBER_OF_EPOCHS:
+    while nstep < variables.NUMBER_OF_STEPS: #and (sum(rewards[-100:]) / 100) < variables.MAX_R:#epoch < variables.NUMBER_OF_EPOCHS:
         epoch, nstep, reward = variables.env.run(variables.agent)
         print(epoch, nstep, reward, (sum(rewards[-100:]) / 100))
         epochs.append(epoch)

@@ -50,7 +50,7 @@ class A2CSILEagerSync:
 
         s = tf.convert_to_tensor(s)
 
-        logits = self.model_actor_critic(s)
+        logits = self.model_actor_critic(s)[0]
         prob = tf.nn.softmax(logits)
         return prob.numpy()
 
@@ -65,7 +65,7 @@ class A2CSILEagerSync:
     def grad(self, model_actor_critic, inputs, targets, one_hot_a, advantage, weight_ce, weight_mse = 0.5):
 
         with tf.GradientTape() as tape:
-            logits, value_critic = model_actor_critic(inputs)
+            logits, value_critic, _ = model_actor_critic(inputs)
             loss_pg = Losses.reinforce_loss(logits, one_hot_a, advantage)
             loss_ce = Losses.entropy_exploration_loss(logits)
             loss_critic = Losses.mse_loss(value_critic, targets)
@@ -76,7 +76,7 @@ class A2CSILEagerSync:
     def grad_imitation(self, model_actor_critic, inputs, targets, one_hot_a, advantage, imp_w, weight_mse=0.5, weight_sil_mse=0.01):
 
         with tf.GradientTape() as tape:
-            logits, value_critic = model_actor_critic(inputs)
+            logits, value_critic, _ = model_actor_critic(inputs)
             loss_pg_imitation = Losses.reinforce_loss_imp_w(logits, one_hot_a, advantage, imp_w)
             loss_critic_imitation = (weight_mse * Losses.mse_loss_self_imitation_learning_imp_w(value_critic, targets, imp_w))
             loss_value = weight_sil_mse * loss_critic_imitation + loss_pg_imitation
