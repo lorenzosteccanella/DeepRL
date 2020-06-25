@@ -85,5 +85,5 @@ class variables():
         self.agent = HrlAgent_SubGoal_Plan_heuristic_count_PR_v2(self.option_params, self.random_agent, self.exploration_fn,
                                                               self.LAMBDA, self.MIN_EPSILON, 0.8, -1, self.SAVE_RESULT)
 
-        self.agent.load("./Models_saved/Wed_May_13_18:15:16_2020/seed_0/model")
+        #self.agent.load("./Models_saved/Wed_May_13_18:15:16_2020/seed_0/model")
 

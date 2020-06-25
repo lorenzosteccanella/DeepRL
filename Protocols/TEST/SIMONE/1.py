@@ -24,7 +24,7 @@ class variables():
         self.RESULTS_FOLDER = (os.path.basename(os.path.dirname(os.path.dirname(__file__))) + '  -  Montezuma_SIL_POSITION_1/')
         self.SAVE_RESULT = SaveResult(self.RESULTS_FOLDER)
         self.FILE_NAME = 'Position_SIL_Montezuma'
-        self.NUMBER_OF_EPOCHS = 4000
+        self.NUMBER_OF_STEPS = 400000
 
         self.multi_processing = False
 
@@ -87,7 +87,7 @@ class variables():
         self.agent = HrlAgent_heuristic_count_PR_v2(self.option_params, self.random_agent, self.exploration_fn,
                                                               self.LAMBDA, self.MIN_EPSILON, 0.8, -0.1, self.SAVE_RESULT)
 
-        self.agent.load("./Models_saved/Wed_May_13_18:15:16_2020/seed_0/model")
+        #self.agent.load("./Models_saved/Wed_May_13_18:15:16_2020/seed_0/model")
 
 
 
