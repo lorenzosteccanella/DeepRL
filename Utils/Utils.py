@@ -153,7 +153,7 @@ class PrioritizedExperienceReplay:  # stored as ( s, a, r, s_ ) in SumTree
 
         self.tree.add(max_priority, sample)  # set the max p for new p
 
-    def sample(self, n):
+    def sample(self, n, rand=True):
 
         # Create a sample array that will contains the minibatch
         batch = []
@@ -189,6 +189,11 @@ class PrioritizedExperienceReplay:  # stored as ( s, a, r, s_ ) in SumTree
             #  IS = (1/N * 1/P(i))**b /max wi == (N*P(i))**-b  /max wi
             b_ISWeights[i, 0] = np.power(n * sampling_probabilities, -self.PER_b) / max_weight
             batch.append((index, data))
+
+        if rand:
+            c = list(zip(batch, b_ISWeights))
+            random.shuffle(c)
+            batch, b_ISWeights = zip(*c)
 
         return batch, b_ISWeights
 
@@ -274,6 +279,28 @@ class SoftUpdateWeightsEager:
         weights_target_network = np.array(self.model.model.get_weights())
         self.model.model.set_weights(self.tau * weights_main_network +
                                      (1 - self.tau) * weights_target_network)
+
+class SoftUpdateWeightsPPO:
+
+    #θ_target = τ * θ_local + (1 - τ) * θ_target
+
+    def __init__(self, weights, model, tau=1e-3):
+        self.operation = []
+        self.model = model
+        self.weights = weights
+        self.tau = tau
+
+    def update(self):
+        weights_main_network = np.array(self.weights.get_weights())
+        weights_target_network = np.array(self.model.get_weights())
+
+        self.model.set_weights(self.tau * weights_main_network +
+                                     (1 - self.tau) * weights_target_network)
+
+    def exact_copy(self):
+        weights_main_network = np.array(self.weights.get_weights())
+
+        self.model.set_weights(weights_main_network)
 
 
 class UpdateWeightsEager:

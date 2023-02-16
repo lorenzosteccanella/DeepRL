@@ -1,1 +1,20 @@
-source /homedtic/lsteccanella/DeepRL/Cluster_utils/run-multiple-nodes.sh Test.HRL-E-GREEDY.1 Test.HRL-E-GREEDY.2 Test.HRL-E-GREEDY.3 Test.HRL-E-GREEDY.4 Test.HRL-E-GREEDY.5 Test.HRL-E-GREEDY.6 Test.HRL-PSEUDO-COUNT.1 Test.HRL-PSEUDO-COUNT.2 Test.HRL-PSEUDO-COUNT.3 Test.HRL-PSEUDO-COUNT.4 Test.HRL-PSEUDO-COUNT.5 Test.HRL-PSEUDO-COUNT.6 Test_SIL.HRL-E-GREEDY.1 Test_SIL.HRL-E-GREEDY.2 Test_SIL.HRL-E-GREEDY.3 Test_SIL.HRL-E-GREEDY.4 Test_SIL.HRL-E-GREEDY.5 Test_SIL.HRL-E-GREEDY.6 Test_SIL.HRL-PSEUDO-COUNT.1 Test_SIL.HRL-PSEUDO-COUNT.2 Test_SIL.HRL-PSEUDO-COUNT.3 Test_SIL.HRL-PSEUDO-COUNT.4 Test_SIL.HRL-PSEUDO-COUNT.5 Test_SIL.HRL-PSEUDO-COUNT.6 Test_SIL.A2C_SIL.1 Test_SIL.A2C_SIL.2 Test.A2C.1 Test.A2C.1
+E_PATH='/homedtic/lsteccanella/DeepRL/Protocols/EXPERIMENT_3/'
+prefix='/homedtic/lsteccanella/DeepRL/Protocols/'
+suffix=0
+
+for i in $(find $E_PATH -name '*.py' -type f);
+do 
+	for j in 0 1 2 3 4
+	do	
+		SEED=$j
+		PROT_PATH=${i#"$prefix"}
+		PROT_PATH=${PROT_PATH%.*}
+		PROT_PATH="$(tr / . <<<$PROT_PATH)"
+		PROT_PATH_SEED="$PROT_PATH $SEED"
+		echo $PROT_PATH_SEED
+		sbatch --exclude=node[022-030] -C intel /homedtic/lsteccanella/DeepRL/Cluster_utils/run-sbatch.sh $PROT_PATH_SEED
+	done
+	
+done
+
+

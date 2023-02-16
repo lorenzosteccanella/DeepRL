@@ -1,16 +1,30 @@
 import numpy as np
 from Agents.AbstractAgent import AbstractAgent
 from Utils import ExperienceReplay
+import collections
 
 class A2CAgent(AbstractAgent):
+    id = 0
 
-    def __init__(self, action_space, main_model_nn, gamma, batch_size):
-
+    def __init__(self, action_space, main_model_nn, gamma, batch_size, number_of_step_training=1):
         self.batch_size = batch_size
         self.buffer = ExperienceReplay(self.batch_size)
         self.action_space = action_space
         self.main_model_nn = main_model_nn
         self.gamma = gamma
+        self.ce_loss = None
+        self.number_of_step_training = number_of_step_training
+        self.id = A2CAgent.id
+        A2CAgent.id += 1
+
+        self.correct_termination = collections.deque(maxlen = 10)
+
+        self.n_steps = 0
+        self.n_episodes = 0
+
+    def update_correct_termination(self, reward, done):
+        if done:
+            self.correct_termination.append(reward)
 
     def _get_actor_critic_error(self, batch):
 
@@ -22,6 +36,7 @@ class A2CAgent(AbstractAgent):
 
         for i in range(len(batch)):
             o = batch[i][1]
+
             a = o[1]
             r = o[2]
             s_ = o[3]
@@ -38,7 +53,9 @@ class A2CAgent(AbstractAgent):
             a_one_hot[i][a_index] = 1
 
         y_critic, adv_actor = self._returns_advantages(rewards, dones, p, p_)
+
         y_critic = np.expand_dims(y_critic, axis=-1)
+
         return states_t, adv_actor, a_one_hot, y_critic
 
     def _returns_advantages(self, rewards, dones, values, next_value):
@@ -47,7 +64,9 @@ class A2CAgent(AbstractAgent):
         # returns are calculated as discounted sum of future rewards
         for t in reversed(range(rewards.shape[0])):
             returns[t] = rewards[t] + self.gamma * returns[t + 1] * (1 - dones[t])
+
         returns = returns[:-1]
+
         # advantages are returns - baseline, value estimates in our case
         advantages = returns - values
         return returns, advantages
@@ -55,21 +74,58 @@ class A2CAgent(AbstractAgent):
     def act(self, s):
 
         predict = self.main_model_nn.prediction_actor([s])[0]
+        a = np.random.choice(self.action_space, p=predict)
+        if sum(self.correct_termination) > 10:
+            print("Become Deterministic, option n ", self.id)
+            i_a = np.argmax(predict)
+            a = self.action_space[i_a]
 
-        return np.random.choice(self.action_space, p=predict)
+        return a
 
     def observe(self, sample): # in (s, a, r, s_, done, info) format
 
+        self.update_correct_termination(sample[2], sample[4])
+
+        self.n_steps += 1
+
         self.buffer.add(sample)
 
-    def replay(self):
+        if sample[4]:
+            self.n_episodes += 1
 
-        if self.buffer.buffer_len() >= self.batch_size:
+        return self.n_steps, self.n_episodes
 
-            batch, imp_w = self.buffer.sample(self.batch_size, False)
+    def get_observation_encoding(self, s):
+        h = self.main_model_nn.prediction_h([s])
+        return h
 
-            x, adv_actor, a_one_hot, y_critic = self._get_actor_critic_error(batch)
+    def replay(self, done=False):
 
-            self.main_model_nn.train(x, y_critic, a_one_hot, adv_actor)
+        if sum(self.correct_termination) < 10:
 
-            self.buffer.reset_buffer()
+            if self.buffer.buffer_len() >= self.batch_size:
+
+                for i in range(self.number_of_step_training):
+
+                    batch, imp_w = self.buffer.sample(self.batch_size, False)  # shuffleing or not?
+
+                    x, adv_actor, a_one_hot, y_critic = self._get_actor_critic_error(batch)
+
+                    _, __, self.ce_loss = self.main_model_nn.train(x, y_critic, a_one_hot, adv_actor)
+
+                self.buffer.reset_buffer()
+
+            elif done is True:
+
+                for i in range(self.number_of_step_training):
+
+                    batch, imp_w = self.buffer.sample(self.buffer.buffer_len(), False)  # shuffleing or not?
+
+                    x, adv_actor, a_one_hot, y_critic = self._get_actor_critic_error(batch)
+
+                    _, __, self.ce_loss = self.main_model_nn.train(x, y_critic, a_one_hot, adv_actor)
+
+                self.buffer.reset_buffer()
+
+            else:
+                self.ce_loss = None

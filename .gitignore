@@ -4,5 +4,10 @@ core
 __pycache__
 results/
 DeepRL_venv/
+DeepRL_venv_gpu/
 Cluster_utils/cluster_env/
+Cluster_utils/cluster_env_2/
 Cluster_utils/jobs/
+Best_run/
+RLstateAggregationTool/
+Plots/images/

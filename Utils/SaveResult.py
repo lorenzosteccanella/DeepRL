@@ -3,6 +3,7 @@ import time
 import matplotlib.pyplot as plt
 import pickle
 import numpy as np
+from random import randint
 
 
 class SaveResult:
@@ -20,6 +21,7 @@ class SaveResult:
 
     @staticmethod
     def make_dir_path(dir_name):
+        time.sleep(randint(1,10))
         dir_name = "results/" + dir_name
         if not os.path.exists("results/"):
             os.mkdir("results/")
@@ -44,8 +46,10 @@ class SaveResult:
                 f.write(message)
         f.close
 
-    def save_pickle_data(self, file_name, data):
+    def get_path(self):
+        return self.dir_path_seed
 
+    def save_pickle_data(self, file_name, data):
         with open(self.dir_path_seed + "/" + file_name, 'wb') as f:
             pickle.dump(data, f)
 
@@ -62,20 +66,69 @@ class SaveResult:
 
     def plot_results(self, file_name, title, xlabel, ylabel):
         x, y = [], []
-        with open(str(self.dir_path_seed) + "/" + file_name) as f:
-            print(str(self.dir_path_seed) + "/" + file_name)
-            for line in f:
-                x.append(float(line.split()[0]))
-                y.append(float(line.split()[2]))
+        try:
+            with open(str(self.dir_path_seed) + "/" + file_name) as f:
+                print(str(self.dir_path_seed) + "/" + file_name)
+                for line in f:
+                    x.append(float(line.split()[0]))
+                    y.append(float(line.split()[2]))
 
-        plt.plot(x, y)
-        plt.title(title)
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
-        # plt.draw()
-        # plt.pause(0.01)
-        plt.savefig(str(self.dir_path_seed) + "/" + file_name)
-        plt.close()
+                plt.plot(x, y)
+                plt.title(title)
+                plt.xlabel(xlabel)
+                plt.ylabel(ylabel)
+                # plt.draw()
+                # plt.pause(0.01)
+                plt.savefig(str(self.dir_path_seed) + "/" + file_name + " - " + title)
+                plt.close()
+
+        except IOError:
+            print("Error: File does not appear to exist.")
+            return 0
+
+    def plot_reward_ep(self, file_name, title, xlabel, ylabel):
+        x, y = [], []
+        try:
+            with open(str(self.dir_path_seed) + "/" + file_name) as f:
+                print(str(self.dir_path_seed) + "/" + file_name)
+                for line in f:
+                    x.append(float(line.split()[0]))
+                    y.append(float(line.split()[2]))
+
+                plt.plot(x, y)
+                plt.title(title)
+                plt.xlabel(xlabel)
+                plt.ylabel(ylabel)
+                # plt.draw()
+                # plt.pause(0.01)
+                plt.savefig(str(self.dir_path_seed) + "/" + file_name + " - " + title)
+                plt.close()
+
+        except IOError:
+            print("Error: File does not appear to exist.")
+            return 0
+
+    def plot_reward_nstep(self, file_name, title, xlabel, ylabel):
+        x, y = [], []
+        try:
+            with open(str(self.dir_path_seed) + "/" + file_name) as f:
+                print(str(self.dir_path_seed) + "/" + file_name)
+                for line in f:
+                    x.append(float(line.split()[1]))
+                    y.append(float(line.split()[2]))
+
+                plt.plot(x, y)
+                plt.title(title)
+                plt.xlabel(xlabel)
+                plt.ylabel(ylabel)
+                # plt.draw()
+                # plt.pause(0.01)
+                plt.savefig(str(self.dir_path_seed) + "/" + file_name + " - " + title)
+                plt.close()
+
+        except IOError:
+            print("Error: File does not appear to exist.")
+            return 0
 
     def plot_multiple_seeds(self, file_name, title, xlabel, ylabel):
         list_results_x = []
@@ -109,6 +162,76 @@ class SaveResult:
         plt.plot(x, y_mean, color='#CC4F1B')
         plt.fill_between(x, y_min, y_max, alpha=0.5, edgecolor='#CC4F1B', facecolor='#FF9848')
         plt.savefig(str(self.dir_path) + "/" + file_name)
+
+        plt.close()
+
+    def plot_multiple_seeds_reward_ep(self, file_name, title, xlabel, ylabel):
+        list_results_x = []
+        list_results_y = []
+
+        for p in self.all_seed_paths:
+            x, y = list(), list()
+            with open(p + "/" + file_name) as f:
+                for line in f:
+                    x.append(float(line.split()[0]))
+                    y.append(float(line.split()[2]))
+
+            list_results_x.append(x)
+            list_results_y.append(y)
+
+        min_length = min([len(result) for result in list_results_x])
+
+        x = list_results_x[0][:min_length]
+
+        list_results_y = [a[:min_length] for a in list_results_y]
+        st = np.vstack(list_results_y)
+
+        y_mean = np.mean(st, axis=0)
+        y_max = np.max(st, axis=0)
+        y_min = np.min(st, axis=0)
+
+        plt.title(title)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+
+        plt.plot(x, y_mean, color='#CC4F1B')
+        plt.fill_between(x, y_min, y_max, alpha=0.5, edgecolor='#CC4F1B', facecolor='#FF9848')
+        plt.savefig(str(self.dir_path) + "/" + file_name + " - " + title)
+
+        plt.close()
+
+    def plot_multiple_seeds_reward_nstep(self, file_name, title, xlabel, ylabel):
+        list_results_x = []
+        list_results_y = []
+
+        for p in self.all_seed_paths:
+            x, y = list(), list()
+            with open(p + "/" + file_name) as f:
+                for line in f:
+                    x.append(float(line.split()[1]))
+                    y.append(float(line.split()[2]))
+
+            list_results_x.append(x)
+            list_results_y.append(y)
+
+        min_length = min([len(result) for result in list_results_x])
+
+        x = list_results_x[0][:min_length]
+
+        list_results_y = [a[:min_length] for a in list_results_y]
+        st = np.vstack(list_results_y)
+
+        y_mean = np.mean(st, axis=0)
+        y_max = np.max(st, axis=0)
+        y_min = np.min(st, axis=0)
+
+        plt.title(title)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+
+        plt.plot(x, y_mean, color='#CC4F1B')
+        plt.fill_between(x, y_min, y_max, alpha=0.5, edgecolor='#CC4F1B', facecolor='#FF9848')
+        plt.savefig(str(self.dir_path) + "/" + file_name + " - " + title)
 
         plt.close()
 

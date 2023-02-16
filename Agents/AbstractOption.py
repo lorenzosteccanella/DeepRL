@@ -17,6 +17,12 @@ class AbstractOption(abc.ABC):
     def observe(self, s):
         pass
 
+    def observe_online(self, s):
+        pass
+
+    def observe_imitation(self, s):
+        pass
+
     def getID(self):
         return self.id
 
@@ -26,3 +32,6 @@ class AbstractOption(abc.ABC):
 
     def get_edge_list(self):
         return self.edge_list
+
+    def get_state_value(self, s):
+        pass

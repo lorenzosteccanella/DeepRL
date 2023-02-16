@@ -1,0 +1,17 @@
+seeds : range(0, 1)
+RESULTS_FOLDER : TEST  -  Montezuma_SIL_POSITION_1/
+SAVE_RESULT : <Utils.SaveResult.SaveResult object at 0x7f740ede3668>
+FILE_NAME : Position_SIL_Montezuma
+NUMBER_OF_EPOCHS : 4000
+multi_processing : False
+PROBLEM : MontezumaRevenge-ram-v0
+ACTION_SPACE : [0, 1, 2, 3, 4, 5, 14, 15]
+wrapper_params : {'stack_images_length': 1, 'n_zones': 40}
+wrapper : <Montezuma_position_wrapper_only_1key<TimeLimit<AtariEnv<MontezumaRevenge-ram-v0>>>>
+env : <Environment.Environment.Environment object at 0x7f740ed80ac8>
+option_params : {'option': <class 'Agents.A2CSILOption.A2CSILOption'>, 'h_size': 128, 'action_space': [0, 1, 2, 3, 4, 5, 14, 15], 'critic_network': <class 'Models.CommonA2C.CriticNetwork'>, 'actor_network': <class 'Models.CommonA2C.ActorNetwork'>, 'shared_representation': None, 'weight_mse': 0.5, 'sil_weight_mse': 0.01, 'weight_ce_exploration': 0.01, 'learning_rate': 0.0005, 'gamma': 0.95, 'batch_size': 6, 'sil_batch_size': 64, 'imitation_buffer_size': 1000, 'imitation_learning_steps': 8, 'preprocessing': None}
+random_agent :  random_exploration_option 
+LAMBDA : 0.05
+MIN_EPSILON : 0
+exploration_fn : <function get_epsilon_count_exploration at 0x7f740edea158>
+agent : <Agents.HrlAgent_SubGoal_Plan_heuristic_count_PR_v2.HrlAgent_SubGoal_Plan_heuristic_count_PR_v2 object at 0x7f740ed954a8>
